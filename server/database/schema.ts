@@ -18,6 +18,7 @@ export const users = pgTable(
     email: text('email').notNull().unique(),
     name: text('name').notNull(),
     avatarUrl: text('avatar_url'),
+    bio: text('bio'),
     campus: text('campus'),
     major: text('major'),
     creditBalance: integer('credit_balance').notNull().default(0),

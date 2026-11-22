@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { compressAvatarFile } from '~/utils/avatarUpload'
+
 interface ProfilePayload {
   user: {
     id: string
     name: string
     email: string
     avatarUrl: string | null
+    bio: string | null
     campus: string | null
     major: string | null
     creditBalance: number
@@ -37,19 +40,29 @@ interface ProfilePayload {
 }
 
 const { data, status, error, refresh } = useLazyFetch<ProfilePayload>('/api/profile')
-const { clear: clearSession } = useUserSession()
+const { refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
+const { clear: clearSession, fetch: fetchSession } = useUserSession()
 
 const activeTab = ref<'identity' | 'reputation' | 'account'>('identity')
+const nameInput = ref('')
+const avatarInput = ref<string | null>(null)
+const bioInput = ref('')
 const campusInput = ref('')
 const majorInput = ref('')
+const avatarError = ref('')
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const saving = ref(false)
 const saveMessage = ref('')
+const saveError = ref('')
 const logoutConfirmOpen = ref(false)
 
 watch(
   () => data.value?.user,
   (u: ProfilePayload['user'] | undefined) => {
     if (u) {
+      nameInput.value = u.name || ''
+      avatarInput.value = u.avatarUrl || null
+      bioInput.value = u.bio || ''
       campusInput.value = u.campus || ''
       majorInput.value = u.major || ''
     }
@@ -80,16 +93,47 @@ const milestoneProgress = computed(() => {
   return Math.round((points / 3) * 100)
 })
 
+async function onAvatarChange(event: Event) {
+  avatarError.value = ''
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  try {
+    avatarInput.value = await compressAvatarFile(file)
+  } catch (err: unknown) {
+    const e = err as { message?: string }
+    avatarError.value = e.message || 'Gagal memproses foto.'
+  } finally {
+    input.value = ''
+  }
+}
+
 async function saveProfile() {
-  saving.value = true
+  saveError.value = ''
   saveMessage.value = ''
+  if (nameInput.value.trim().length < 2) {
+    saveError.value = 'Nama tampilan minimal 2 karakter.'
+    return
+  }
+
+  saving.value = true
   try {
     await $fetch('/api/profile', {
       method: 'PATCH',
-      body: { campus: campusInput.value, major: majorInput.value }
+      body: {
+        name: nameInput.value,
+        avatarUrl: avatarInput.value ?? '',
+        bio: bioInput.value,
+        campus: campusInput.value,
+        major: majorInput.value
+      }
     })
-    await refresh()
-    saveMessage.value = 'Identitas kampus dan jurusan berhasil diperbarui.'
+    await Promise.all([refresh(), refreshMe(), fetchSession()])
+    saveMessage.value = 'Profil dan foto berhasil diperbarui.'
+  } catch (err: unknown) {
+    const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
+    saveError.value =
+      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal menyimpan perubahan.'
   } finally {
     saving.value = false
   }
@@ -130,7 +174,7 @@ function formatDate(iso: string) {
 
     <template v-else-if="data">
       <!-- Dark Ink Identity Banner -->
-      <section class="bg-slate-900 text-white rounded-2xl p-6 sm:p-7 space-y-6">
+      <section class="bg-slate-900 text-white rounded-2xl p-6 sm:p-7 space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <UAvatar :src="data.user.avatarUrl || undefined" :alt="data.user.name" size="xl" />
@@ -147,13 +191,16 @@ function formatDate(iso: string) {
                 </span>
               </div>
               <p class="text-sm text-slate-300">{{ data.user.email }}</p>
+              <p v-if="data.user.bio" class="text-xs sm:text-sm text-slate-200 pt-0.5">
+                {{ data.user.bio }}
+              </p>
               <p v-if="data.user.campus || data.user.major" class="text-xs text-slate-400">
                 {{ [data.user.major, data.user.campus].filter(Boolean).join(' · ') }}
               </p>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 text-center bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 tabular-nums">
+          <div class="grid grid-cols-3 gap-3 text-center bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 tabular-nums shrink-0">
             <div>
               <p class="text-[11px] text-slate-400">Kredit</p>
               <p class="text-lg font-bold font-mono text-teal-300">{{ data.user.creditBalance }}</p>
@@ -237,52 +284,116 @@ function formatDate(iso: string) {
       </div>
 
       <Transition name="panel-slide" mode="out-in">
-        <!-- Tab 1: Identity & Skills -->
+        <!-- Tab 1: Identity, Photo & Skills -->
         <div v-if="activeTab === 'identity'" key="tab-identity" class="grid grid-cols-1 md:grid-cols-12 gap-5">
-          <section class="md:col-span-6 bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
-            <h2 class="text-base font-bold text-slate-900">Informasi Kampus</h2>
-            <form class="space-y-3.5" @submit.prevent="saveProfile">
-              <div>
-                <label for="profile-campus" class="block text-xs font-semibold text-slate-700 mb-1">
-                  Kampus
-                </label>
-                <input
-                  id="profile-campus"
-                  v-model="campusInput"
-                  name="campus"
-                  type="text"
-                  placeholder="Contoh: Universitas Kristen Satya Wacana"
-                  class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
-                />
+          <section class="md:col-span-7 bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
+            <h2 class="text-base font-bold text-slate-900">Edit Identitas &amp; Foto Profil</h2>
+            <form class="space-y-4" @submit.prevent="saveProfile">
+              <!-- Avatar Upload Row -->
+              <div class="flex items-center gap-4 pb-3 border-b border-stone-200">
+                <UAvatar :src="avatarInput || undefined" :alt="nameInput || 'Foto Profil'" size="lg" />
+                <div class="space-y-1.5">
+                  <div class="flex flex-wrap gap-2">
+                    <input
+                      ref="fileInputRef"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      class="sr-only"
+                      aria-label="Upload foto profil baru"
+                      @change="onAvatarChange"
+                    />
+                    <button
+                      type="button"
+                      class="px-3.5 py-2 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-xs font-semibold text-slate-900 min-h-[38px]"
+                      @click="fileInputRef?.click()"
+                    >
+                      Ganti Foto
+                    </button>
+                    <button
+                      v-if="avatarInput"
+                      type="button"
+                      class="px-3 py-2 rounded-xl border border-stone-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
+                      @click="avatarInput = null"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                  <p v-if="avatarError" class="text-xs text-rose-600">{{ avatarError }}</p>
+                </div>
               </div>
+
               <div>
-                <label for="profile-major" class="block text-xs font-semibold text-slate-700 mb-1">
-                  Jurusan / Program Studi
+                <label for="profile-name" class="block text-xs font-semibold text-slate-700 mb-1">
+                  Nama Tampilan
                 </label>
                 <input
-                  id="profile-major"
-                  v-model="majorInput"
-                  name="major"
+                  id="profile-name"
+                  v-model="nameInput"
+                  name="name"
                   type="text"
-                  placeholder="Contoh: Teknik Informatika"
+                  required
                   class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
                 />
               </div>
 
+              <div>
+                <label for="profile-bio" class="block text-xs font-semibold text-slate-700 mb-1">
+                  Bio Singkat
+                </label>
+                <textarea
+                  id="profile-bio"
+                  v-model="bioInput"
+                  name="bio"
+                  rows="2"
+                  placeholder="Ceritakan singkat minat atau pengalaman belajarmu…"
+                  class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label for="profile-campus" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Kampus
+                  </label>
+                  <input
+                    id="profile-campus"
+                    v-model="campusInput"
+                    name="campus"
+                    type="text"
+                    placeholder="Contoh: UKSW"
+                    class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label for="profile-major" class="block text-xs font-semibold text-slate-700 mb-1">
+                    Jurusan / Program Studi
+                  </label>
+                  <input
+                    id="profile-major"
+                    v-model="majorInput"
+                    name="major"
+                    type="text"
+                    placeholder="Contoh: Teknik Informatika"
+                    class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
               <div class="flex items-center justify-between gap-3 pt-1" aria-live="polite">
-                <span v-if="saveMessage" class="text-xs font-semibold text-teal-700">{{ saveMessage }}</span>
+                <span v-if="saveError" class="text-xs font-semibold text-rose-600">{{ saveError }}</span>
+                <span v-else-if="saveMessage" class="text-xs font-semibold text-teal-700">{{ saveMessage }}</span>
                 <button
                   type="submit"
                   :disabled="saving"
                   class="ml-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold min-h-[42px]"
                 >
-                  {{ saving ? 'Menyimpan…' : 'Simpan Perubahan' }}
+                  {{ saving ? 'Menyimpan…' : 'Simpan Profil' }}
                 </button>
               </div>
             </form>
           </section>
 
-          <section class="md:col-span-6 bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
+          <section class="md:col-span-5 bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
             <div class="flex items-center justify-between">
               <h2 class="text-base font-bold text-slate-900">Daftar Skill Aktif</h2>
               <NuxtLink to="/teach" class="text-xs font-semibold text-indigo-700 hover:underline">

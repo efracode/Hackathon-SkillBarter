@@ -1,8 +1,12 @@
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDb, schema } from '../database'
+import { avatarUrlSchema } from '../utils/validation'
 
 const onboardingSchema = z.object({
+  name: z.string().trim().min(2, 'Nama tampilan minimal 2 karakter').max(80),
+  avatarUrl: avatarUrlSchema,
+  bio: z.string().max(240).optional().nullable(),
   teachSkill: z.object({
     category: z.string().min(2).max(60),
     title: z.string().min(3).max(120),
@@ -37,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDb()
-  const { teachSkill, learnSkills, campus, major } = parsed.data
+  const { name, avatarUrl, bio, teachSkill, learnSkills, campus, major } = parsed.data
 
   const updatedUser = await db.transaction(async (tx) => {
     const [lockedUser] = await tx
@@ -79,6 +83,9 @@ export default defineEventHandler(async (event) => {
     const [saved] = await tx
       .update(schema.users)
       .set({
+        name: name.trim(),
+        avatarUrl: avatarUrl === '' ? null : (avatarUrl ?? lockedUser.avatarUrl),
+        bio: bio?.trim() || null,
         campus: campus?.trim() || null,
         major: major?.trim() || null,
         creditBalance: newBalance,
@@ -106,6 +113,8 @@ export default defineEventHandler(async (event) => {
   await setUserSession(event, {
     user: {
       ...session.user,
+      name: updatedUser.name,
+      avatarUrl: updatedUser.avatarUrl,
       role: updatedUser.role,
       onboardingCompleted: true
     }

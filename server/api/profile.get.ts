@@ -62,6 +62,7 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       email: user.email,
       avatarUrl: user.avatarUrl,
+      bio: user.bio,
       campus: user.campus,
       major: user.major,
       creditBalance: user.creditBalance,

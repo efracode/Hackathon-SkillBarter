@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { compressAvatarFile } from '~/utils/avatarUpload'
+
 definePageMeta({
   layout: false
 })
+
+const { user: sessionUser, fetch: fetchSession } = useUserSession()
 
 const categories = ['Teknologi & Coding', 'Desain & UI/UX', 'Bahasa & Presentasi', 'Akademik & Riset', 'Karier & CV']
 
@@ -19,6 +23,16 @@ const microTemplates = [
   { tag: 'Bedah Studi Kasus (30m)', title: 'Bedah Studi Kasus Singkat 30 Menit', category: 'Akademik & Riset' }
 ]
 
+const displayName = ref(sessionUser.value?.name || '')
+const avatarUrl = ref<string | null>(sessionUser.value?.avatarUrl || null)
+const bio = ref('')
+const campus = ref(
+  sessionUser.value?.isVerifiedUksw ? 'Universitas Kristen Satya Wacana (UKSW)' : ''
+)
+const major = ref('')
+const avatarError = ref('')
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
 const learnInput = ref('')
 const learnCategory = ref('Teknologi & Coding')
 const learnSkills = ref<Array<{ category: string; title: string }>>([
@@ -30,11 +44,23 @@ const teachTitle = ref('Sesi Tanya-Jawab Dasar 30 Menit')
 const teachTemplateTag = ref<string | null>('Q&A Dasar (30m)')
 const teachDescription = ref('')
 
-const campus = ref('')
-const major = ref('')
-
 const submitting = ref(false)
 const errorMessage = ref('')
+
+async function onAvatarChange(event: Event) {
+  avatarError.value = ''
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  try {
+    avatarUrl.value = await compressAvatarFile(file)
+  } catch (err: unknown) {
+    const e = err as { message?: string }
+    avatarError.value = e.message || 'Gagal memproses foto profil.'
+  } finally {
+    input.value = ''
+  }
+}
 
 function applyTemplate(tpl: (typeof microTemplates)[number]) {
   teachTemplateTag.value = tpl.tag
@@ -73,6 +99,11 @@ function removeLearnSkill(index: number) {
 async function submitOnboarding() {
   errorMessage.value = ''
 
+  if (displayName.value.trim().length < 2) {
+    errorMessage.value = 'Isi nama tampilan kamu (minimal 2 karakter).'
+    return
+  }
+
   if (learnInput.value.trim()) {
     addLearnSkill()
   }
@@ -92,6 +123,9 @@ async function submitOnboarding() {
     await $fetch('/api/onboarding', {
       method: 'POST',
       body: {
+        name: displayName.value,
+        avatarUrl: avatarUrl.value ?? '',
+        bio: bio.value,
         teachSkill: {
           category: teachCategory.value,
           title: teachTitle.value,
@@ -103,6 +137,7 @@ async function submitOnboarding() {
         major: major.value
       }
     })
+    await fetchSession()
     await navigateTo('/dashboard')
   } catch (err: unknown) {
     const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
@@ -115,41 +150,146 @@ async function submitOnboarding() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 py-8 px-4">
-    <div class="max-w-4xl mx-auto">
-      <div class="flex items-center justify-between gap-4 mb-6">
+  <main class="min-h-screen bg-[#F7F5F0] py-8 px-4">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4">
         <SkillBarterLogo size="md" />
-        <span class="text-xs sm:text-sm font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
-          Onboarding 1 Langkah · +2 Kredit Belajar
-        </span>
+        <div class="flex items-center gap-2">
+          <VerifiedUkswBadge v-if="sessionUser?.isVerifiedUksw" />
+          <span class="text-xs sm:text-sm font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
+            Onboarding 1 Langkah · +2 Kredit Belajar
+          </span>
+        </div>
       </div>
 
-      <header class="mb-6">
+      <header>
         <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-          Atur Minat Belajarmu Sebelum Masuk Dashboard
+          Atur Identitas &amp; Minat Belajarmu
         </h1>
         <p class="mt-1 text-sm sm:text-base text-slate-600">
-          Kamu tidak harus langsung membuka jadwal mengajar sekarang. Pilih minat belajarmu dulu untuk langsung memakai 2 kredit awal di dashboard.
+          Sesuaikan nama tampilan dan foto profilmu agar tidak memakai bawaan Google, lalu klaim 2 kredit awal ke Dashboard.
         </p>
       </header>
 
-      <UAlert
-        v-if="errorMessage"
-        color="error"
-        variant="subtle"
-        icon="i-ph-warning-circle"
-        :title="errorMessage"
-        class="mb-5"
-      />
+      <div aria-live="polite">
+        <UAlert
+          v-if="errorMessage"
+          color="error"
+          variant="subtle"
+          icon="i-ph-warning-circle"
+          :title="errorMessage"
+        />
+      </div>
 
       <form class="space-y-6" @submit.prevent="submitOnboarding">
+        <!-- Step 1: Custom Identity & Photo Upload -->
+        <section class="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+            <div class="flex items-center gap-4">
+              <UAvatar
+                :src="avatarUrl || undefined"
+                :alt="displayName || 'Foto Profil'"
+                size="xl"
+              />
+              <div class="space-y-2">
+                <p class="text-xs font-semibold text-slate-800">Foto Profil</p>
+                <div class="flex flex-wrap gap-2">
+                  <input
+                    ref="fileInputRef"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    class="sr-only"
+                    aria-label="Pilih file foto profil"
+                    @change="onAvatarChange"
+                  />
+                  <button
+                    type="button"
+                    class="px-3.5 py-2 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-xs font-semibold text-slate-900 min-h-[38px]"
+                    @click="fileInputRef?.click()"
+                  >
+                    Upload Foto
+                  </button>
+                  <button
+                    v-if="avatarUrl"
+                    type="button"
+                    class="px-3 py-2 rounded-xl border border-stone-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
+                    @click="avatarUrl = null"
+                  >
+                    Hapus Foto
+                  </button>
+                </div>
+                <p v-if="avatarError" class="text-xs text-rose-600">{{ avatarError }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-stone-200">
+            <div>
+              <label for="display-name" class="block text-sm font-medium text-slate-800 mb-1">
+                Nama Tampilan
+              </label>
+              <input
+                id="display-name"
+                v-model="displayName"
+                name="name"
+                type="text"
+                required
+                placeholder="Nama panggilan atau nama lengkap…"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label for="bio-input" class="block text-sm font-medium text-slate-800 mb-1">
+                Bio Singkat (Opsional)
+              </label>
+              <input
+                id="bio-input"
+                v-model="bio"
+                name="bio"
+                type="text"
+                placeholder="Contoh: Mahasiswa TI semester 5, suka UI/UX & backend…"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label for="campus" class="block text-sm font-medium text-slate-800 mb-1">
+                Kampus (Opsional)
+              </label>
+              <input
+                id="campus"
+                v-model="campus"
+                name="campus"
+                type="text"
+                placeholder="Nama universitas atau politeknik…"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label for="major" class="block text-sm font-medium text-slate-800 mb-1">
+                Jurusan (Opsional)
+              </label>
+              <input
+                id="major"
+                v-model="major"
+                name="major"
+                type="text"
+                placeholder="Contoh: Teknik Informatika / DKV…"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+              />
+            </div>
+          </div>
+        </section>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <!-- Kartu Kiri: Minat Belajar -->
-          <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <!-- Learn Skills Card -->
+          <section class="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
             <div>
               <h2 class="text-lg font-semibold text-slate-900">1. Apa yang ingin kamu pelajari?</h2>
               <p class="mt-1 text-sm text-slate-600">
-                Kami pakai pilihan ini untuk menampilkan rekomendasi mentor di dashboardmu.
+                Dipakai untuk memprioritaskan rekomendasi mentor di dashboardmu.
               </p>
             </div>
 
@@ -164,7 +304,7 @@ async function submitOnboarding() {
                     'text-xs px-3 py-1.5 rounded-lg border transition-colors min-h-[36px]',
                     learnSkills.some((s: { category: string; title: string }) => s.title === chip.title)
                       ? 'bg-indigo-50 border-indigo-600 text-indigo-700 font-semibold'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      : 'bg-[#F7F5F0] border-stone-200 text-slate-700 hover:bg-stone-200/70'
                   ]"
                   @click="toggleQuickLearn(chip)"
                 >
@@ -180,7 +320,7 @@ async function submitOnboarding() {
               <select
                 id="learn-category"
                 v-model="learnCategory"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               >
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
               </select>
@@ -190,13 +330,13 @@ async function submitOnboarding() {
                   id="learn-title"
                   v-model="learnInput"
                   type="text"
-                  placeholder="Contoh: Dasar SQL / Public Speaking"
-                  class="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                  placeholder="Contoh: Dasar SQL / Public Speaking…"
+                  class="flex-1 rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
                   @keydown.enter.prevent="addLearnSkill"
                 />
                 <button
                   type="button"
-                  class="px-4 py-2.5 rounded-lg border border-slate-300 bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-800 min-h-[44px]"
+                  class="px-4 py-2.5 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-sm font-medium text-slate-800 min-h-[44px]"
                   @click="addLearnSkill"
                 >
                   Tambah
@@ -221,41 +361,14 @@ async function submitOnboarding() {
                 </button>
               </span>
             </div>
-
-            <div class="pt-2 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label for="campus" class="block text-xs font-medium text-slate-800 mb-1">
-                  Kampus (Opsional)
-                </label>
-                <input
-                  id="campus"
-                  v-model="campus"
-                  type="text"
-                  placeholder="Nama universitas"
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[42px]"
-                />
-              </div>
-              <div>
-                <label for="major" class="block text-xs font-medium text-slate-800 mb-1">
-                  Jurusan (Opsional)
-                </label>
-                <input
-                  id="major"
-                  v-model="major"
-                  type="text"
-                  placeholder="Nama jurusan"
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[42px]"
-                />
-              </div>
-            </div>
           </section>
 
-          <!-- Kartu Kanan: Topik Ringan untuk Profil -->
-          <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <!-- Draft Teach Skill Card -->
+          <section class="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
             <div>
               <h2 class="text-lg font-semibold text-slate-900">2. Topik santai yang bisa kamu bantu</h2>
               <p class="mt-1 text-sm text-slate-600">
-                Disimpan sebagai draf profil saja. Kamu baru akan menerima murid jika nanti membuka slot jadwal di menu Mengajar.
+                Disimpan sebagai draf profil saja. Kamu baru menerima murid jika membuka slot jadwal di menu Mengajar.
               </p>
             </div>
 
@@ -270,7 +383,7 @@ async function submitOnboarding() {
                     'text-xs px-3 py-1.5 rounded-lg border transition-colors duration-150 min-h-[36px]',
                     teachTemplateTag === tpl.tag
                       ? 'bg-teal-50 border-teal-700 text-teal-700 font-semibold'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      : 'bg-[#F7F5F0] border-stone-200 text-slate-700 hover:bg-stone-200/70'
                   ]"
                   @click="applyTemplate(tpl)"
                 >
@@ -286,7 +399,7 @@ async function submitOnboarding() {
               <select
                 id="teach-category"
                 v-model="teachCategory"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               >
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
               </select>
@@ -301,7 +414,7 @@ async function submitOnboarding() {
                 v-model="teachTitle"
                 type="text"
                 required
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               />
             </div>
 
@@ -313,8 +426,8 @@ async function submitOnboarding() {
                 id="teach-desc"
                 v-model="teachDescription"
                 rows="2"
-                placeholder="Bisa diubah kapan saja dari menu Mengajar."
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                placeholder="Bisa diubah kapan saja dari menu Mengajar…"
+                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-slate-900"
               />
             </div>
           </section>
@@ -327,7 +440,7 @@ async function submitOnboarding() {
             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold text-sm transition-colors duration-150 min-h-[48px]"
           >
             <UIcon name="i-ph-check-circle" class="w-5 h-5" aria-hidden="true" />
-            <span>{{ submitting ? 'Menyiapkan Dashboard...' : 'Simpan & Masuk Dashboard (+2 Kredit)' }}</span>
+            <span>{{ submitting ? 'Menyiapkan Dashboard…' : 'Simpan & Masuk Dashboard (+2 Kredit)' }}</span>
           </button>
         </div>
       </form>
