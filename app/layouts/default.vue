@@ -38,16 +38,16 @@ const isActive = (path: string) =>
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F7F5F0] text-slate-900">
+  <div class="min-h-screen flex flex-col bg-[#F4F7FB] text-slate-900">
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-indigo-600 focus:text-white focus:text-sm focus:font-semibold"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-blue-600 focus:text-white focus:text-sm focus:font-semibold"
     >
       Lewati ke konten utama
     </a>
 
     <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-stone-200">
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-slate-200">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <NuxtLink
           to="/dashboard"
@@ -64,13 +64,13 @@ const isActive = (path: string) =>
             :key="item.to"
             :to="item.to"
             :aria-current="isActive(item.to) ? 'page' : undefined"
-            class="nav-link inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-stone-100 transition-colors duration-150 min-h-[44px]"
+            class="nav-link inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-700 hover:bg-blue-50/60 transition-colors duration-150 min-h-[44px]"
           >
             <UIcon :name="item.icon" class="w-4 h-4" aria-hidden="true" />
             <span>{{ item.label }}</span>
             <span
               v-if="item.to === '/sessions' && hasSessionAlert"
-              class="w-2 h-2 rounded-full bg-indigo-600"
+              class="w-2 h-2 rounded-full bg-blue-600"
               aria-label="Ada sesi atau permintaan aktif"
             />
           </NuxtLink>
@@ -81,12 +81,12 @@ const isActive = (path: string) =>
           <NuxtLink
             to="/wallet"
             :aria-current="isActive('/wallet') ? 'page' : undefined"
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 transition-colors duration-150 min-h-[40px] text-xs sm:text-sm font-semibold text-slate-900 tabular-nums"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-200 bg-blue-50/80 hover:bg-blue-100/80 transition-colors duration-150 min-h-[40px] text-xs sm:text-sm font-semibold text-blue-950 tabular-nums"
             aria-label="Lihat Dompet Kredit dan Escrow"
           >
-            <UIcon name="i-ph-wallet" class="w-4 h-4 text-teal-700" aria-hidden="true" />
+            <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-700" aria-hidden="true" />
             <span>{{ creditBalance }} Kredit</span>
-            <span v-if="escrowBalance > 0" class="text-amber-700 font-semibold">
+            <span v-if="escrowBalance > 0" class="text-sky-700 font-semibold">
               · {{ escrowBalance }} Escrow
             </span>
           </NuxtLink>
@@ -94,7 +94,7 @@ const isActive = (path: string) =>
           <NuxtLink
             to="/profile"
             :aria-current="isActive('/profile') ? 'page' : undefined"
-            class="hidden md:inline-flex items-center justify-center rounded-full min-w-[44px] min-h-[44px] hover:bg-stone-100 transition-colors duration-150"
+            class="hidden md:inline-flex items-center justify-center rounded-full min-w-[44px] min-h-[44px] hover:bg-blue-50 transition-colors duration-150"
             aria-label="Profil Saya"
           >
             <UAvatar
@@ -115,7 +115,7 @@ const isActive = (path: string) =>
     <!-- Mobile Fixed Bottom Navigation (5 Tabs) -->
     <nav
       aria-label="Navigasi Mobile"
-      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-stone-200"
+      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200"
     >
       <div class="grid grid-cols-5">
         <NuxtLink
@@ -123,13 +123,13 @@ const isActive = (path: string) =>
           :key="item.to"
           :to="item.to"
           :aria-current="isActive(item.to) ? 'page' : undefined"
-          class="mobile-nav-link flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[11px] font-medium text-slate-600 hover:text-slate-900 transition-colors duration-150"
+          class="mobile-nav-link flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[11px] font-medium text-slate-600 hover:text-blue-700 transition-colors duration-150"
         >
           <span class="relative">
             <UIcon :name="item.icon" class="w-5 h-5" aria-hidden="true" />
             <span
               v-if="item.to === '/sessions' && hasSessionAlert"
-              class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-indigo-600"
+              class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-blue-600"
               aria-label="Ada sesi atau permintaan aktif"
             />
           </span>

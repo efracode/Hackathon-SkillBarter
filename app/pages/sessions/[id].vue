@@ -344,7 +344,7 @@ function formatDateTime(iso: string) {
       <!-- Left Panel: Info, Status & Check-in (35% on desktop) -->
       <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-5">
         <div>
-          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700">
+          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200">
             {{ data.roleInSession === 'tutor' ? 'Pengajar' : 'Pembelajar' }} · {{ data.session.durationMinutes }}m ·
             {{ data.session.mode === 'group' ? 'Grup' : '1-on-1' }}
           </span>
@@ -352,10 +352,10 @@ function formatDateTime(iso: string) {
           <p class="text-sm text-slate-600 mt-1">
             {{ formatDateTime(data.session.scheduledAt) }}
           </p>
-          <div class="mt-2 flex items-center gap-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+          <div class="mt-2 flex items-center gap-2 text-xs text-slate-700 bg-[#EFF5FD] border border-blue-100 rounded-lg px-3 py-2">
             <UIcon
               :name="data.session.format === 'online' ? 'i-ph-video-camera' : 'i-ph-map-pin'"
-              class="w-4 h-4 text-indigo-600 shrink-0"
+              class="w-4 h-4 text-blue-600 shrink-0"
               aria-hidden="true"
             />
             <span class="break-all">{{ data.session.locationOrLink }}</span>
@@ -372,12 +372,12 @@ function formatDateTime(iso: string) {
 
           <div
             v-if="data.session.checkinCode"
-            class="p-4 rounded-xl bg-teal-50 border border-teal-200 text-center space-y-3"
+            class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-center space-y-3"
           >
-            <p class="text-xs font-medium text-teal-800">
+            <p class="text-xs font-medium text-blue-800">
               Bagikan kode 6 digit atau QR ini ke pembelajar:
             </p>
-            <p class="text-3xl font-bold font-mono tracking-widest text-teal-900 tabular-nums">
+            <p class="text-3xl font-bold font-mono tracking-widest text-blue-950 tabular-nums">
               {{ data.session.checkinCode }}
             </p>
             <img
@@ -386,7 +386,7 @@ function formatDateTime(iso: string) {
               width="180"
               height="180"
               alt="QR Code Check-in Sesi"
-              class="mx-auto rounded-lg border border-teal-200 bg-white p-2"
+              class="mx-auto rounded-lg border border-blue-200 bg-white p-2"
             />
           </div>
 
@@ -397,7 +397,7 @@ function formatDateTime(iso: string) {
             <button
               type="button"
               :disabled="codeLoading || !canGenerateCode"
-              class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
+              class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
               @click="generateCheckinCode"
             >
               {{ codeLoading ? 'Membuat Kode...' : 'Buat Kode Check-in 6 Digit & QR' }}
@@ -429,19 +429,19 @@ function formatDateTime(iso: string) {
                 spellcheck="false"
                 maxlength="6"
                 placeholder="123456"
-                class="flex-1 min-w-[140px] rounded-xl border border-stone-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
+                class="flex-1 min-w-[140px] rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
               />
               <button
                 type="button"
                 :disabled="checkinLoading"
-                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px]"
+                class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
                 @click="submitCheckin"
               >
                 {{ checkinLoading ? 'Validasi...' : 'Check-in' }}
               </button>
               <button
                 type="button"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-sm font-semibold min-h-[44px]"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-blue-50 text-slate-800 text-sm font-semibold min-h-[44px]"
                 @click="openQrScanner"
               >
                 <UIcon name="i-ph-qr-code" class="w-4 h-4" aria-hidden="true" />
@@ -467,8 +467,8 @@ function formatDateTime(iso: string) {
             />
 
             <!-- Attendance-Gated Review -->
-            <div v-if="data.myReview" class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <p class="text-xs font-semibold text-teal-700">Ulasan Terverifikasi Terkirim ({{ data.myReview.rating }}/5)</p>
+            <div v-if="data.myReview" class="p-4 rounded-xl bg-blue-50/70 border border-blue-100 space-y-1">
+              <p class="text-xs font-semibold text-blue-800">Ulasan Terverifikasi Terkirim ({{ data.myReview.rating }}/5)</p>
               <p class="text-sm text-slate-800">{{ data.myReview.comment }}</p>
             </div>
 
@@ -513,7 +513,7 @@ function formatDateTime(iso: string) {
               <button
                 type="submit"
                 :disabled="reviewLoading"
-                class="w-full py-2.5 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold min-h-[44px]"
+                class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
               >
                 {{ reviewLoading ? 'Mengirim...' : 'Kirim Ulasan Terverifikasi' }}
               </button>
@@ -559,13 +559,13 @@ function formatDateTime(iso: string) {
       <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl shadow-xs flex flex-col h-[520px]">
         <header class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <UIcon name="i-ph-chat-circle-text" class="w-5 h-5 text-indigo-600" aria-hidden="true" />
+            <UIcon name="i-ph-chat-circle-text" class="w-5 h-5 text-blue-600" aria-hidden="true" />
             <h2 class="text-sm font-semibold text-slate-900">Ruang Chat Sesi</h2>
           </div>
           <span class="text-xs text-slate-500">Sinkronisasi otomatis</span>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/60">
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F4F7FB]/70">
           <div v-if="!chatData?.messages?.length" class="text-center py-12 text-sm text-slate-500">
             Belum ada pesan. Koordinasikan link Meet atau titik temu kampus di sini.
           </div>
@@ -583,7 +583,7 @@ function formatDateTime(iso: string) {
               :class="[
                 'rounded-2xl px-3.5 py-2 text-sm leading-relaxed break-words',
                 msg.senderId === authUser?.id
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-white border border-slate-200 text-slate-900'
               ]"
             >
@@ -603,7 +603,7 @@ function formatDateTime(iso: string) {
           </div>
         </div>
 
-        <form class="p-3 border-t border-stone-200 flex gap-2 bg-white rounded-b-2xl" @submit.prevent="sendMessage()">
+        <form class="p-3 border-t border-slate-200 flex gap-2 bg-white rounded-b-2xl" @submit.prevent="sendMessage()">
           <label for="chat-input" class="sr-only">Tulis pesan koordinasi sesi</label>
           <input
             id="chat-input"
@@ -612,13 +612,13 @@ function formatDateTime(iso: string) {
             type="text"
             autocomplete="off"
             placeholder="Tulis pesan atau tempel tautan Meet/lokasi kampus…"
-            class="flex-1 rounded-xl border border-stone-300 px-3.5 py-2 text-sm min-h-[44px]"
+            class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2 text-sm min-h-[44px]"
             @keydown.enter.exact="sendMessage($event)"
           />
           <button
             type="submit"
             :disabled="sendingMessage || !messageInput.trim()"
-            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
+            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
           >
             Kirim
           </button>

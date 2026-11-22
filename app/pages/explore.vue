@@ -160,7 +160,7 @@ function resetFilters() {
       </div>
       <NuxtLink
         to="/teach"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px]"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] transition-colors"
       >
         <UIcon name="i-ph-chalkboard-teacher" class="w-4 h-4" aria-hidden="true" />
         <span>Tawarkan Micro-Session</span>
@@ -168,7 +168,7 @@ function resetFilters() {
     </div>
 
     <!-- Search & Filter Bar -->
-    <search class="block bg-white border border-stone-200 rounded-2xl p-4 shadow-xs space-y-3">
+    <search class="block bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <div class="lg:col-span-2">
           <label for="explore-search" class="sr-only">Cari topik atau nama mentor</label>
@@ -188,7 +188,7 @@ function resetFilters() {
               autocapitalize="none"
               spellcheck="false"
               placeholder="Cari topik, skill, atau nama mentor…"
-              class="w-full pl-9 pr-3 py-2 rounded-lg border border-stone-300 bg-white text-sm text-slate-900 min-h-[44px]"
+              class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 min-h-[44px]"
             />
           </div>
         </div>
@@ -235,10 +235,10 @@ function resetFilters() {
         <button
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px]',
+            'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px] transition-colors',
             selectedFormat === 'online'
-              ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              ? 'bg-blue-600 border-blue-600 text-white font-semibold'
+              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
           ]"
           @click="selectedFormat = selectedFormat === 'online' ? '' : 'online'"
         >
@@ -247,10 +247,10 @@ function resetFilters() {
         <button
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px]',
+            'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px] transition-colors',
             selectedFormat === 'in_person'
-              ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              ? 'bg-blue-600 border-blue-600 text-white font-semibold'
+              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
           ]"
           @click="selectedFormat = selectedFormat === 'in_person' ? '' : 'in_person'"
         >
@@ -259,10 +259,10 @@ function resetFilters() {
         <button
           type="button"
           :class="[
-            'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px]',
+            'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px] transition-colors',
             availableOnly
-              ? 'bg-teal-50 border-teal-700 text-teal-700'
-              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+              ? 'bg-sky-700 border-sky-700 text-white font-semibold'
+              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
           ]"
           @click="availableOnly = !availableOnly"
         >
@@ -276,12 +276,12 @@ function resetFilters() {
       <div
         v-for="n in 3"
         :key="n"
-        class="bg-white border border-stone-200 rounded-2xl p-5 space-y-3 animate-pulse"
+        class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 animate-pulse"
       >
-        <div class="h-4 w-28 bg-stone-200 rounded" />
-        <div class="h-5 w-full bg-stone-200 rounded" />
-        <div class="h-4 w-3/4 bg-stone-200 rounded" />
-        <div class="h-10 w-full bg-stone-100 rounded-xl" />
+        <div class="h-4 w-28 bg-slate-200 rounded" />
+        <div class="h-5 w-full bg-slate-200 rounded" />
+        <div class="h-4 w-3/4 bg-slate-200 rounded" />
+        <div class="h-10 w-full bg-slate-100 rounded-xl" />
       </div>
       <p class="sr-only">Memuat daftar mentor SkillBarter…</p>
     </div>
@@ -324,12 +324,12 @@ function resetFilters() {
       <article
         v-for="item in data.items"
         :key="item.skill.id"
-        class="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between gap-4 hover:-translate-y-0.5 hover:border-stone-300 transition-[transform,border-color] duration-150"
+        class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between gap-4 hover:-translate-y-0.5 hover:border-blue-300 transition-[transform,border-color] duration-150"
       >
         <div class="space-y-3">
           <!-- 1. Header: Category + Slot Summary Pill -->
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
+            <span class="text-xs font-medium px-2.5 py-1 rounded-md bg-blue-50 text-blue-800 border border-blue-100">
               {{ item.skill.category }}
             </span>
             <span
@@ -340,11 +340,11 @@ function resetFilters() {
               {{ item.slots[0].mode === 'group' ? `Grup ${item.slots[0].bookedCount}/${item.slots[0].maxLearners}` : '1-on-1' }}
               · {{ item.slots[0].format === 'online' ? 'Online' : 'Kampus' }}
             </span>
-            <span v-else class="text-xs font-medium text-amber-700">Slot Penuh</span>
+            <span v-else class="text-xs font-medium text-slate-600">Hold Queue 48j</span>
           </div>
 
           <!-- 2. Topic Title (max 2 lines) -->
-          <h2 class="text-base font-semibold text-slate-900 line-clamp-2 leading-snug">
+          <h2 class="text-base font-bold text-slate-900 line-clamp-2 leading-snug">
             {{ item.skill.title }}
           </h2>
 
@@ -353,11 +353,11 @@ function resetFilters() {
             <UAvatar :src="item.tutor.avatarUrl || undefined" :alt="item.tutor.name" size="sm" />
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5">
-                <span class="text-sm font-medium text-slate-900 truncate">{{ item.tutor.name }}</span>
+                <span class="text-sm font-semibold text-slate-900 truncate">{{ item.tutor.name }}</span>
                 <VerifiedUkswBadge v-if="item.tutor.isVerifiedUksw" />
                 <span
                   v-if="item.tutor.isVerifiedMentor"
-                  class="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md"
+                  class="inline-flex items-center gap-1 text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-md"
                 >
                   <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5" aria-hidden="true" />
                   Verified Peer Mentor
@@ -382,11 +382,11 @@ function resetFilters() {
         <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
           <span
             v-if="item.slots.length > 0"
-            class="text-sm font-semibold text-slate-900 tabular-nums"
+            class="text-sm font-semibold text-blue-900 tabular-nums"
           >
             1 Kredit
           </span>
-          <span v-else class="text-xs font-medium text-amber-700">
+          <span v-else class="text-xs font-medium text-slate-600">
             Antrean 48 Jam
           </span>
 
@@ -401,7 +401,7 @@ function resetFilters() {
           <button
             v-else-if="item.slots.length > 0"
             type="button"
-            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px] transition-colors duration-150"
+            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] transition-colors duration-150"
             @click="openDetail(item)"
           >
             Booking Sesi
@@ -409,7 +409,7 @@ function resetFilters() {
           <button
             v-else
             type="button"
-            class="px-4 py-2 rounded-xl border border-amber-700 text-amber-700 hover:bg-amber-50 text-sm font-semibold min-h-[44px] transition-colors duration-150"
+            class="px-4 py-2 rounded-xl border border-blue-300 bg-blue-50/70 text-blue-800 hover:bg-blue-100/70 text-sm font-semibold min-h-[44px] transition-colors duration-150"
             @click="openDetail(item)"
           >
             Masuk Hold Queue (48j)
@@ -451,7 +451,7 @@ function resetFilters() {
                 :class="[
                   'flex items-start gap-3 p-3 rounded-xl border transition-colors duration-150',
                   selectedSlotId === slot.id
-                    ? 'border-indigo-600 bg-indigo-50/50'
+                    ? 'border-blue-600 bg-blue-50/60'
                     : 'border-slate-200 bg-white hover:bg-slate-50'
                 ]"
               >
@@ -519,7 +519,7 @@ function resetFilters() {
           <button
             type="button"
             :disabled="bookingLoading || creditBalance < 1"
-            class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[48px]"
+            class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[48px] transition-colors"
             @click="confirmBooking"
           >
             {{
@@ -545,11 +545,11 @@ function resetFilters() {
               <li
                 v-for="rev in activeItem.reviews"
                 :key="rev.id"
-                class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1"
+                class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1"
               >
                 <div class="flex items-center justify-between gap-2">
                   <span class="text-xs font-semibold text-slate-900">{{ rev.reviewerName }}</span>
-                  <span class="text-xs font-medium text-teal-700 tabular-nums">
+                  <span class="text-xs font-semibold text-blue-700 tabular-nums">
                     Rating {{ rev.rating }}/5 · Verified Attendance
                   </span>
                 </div>

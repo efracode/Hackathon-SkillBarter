@@ -40,12 +40,12 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#F7F5F0] text-slate-900 flex flex-col justify-between px-4 py-8 sm:py-12">
+  <main class="min-h-screen bg-[#F4F7FB] text-slate-900 flex flex-col justify-between px-4 py-8 sm:py-12">
     <div class="max-w-5xl w-full mx-auto">
-      <div class="flex items-center justify-between gap-4 pb-6 border-b border-stone-300">
+      <div class="flex items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <NuxtLink
           to="/"
-          class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 hover:text-slate-900 min-h-[40px]"
+          class="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 hover:text-blue-900 min-h-[40px]"
         >
           <UIcon name="i-ph-arrow-left" class="w-4 h-4" aria-hidden="true" />
           <span>Kembali ke Pratinjau</span>
@@ -57,12 +57,12 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
         <!-- Editorial Interactive Column -->
         <section class="lg:col-span-7 space-y-6">
           <div class="space-y-3">
-            <p class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
+            <p class="font-mono text-xs font-semibold uppercase tracking-wider text-blue-700">
               Ekonomi Waktu Kampus · 1:1 Adil
             </p>
             <h1 class="text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-[1.1]">
               Tukar waktumu jadi
-              <span class="font-serif italic font-normal text-indigo-600">kredit belajar,</span>
+              <span class="font-serif italic font-normal text-blue-600">kredit belajar,</span>
               bukan biaya uang.
             </h1>
             <p class="text-sm sm:text-base text-slate-700 leading-relaxed max-w-xl">
@@ -71,7 +71,7 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
           </div>
 
           <!-- Interactive Pillars -->
-          <div class="border-t border-stone-300 divide-y divide-stone-300">
+          <div class="border-t border-slate-200 divide-y divide-slate-200">
             <button
               v-for="(item, idx) in pillars"
               :key="item.code"
@@ -79,14 +79,14 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
               :aria-pressed="activePillar === idx"
               :class="[
                 'w-full text-left py-4 px-3.5 -mx-3.5 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-1.5 sm:gap-4 items-baseline transition-colors duration-150',
-                activePillar === idx ? 'bg-white shadow-xs' : 'hover:bg-white/60'
+                activePillar === idx ? 'bg-white shadow-xs border border-blue-200/80' : 'hover:bg-white/70'
               ]"
               @click="activePillar = idx"
             >
               <span
                 :class="[
                   'sm:col-span-2 font-mono text-xs font-semibold',
-                  activePillar === idx ? 'text-indigo-700' : 'text-teal-700'
+                  activePillar === idx ? 'text-blue-700' : 'text-sky-700'
                 ]"
               >
                 {{ item.code }}
@@ -96,7 +96,7 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
                   <h2 class="text-sm font-semibold text-slate-900">{{ item.title }}</h2>
                   <span
                     v-if="activePillar === idx"
-                    class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200"
+                    class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200"
                   >
                     {{ item.badge }}
                   </span>
@@ -110,10 +110,10 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
           <Transition name="panel-slide" mode="out-in">
             <div
               :key="activePillar"
-              class="rounded-2xl bg-slate-900 text-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              class="rounded-2xl bg-gradient-to-r from-[#0B2249] to-[#1D4ED8] text-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-blue-800/50 shadow-sm"
             >
               <div class="space-y-0.5">
-                <p class="font-mono text-[11px] uppercase tracking-wider text-teal-300">
+                <p class="font-mono text-[11px] uppercase tracking-wider text-blue-200">
                   {{ currentPillar.sampleTitle }}
                 </p>
                 <p class="text-sm font-semibold text-white">{{ currentPillar.sampleMetric }}</p>
@@ -125,8 +125,8 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 
         <!-- Auth Card Column -->
         <section class="lg:col-span-5">
-          <div class="bg-white border border-stone-300 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
-            <div class="space-y-2 pb-5 border-b border-stone-200">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div class="space-y-2 pb-5 border-b border-slate-200">
               <SkillBarterLogo size="md" />
               <h2 class="text-xl font-bold text-slate-900 pt-2">Masuk ke Akunmu</h2>
               <p class="text-sm text-slate-600">
@@ -135,15 +135,15 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
             </div>
 
             <!-- Interactive Domain Trust Simulator -->
-            <div class="rounded-xl bg-[#F7F5F0] border border-stone-200 p-4 space-y-3">
+            <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-4 space-y-3">
               <div class="flex items-center justify-between gap-2">
-                <p class="text-xs font-semibold text-slate-800">Cek Status Domain Emailmu:</p>
-                <div class="inline-flex rounded-lg border border-stone-300 bg-white p-0.5 text-[11px] font-semibold">
+                <p class="text-xs font-semibold text-blue-950">Cek Status Domain Emailmu:</p>
+                <div class="inline-flex rounded-lg border border-blue-200 bg-white p-0.5 text-[11px] font-semibold">
                   <button
                     type="button"
                     :class="[
                       'px-2.5 py-1 rounded-md transition-colors',
-                      previewDomain === 'uksw' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                      previewDomain === 'uksw' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-blue-700'
                     ]"
                     @click="previewDomain = 'uksw'"
                   >
@@ -153,7 +153,7 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
                     type="button"
                     :class="[
                       'px-2.5 py-1 rounded-md transition-colors',
-                      previewDomain === 'general' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                      previewDomain === 'general' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-blue-700'
                     ]"
                     @click="previewDomain = 'general'"
                   >
@@ -174,10 +174,10 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
                 <div
                   v-else
                   key="domain-general"
-                  class="flex items-center justify-between gap-2 bg-white border border-stone-200 rounded-lg px-3 py-2.5"
+                  class="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2.5"
                 >
                   <span class="text-xs text-slate-700">Akun Gmail biasa tetap bisa masuk</span>
-                  <span class="text-[11px] font-semibold text-slate-600 px-2 py-0.5 rounded bg-stone-100">
+                  <span class="text-[11px] font-semibold text-slate-600 px-2 py-0.5 rounded bg-slate-100">
                     Akun Standar
                   </span>
                 </div>
@@ -197,14 +197,14 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 
             <a
               href="/api/auth/google"
-              class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm transition-[background-color,transform] duration-150 active:scale-[0.99] min-h-[48px]"
+              class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-[background-color,transform] duration-150 active:scale-[0.99] min-h-[48px]"
             >
               <UIcon name="i-ph-google-logo-bold" class="w-5 h-5" aria-hidden="true" />
               <span>Masuk dengan Google</span>
             </a>
 
             <p class="text-xs text-slate-600 text-center">
-              Pengguna baru langsung menerima <strong class="font-mono text-teal-700">+2 kredit</strong> setelah 1 langkah onboarding.
+              Pengguna baru langsung menerima <strong class="font-mono text-blue-700">+2 kredit</strong> setelah 1 langkah onboarding.
             </p>
           </div>
         </section>

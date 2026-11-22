@@ -26,8 +26,8 @@ function formatDateTime(iso: string) {
 
 <template>
   <div class="space-y-6">
-    <div class="pb-4 border-b border-stone-300">
-      <p class="font-mono text-xs font-semibold uppercase tracking-wider text-teal-700">
+    <div class="pb-4 border-b border-slate-200">
+      <p class="font-mono text-xs font-semibold uppercase tracking-wider text-blue-700">
         Transparansi Ekonomi Kredit
       </p>
       <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-1">
@@ -38,7 +38,7 @@ function formatDateTime(iso: string) {
       </p>
     </div>
 
-    <div v-if="status === 'pending'" class="bg-white border border-stone-200 rounded-2xl p-6 animate-pulse" aria-busy="true">
+    <div v-if="status === 'pending'" class="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse" aria-busy="true">
       <p class="text-sm text-slate-600">Memuat saldo dan riwayat ledger…</p>
     </div>
 
@@ -56,25 +56,25 @@ function formatDateTime(iso: string) {
     </UAlert>
 
     <template v-else-if="data">
-      <section class="bg-white border border-stone-200 rounded-2xl grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-stone-200">
+      <section class="bg-white border border-slate-200 rounded-2xl grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 shadow-xs">
         <div class="p-5 sm:p-6">
           <p class="text-xs font-medium text-slate-600">Saldo Tersedia</p>
-          <p class="mt-1 text-3xl font-bold text-teal-700 font-mono tabular-nums">
+          <p class="mt-1 text-3xl font-bold text-blue-700 font-mono tabular-nums">
             {{ data.creditBalance }} <span class="text-base font-sans font-medium">Kredit</span>
           </p>
           <p class="mt-1 text-xs text-slate-500">Dapat langsung dipakai untuk booking sesi baru.</p>
         </div>
         <div class="p-5 sm:p-6">
           <p class="text-xs font-medium text-slate-600">Terkunci di Escrow</p>
-          <p class="mt-1 text-3xl font-bold text-amber-700 font-mono tabular-nums">
+          <p class="mt-1 text-3xl font-bold text-sky-700 font-mono tabular-nums">
             {{ data.escrowBalance }} <span class="text-base font-sans font-medium">Kredit</span>
           </p>
           <p class="mt-1 text-xs text-slate-500">Menunggu sesi selesai atau batas antrean Hold Queue.</p>
         </div>
       </section>
 
-      <section class="bg-white border border-stone-200 rounded-2xl shadow-xs overflow-hidden">
-        <header class="px-5 py-4 border-b border-stone-200">
+      <section class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        <header class="px-5 py-4 border-b border-slate-200">
           <h2 id="ledger-caption" class="text-base font-semibold text-slate-900">
             Riwayat Mutasi Kredit (Ledger)
           </h2>
@@ -93,7 +93,7 @@ function formatDateTime(iso: string) {
         >
           <table class="ledger-table text-left text-sm">
             <caption class="sr-only">Riwayat mutasi saldo kredit dan escrow SkillBarter</caption>
-            <thead class="bg-[#F7F5F0] border-b border-stone-200 text-xs text-slate-600">
+            <thead class="bg-blue-50/70 border-b border-blue-100 text-xs text-blue-950">
               <tr>
                 <th scope="col" class="px-5 py-3 font-semibold">Keterangan</th>
                 <th scope="col" class="px-5 py-3 font-semibold">Waktu</th>
@@ -101,7 +101,7 @@ function formatDateTime(iso: string) {
                 <th scope="col" class="px-5 py-3 font-semibold text-right">Saldo Akhir</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-stone-100">
+            <tbody class="divide-y divide-slate-100">
               <tr v-for="row in data.ledger" :key="row.id">
                 <th scope="row" data-label="Keterangan" class="px-5 py-3.5 font-medium text-slate-900">
                   {{ row.reason }}
@@ -113,7 +113,7 @@ function formatDateTime(iso: string) {
                   data-label="Mutasi"
                   :class="[
                     'px-5 py-3.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap',
-                    row.delta >= 0 ? 'text-teal-700' : 'text-amber-700'
+                    row.delta >= 0 ? 'text-blue-700' : 'text-slate-700'
                   ]"
                 >
                   {{ row.delta >= 0 ? `+${row.delta}` : row.delta }}

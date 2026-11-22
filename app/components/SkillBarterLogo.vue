@@ -27,17 +27,17 @@ const sizeMap = {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect width="36" height="36" rx="9" fill="#EEF2FF" />
+      <rect width="36" height="36" rx="9" fill="#EFF6FF" />
       <path
         d="M10 13.5H23.5L19.5 9.5"
-        stroke="#4F46E5"
+        stroke="#2563EB"
         stroke-width="2.4"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
       <path
         d="M26 22.5H12.5L16.5 26.5"
-        stroke="#0F766E"
+        stroke="#0284C7"
         stroke-width="2.4"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -47,7 +47,7 @@ const sizeMap = {
       v-if="showWordmark"
       :class="['font-semibold tracking-tight text-slate-900', sizeMap[size].text]"
     >
-      Skill<span class="text-indigo-600">Barter</span>
+      Skill<span class="text-blue-600">Barter</span>
     </span>
   </span>
 </template>

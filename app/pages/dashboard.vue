@@ -110,12 +110,12 @@ function formatDateTime(iso: string) {
   <div class="space-y-6">
     <!-- Loading Skeleton -->
     <div v-if="status === 'pending'" class="space-y-5" aria-busy="true">
-      <div class="bg-white border border-stone-200 rounded-2xl p-6 animate-pulse space-y-3">
-        <div class="h-6 w-56 bg-stone-200 rounded" />
-        <div class="h-4 w-80 bg-stone-100 rounded" />
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse space-y-3">
+        <div class="h-6 w-56 bg-slate-200 rounded" />
+        <div class="h-4 w-80 bg-slate-100 rounded" />
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div v-for="n in 3" :key="n" class="h-28 bg-white border border-stone-200 rounded-2xl animate-pulse" />
+        <div v-for="n in 3" :key="n" class="h-28 bg-white border border-slate-200 rounded-2xl animate-pulse" />
       </div>
       <p class="text-xs text-slate-600">Memuat dashboard…</p>
     </div>
@@ -136,16 +136,16 @@ function formatDateTime(iso: string) {
 
     <template v-else-if="data">
       <!-- Editorial Greeting + Mode Switcher -->
-      <section class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-stone-300">
+      <section class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200">
         <div class="space-y-1.5">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
+            <span class="font-mono text-xs font-semibold uppercase tracking-wider text-blue-700">
               Pusat Aktivitas SkillBarter
             </span>
             <VerifiedUkswBadge v-if="data.user.isVerifiedUksw" />
           </div>
           <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-            Halo, <span class="font-serif italic font-normal text-indigo-600">{{ data.user.name.split(' ')[0] }}</span>
+            Halo, <span class="font-serif italic font-normal text-blue-600">{{ data.user.name.split(' ')[0] }}</span>
           </h1>
           <p class="text-sm text-slate-600">
             Kelola saldo belajarmu, pantau agenda sesi, atau beralih ke mode mengajar kapan saja.
@@ -154,14 +154,14 @@ function formatDateTime(iso: string) {
 
         <div class="flex flex-wrap items-center gap-2.5">
           <!-- Mode Toggle -->
-          <div class="inline-flex rounded-xl border border-stone-300 bg-white p-1" role="tablist" aria-label="Mode Dashboard">
+          <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-xs" role="tablist" aria-label="Mode Dashboard">
             <button
               type="button"
               role="tab"
               :aria-selected="dashboardMode === 'learn'"
               :class="[
                 'px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[38px]',
-                dashboardMode === 'learn' ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-stone-100'
+                dashboardMode === 'learn' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
               ]"
               @click="dashboardMode = 'learn'"
             >
@@ -173,7 +173,7 @@ function formatDateTime(iso: string) {
               :aria-selected="dashboardMode === 'teach'"
               :class="[
                 'px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[38px]',
-                dashboardMode === 'teach' ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-stone-100'
+                dashboardMode === 'teach' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
               ]"
               @click="dashboardMode = 'teach'"
             >
@@ -183,7 +183,7 @@ function formatDateTime(iso: string) {
 
           <NuxtLink
             to="/explore"
-            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px] transition-colors"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] transition-colors shadow-xs"
           >
             <UIcon name="i-ph-compass" class="w-4 h-4" aria-hidden="true" />
             <span>Jelajahi Mentor</span>
@@ -193,17 +193,17 @@ function formatDateTime(iso: string) {
 
       <!-- Visual Credit Vault + Mentor Progress Strip -->
       <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">
                 Rasio Dompet Kredit
               </p>
               <div class="mt-1 flex items-baseline gap-4 tabular-nums">
-                <p class="text-2xl sm:text-3xl font-bold font-mono text-teal-700">
+                <p class="text-2xl sm:text-3xl font-bold font-mono text-blue-700">
                   {{ data.user.creditBalance }} <span class="text-xs font-sans font-semibold">Tersedia</span>
                 </p>
-                <p class="text-lg font-bold font-mono text-amber-700">
+                <p class="text-lg font-bold font-mono text-sky-700">
                   {{ data.user.escrowBalance }} <span class="text-xs font-sans font-semibold">Di Escrow</span>
                 </p>
               </div>
@@ -211,21 +211,21 @@ function formatDateTime(iso: string) {
 
             <NuxtLink
               to="/wallet"
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-xs font-semibold text-slate-900 min-h-[38px]"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-xs font-semibold text-blue-800 min-h-[38px] transition-colors"
             >
-              <UIcon name="i-ph-wallet" class="w-4 h-4 text-teal-700" aria-hidden="true" />
+              <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-700" aria-hidden="true" />
               <span>Buka Ledger</span>
             </NuxtLink>
           </div>
 
           <!-- Animated Ratio Bar -->
-          <div class="h-3 w-full rounded-full bg-stone-100 overflow-hidden flex border border-stone-200">
+          <div class="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex border border-slate-200">
             <div
-              class="bg-teal-700 transition-[width] duration-500 ease-out"
+              class="bg-blue-600 transition-[width] duration-500 ease-out"
               :style="{ width: `${availablePercent}%` }"
             />
             <div
-              class="bg-amber-600 transition-[width] duration-500 ease-out"
+              class="bg-sky-400 transition-[width] duration-500 ease-out"
               :style="{ width: `${escrowPercent}%` }"
             />
           </div>
@@ -234,35 +234,35 @@ function formatDateTime(iso: string) {
           </p>
         </div>
 
-        <div class="lg:col-span-5 bg-slate-900 text-white rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4">
+        <div class="lg:col-span-5 bg-gradient-to-br from-[#0B2249] via-[#13366F] to-[#1D4ED8] text-white rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 border border-blue-800/60 shadow-sm">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="font-mono text-[11px] uppercase tracking-wider text-teal-300">
+              <p class="font-mono text-[11px] uppercase tracking-wider text-blue-200">
                 Reputasi Peer Mentor
               </p>
               <h2 class="text-lg font-bold text-white mt-0.5">
                 {{ data.mentorProgress.isVerifiedMentor ? 'Verified Peer Mentor Aktif' : 'Menuju Verified Peer Mentor' }}
               </h2>
             </div>
-            <UIcon name="i-ph-seal-check-duotone" class="w-6 h-6 text-teal-300 shrink-0" aria-hidden="true" />
+            <UIcon name="i-ph-seal-check-duotone" class="w-6 h-6 text-sky-300 shrink-0" aria-hidden="true" />
           </div>
 
           <div class="space-y-2">
-            <div class="flex justify-between text-xs text-slate-300 tabular-nums">
+            <div class="flex justify-between text-xs text-blue-100 tabular-nums">
               <span>Progres Sesi Mengajar ({{ Math.min(3, data.mentorProgress.completedCount) }}/3)</span>
               <span>Rating: {{ data.mentorProgress.reviewCount > 0 ? `${data.mentorProgress.avgRating}/5` : 'Belum ada' }}</span>
             </div>
-            <div class="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
+            <div class="h-2.5 w-full rounded-full bg-white/15 overflow-hidden">
               <div
-                class="h-full bg-teal-400 transition-[width] duration-500 ease-out"
+                class="h-full bg-sky-300 transition-[width] duration-500 ease-out"
                 :style="{ width: `${mentorProgressPercent}%` }"
               />
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-xs text-slate-300 pt-1">
+          <div class="flex items-center justify-between text-xs text-blue-100 pt-1">
             <span>Penalti aktif: <strong class="text-white font-mono">{{ data.user.penaltyCount }}</strong></span>
-            <NuxtLink to="/profile" class="text-teal-300 hover:underline font-semibold">
+            <NuxtLink to="/profile" class="text-white hover:underline font-semibold">
               Lihat Detail Reputasi
             </NuxtLink>
           </div>
@@ -293,8 +293,8 @@ function formatDateTime(iso: string) {
         <!-- MODE BELAJAR -->
         <div v-if="dashboardMode === 'learn'" key="mode-learn" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <!-- Left (7 cols): Interactive Filterable Recommendations -->
-          <section class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl overflow-hidden">
-            <header class="px-5 py-4 border-b border-stone-200 flex flex-wrap items-center justify-between gap-3">
+          <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+            <header class="px-5 py-4 bg-blue-50/60 border-b border-blue-100 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 class="text-base font-bold text-slate-900">Rekomendasi Mentor Untukmu</h2>
                 <p class="text-xs text-slate-600">Filter cepat berdasarkan minat belajar atau slot tersedia.</p>
@@ -304,7 +304,7 @@ function formatDateTime(iso: string) {
                   type="button"
                   :class="[
                     'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'all' ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-stone-300 text-slate-700'
+                    recFilter === 'all' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50'
                   ]"
                   @click="recFilter = 'all'"
                 >
@@ -314,7 +314,7 @@ function formatDateTime(iso: string) {
                   type="button"
                   :class="[
                     'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'match' ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-stone-300 text-slate-700'
+                    recFilter === 'match' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50'
                   ]"
                   @click="recFilter = 'match'"
                 >
@@ -324,7 +324,7 @@ function formatDateTime(iso: string) {
                   type="button"
                   :class="[
                     'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'slot' ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-stone-300 text-slate-700'
+                    recFilter === 'slot' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50'
                   ]"
                   @click="recFilter = 'slot'"
                 >
@@ -337,51 +337,50 @@ function formatDateTime(iso: string) {
               <p class="text-sm font-medium text-slate-900">Tidak ada rekomendasi pada filter ini</p>
               <button
                 type="button"
-                class="text-xs font-semibold text-indigo-700 hover:underline"
+                class="text-xs font-semibold text-blue-700 hover:underline"
                 @click="recFilter = 'all'"
               >
                 Tampilkan Semua Mentor
               </button>
             </div>
 
-            <TransitionGroup v-else name="list-stagger" tag="ul" class="divide-y divide-stone-200">
+            <TransitionGroup v-else name="list-stagger" tag="ul" class="divide-y divide-slate-200">
               <li
                 v-for="rec in filteredRecommendations"
                 :key="rec.skill.id"
-                class="p-5 hover:bg-stone-50/90 transition-colors"
+                class="p-5 hover:bg-blue-50/30 transition-colors"
               >
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div class="min-w-0 space-y-1.5">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      <span class="text-xs font-medium px-2.5 py-0.5 rounded-md bg-stone-100 text-slate-700">
-                        {{ rec.skill.category }}
-                      </span>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <p class="text-sm sm:text-base font-bold text-slate-900">{{ rec.skill.title }}</p>
                       <span
                         v-if="rec.matchesInterest"
-                        class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200"
+                        class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200"
                       >
                         Cocok Minatmu
                       </span>
                     </div>
-                    <p class="text-sm font-semibold text-slate-900">{{ rec.skill.title }}</p>
                     <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-600">
-                      <span class="font-medium text-slate-800">{{ rec.tutorName }}</span>
+                      <span class="font-semibold text-slate-800">{{ rec.tutorName }}</span>
                       <VerifiedUkswBadge v-if="rec.tutorVerifiedUksw" />
-                      <span v-if="rec.tutorMajor">· {{ rec.tutorMajor }}</span>
+                      <span class="text-slate-500">
+                        {{ [rec.skill.category, rec.tutorMajor].filter(Boolean).join(' · ') }}
+                      </span>
                     </div>
                   </div>
 
                   <div class="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      class="px-3 py-2 rounded-xl border border-stone-300 bg-white hover:bg-stone-100 text-xs font-semibold text-slate-800 min-h-[40px]"
+                      class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/70 text-xs font-semibold text-slate-700 hover:text-blue-700 min-h-[40px]"
                       @click="toggleExpandRec(rec.skill.id)"
                     >
                       {{ expandedRecId === rec.skill.id ? 'Tutup' : 'Detail' }}
                     </button>
                     <NuxtLink
                       to="/explore"
-                      class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold min-h-[40px] inline-flex items-center"
+                      class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold min-h-[40px] inline-flex items-center"
                     >
                       {{ rec.nextSlot ? 'Booking' : 'Hold Queue' }}
                     </NuxtLink>
@@ -391,10 +390,10 @@ function formatDateTime(iso: string) {
                 <Transition name="panel-slide">
                   <div
                     v-if="expandedRecId === rec.skill.id"
-                    class="mt-3 pt-3 border-t border-stone-200 text-xs text-slate-600 space-y-1"
+                    class="mt-3 pt-3 border-t border-blue-100 text-xs text-slate-600 space-y-1"
                   >
                     <p>{{ rec.skill.description || 'Micro-session tanya-jawab langsung sesuai kebutuhan belajarmu.' }}</p>
-                    <p v-if="rec.nextSlot" class="font-semibold text-teal-700 tabular-nums">
+                    <p v-if="rec.nextSlot" class="font-semibold text-blue-700 tabular-nums">
                       Jadwal terdekat: {{ formatDateTime(rec.nextSlot.scheduledAt) }} ({{ rec.nextSlot.durationMinutes }}m · {{ rec.nextSlot.format === 'online' ? 'Online' : 'Kampus' }})
                     </p>
                   </div>
@@ -405,19 +404,19 @@ function formatDateTime(iso: string) {
 
           <!-- Right (5 cols): Upcoming Agenda + Recent Ledger -->
           <div class="lg:col-span-5 space-y-5">
-            <section class="bg-white border border-stone-200 rounded-2xl p-5 space-y-3.5">
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
               <div class="flex items-center justify-between">
                 <h2 class="text-base font-bold text-slate-900">Agenda Sesi Terdekat</h2>
-                <NuxtLink to="/sessions" class="text-xs font-semibold text-indigo-700 hover:underline">
+                <NuxtLink to="/sessions" class="text-xs font-semibold text-blue-700 hover:underline">
                   Kelola Sesi
                 </NuxtLink>
               </div>
 
               <div
                 v-if="data.upcomingLearner.length === 0 && data.upcomingTutor.length === 0"
-                class="p-4 rounded-xl bg-[#F7F5F0] border border-stone-200 space-y-2"
+                class="p-4 rounded-xl bg-[#EFF5FD] border border-blue-100 space-y-1.5"
               >
-                <p class="text-xs font-semibold text-slate-800">Jadwalmu masih kosong</p>
+                <p class="text-xs font-semibold text-blue-950">Jadwalmu masih kosong</p>
                 <p class="text-xs text-slate-600">
                   Pesan sesi 30 menit pertama dari menu Jelajah memakai saldo kreditmu.
                 </p>
@@ -427,17 +426,17 @@ function formatDateTime(iso: string) {
                 <li
                   v-for="s in data.upcomingLearner"
                   :key="s.bookingId"
-                  class="p-3.5 rounded-xl bg-[#F7F5F0] border border-stone-200 flex items-center justify-between gap-3"
+                  class="p-3.5 rounded-xl bg-[#EFF5FD] border border-blue-100 flex items-center justify-between gap-3"
                 >
                   <div class="min-w-0">
-                    <p class="text-xs font-semibold text-indigo-700 tabular-nums">
+                    <p class="text-xs font-semibold text-blue-700 tabular-nums">
                       Belajar · {{ formatDateTime(s.scheduledAt) }}
                     </p>
                     <p class="text-sm font-semibold text-slate-900 truncate">{{ s.skillTitle }}</p>
                   </div>
                   <NuxtLink
                     :to="`/sessions/${s.sessionId}`"
-                    class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
+                    class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
                   >
                     Masuk
                   </NuxtLink>
@@ -445,17 +444,17 @@ function formatDateTime(iso: string) {
                 <li
                   v-for="t in data.upcomingTutor"
                   :key="t.sessionId"
-                  class="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200 flex items-center justify-between gap-3"
+                  class="p-3.5 rounded-xl bg-sky-50/80 border border-sky-200 flex items-center justify-between gap-3"
                 >
                   <div class="min-w-0">
-                    <p class="text-xs font-semibold text-teal-700 tabular-nums">
+                    <p class="text-xs font-semibold text-sky-700 tabular-nums">
                       Mengajar · {{ formatDateTime(t.scheduledAt) }}
                     </p>
                     <p class="text-sm font-semibold text-slate-900 truncate">{{ t.skillTitle }}</p>
                   </div>
                   <NuxtLink
                     :to="`/sessions/${t.sessionId}`"
-                    class="px-3.5 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
+                    class="px-3.5 py-2 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
                   >
                     Check-in
                   </NuxtLink>
@@ -463,17 +462,17 @@ function formatDateTime(iso: string) {
               </ul>
             </section>
 
-            <section class="bg-white border border-stone-200 rounded-2xl p-5 space-y-3">
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
               <div class="flex items-center justify-between">
                 <h2 class="text-sm font-bold text-slate-900">Aktivitas Ledger Terbaru</h2>
-                <NuxtLink to="/wallet" class="text-xs font-semibold text-indigo-700 hover:underline">
+                <NuxtLink to="/wallet" class="text-xs font-semibold text-blue-700 hover:underline">
                   Semua
                 </NuxtLink>
               </div>
               <p v-if="!data.recentLedger?.length" class="text-xs text-slate-600">
                 Belum ada aktivitas mutasi kredit.
               </p>
-              <ul v-else class="divide-y divide-stone-100">
+              <ul v-else class="divide-y divide-slate-100">
                 <li
                   v-for="row in data.recentLedger"
                   :key="row.id"
@@ -483,7 +482,7 @@ function formatDateTime(iso: string) {
                   <span
                     :class="[
                       'font-mono font-bold tabular-nums shrink-0',
-                      row.delta >= 0 ? 'text-teal-700' : 'text-amber-700'
+                      row.delta >= 0 ? 'text-blue-700' : 'text-slate-600'
                     ]"
                   >
                     {{ row.delta >= 0 ? `+${row.delta}` : row.delta }}
@@ -496,9 +495,9 @@ function formatDateTime(iso: string) {
 
         <!-- MODE MENGAJAR -->
         <div v-else key="mode-teach" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <section class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl p-6 space-y-4">
+          <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
             <div class="flex items-center gap-2">
-              <UIcon name="i-ph-chalkboard-teacher" class="w-5 h-5 text-indigo-600" aria-hidden="true" />
+              <UIcon name="i-ph-chalkboard-teacher" class="w-5 h-5 text-blue-600" aria-hidden="true" />
               <h2 class="text-base font-bold text-slate-900">Siap Berbagi Micro-Session 30 Menit?</h2>
             </div>
             <p class="text-sm text-slate-600 leading-relaxed">
@@ -507,20 +506,20 @@ function formatDateTime(iso: string) {
             <div class="flex flex-wrap gap-3 pt-1">
               <NuxtLink
                 to="/teach"
-                class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
+                class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
               >
                 Kelola Topik &amp; Buat Slot
               </NuxtLink>
               <NuxtLink
                 to="/sessions?tab=queue"
-                class="px-4 py-2.5 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-slate-800 text-sm font-semibold min-h-[44px] inline-flex items-center"
+                class="px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-800 text-sm font-semibold min-h-[44px] inline-flex items-center"
               >
                 Cek Hold Queue Masuk ({{ data.incomingQueueCount }})
               </NuxtLink>
             </div>
           </section>
 
-          <section class="lg:col-span-5 bg-white border border-stone-200 rounded-2xl p-5 space-y-3">
+          <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
             <h2 class="text-base font-bold text-slate-900">Jadwal Mengajarmu</h2>
             <p v-if="data.upcomingTutor.length === 0" class="text-xs text-slate-600">
               Belum ada slot mengajar aktif. Publikasikan jadwal pertamamu dari menu Mengajar.
@@ -529,17 +528,17 @@ function formatDateTime(iso: string) {
               <li
                 v-for="t in data.upcomingTutor"
                 :key="t.sessionId"
-                class="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200 flex items-center justify-between gap-3"
+                class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 flex items-center justify-between gap-3"
               >
                 <div class="min-w-0">
-                  <p class="text-xs font-semibold text-teal-700 tabular-nums">
+                  <p class="text-xs font-semibold text-blue-700 tabular-nums">
                     {{ formatDateTime(t.scheduledAt) }}
                   </p>
                   <p class="text-sm font-semibold text-slate-900 truncate">{{ t.skillTitle }}</p>
                 </div>
                 <NuxtLink
                   :to="`/sessions/${t.sessionId}`"
-                  class="px-3.5 py-2 rounded-lg bg-teal-700 text-white text-xs font-semibold shrink-0"
+                  class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
                 >
                   Check-in
                 </NuxtLink>

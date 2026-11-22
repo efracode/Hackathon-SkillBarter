@@ -240,8 +240,8 @@ async function declineQueue(bookingId: string) {
         :class="[
           'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px] transition-colors duration-150',
           activeTab === 'active'
-            ? 'bg-indigo-600 text-white'
-            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
         ]"
         @click="activeTab = 'active'"
       >
@@ -254,8 +254,8 @@ async function declineQueue(bookingId: string) {
         :class="[
           'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px] transition-colors duration-150',
           activeTab === 'queue'
-            ? 'bg-indigo-600 text-white'
-            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
         ]"
         @click="activeTab = 'queue'"
       >
@@ -268,8 +268,8 @@ async function declineQueue(bookingId: string) {
         :class="[
           'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px] transition-colors duration-150',
           activeTab === 'history'
-            ? 'bg-indigo-600 text-white'
-            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
         ]"
         @click="activeTab = 'history'"
       >
@@ -307,7 +307,7 @@ async function declineQueue(bookingId: string) {
         </p>
         <NuxtLink
           to="/explore"
-          class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold min-h-[44px]"
+          class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
         >
           Cari Mentor di Jelajah
         </NuxtLink>
@@ -320,7 +320,7 @@ async function declineQueue(bookingId: string) {
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md">
+            <span class="text-xs font-semibold text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
               Sebagai Pembelajar · {{ row.booking.status }}
             </span>
             <h2 class="text-base font-semibold text-slate-900 mt-1.5">{{ row.skill.title }}</h2>
@@ -334,7 +334,7 @@ async function declineQueue(bookingId: string) {
             <NuxtLink
               v-if="row.session"
               :to="`/sessions/${row.session.id}`"
-              class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
+              class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
             >
               Buka Workspace
             </NuxtLink>
@@ -370,7 +370,7 @@ async function declineQueue(bookingId: string) {
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <span class="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-md">
+            <span class="text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">
               Sebagai Pengajar · {{ t.confirmedCount }}/{{ t.session.maxLearners }} Peserta
             </span>
             <h2 class="text-base font-semibold text-slate-900 mt-1.5">{{ t.skill.title }}</h2>
@@ -382,7 +382,7 @@ async function declineQueue(bookingId: string) {
 
           <NuxtLink
             :to="`/sessions/${t.session.id}`"
-            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
+            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
           >
             Buka Workspace &amp; Check-in
           </NuxtLink>
@@ -433,7 +433,7 @@ async function declineQueue(bookingId: string) {
           <div class="flex items-center gap-2">
             <button
               type="button"
-              class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px]"
+              class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
               @click="openAcceptModal(q.booking.id)"
             >
               Terima &amp; Jadwalkan
@@ -500,7 +500,7 @@ async function declineQueue(bookingId: string) {
         <NuxtLink
           v-if="row.session"
           :to="`/sessions/${row.session.id}`"
-          class="text-xs font-semibold text-indigo-600 hover:underline"
+          class="text-xs font-semibold text-blue-700 hover:underline"
         >
           Lihat Detail
         </NuxtLink>
@@ -519,7 +519,7 @@ async function declineQueue(bookingId: string) {
         </div>
         <NuxtLink
           :to="`/sessions/${t.session.id}`"
-          class="text-xs font-semibold text-indigo-600 hover:underline"
+          class="text-xs font-semibold text-blue-700 hover:underline"
         >
           Lihat Detail
         </NuxtLink>
@@ -541,7 +541,7 @@ async function declineQueue(bookingId: string) {
           <div class="flex justify-end gap-2.5">
             <button
               type="button"
-              class="px-4 py-2.5 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-sm font-semibold text-slate-800 min-h-[44px]"
+              class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-800 min-h-[44px]"
               @click="cancelConfirmOpen = false"
             >
               Tetap Ikut Sesi
@@ -618,7 +618,7 @@ async function declineQueue(bookingId: string) {
           <button
             type="submit"
             :disabled="submittingAccept"
-            class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold min-h-[44px]"
+            class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
           >
             {{ submittingAccept ? 'Menjadwalkan...' : 'Konfirmasi & Buka Chat Sesi' }}
           </button>

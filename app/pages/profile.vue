@@ -156,7 +156,7 @@ function formatDate(iso: string) {
 
 <template>
   <div class="space-y-6 max-w-4xl">
-    <div v-if="status === 'pending'" class="bg-white border border-stone-200 rounded-2xl p-6 animate-pulse" aria-busy="true">
+    <div v-if="status === 'pending'" class="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse" aria-busy="true">
       <p class="text-sm text-slate-600">Memuat profil dan reputasi…</p>
     </div>
 
@@ -173,8 +173,8 @@ function formatDate(iso: string) {
     </UAlert>
 
     <template v-else-if="data">
-      <!-- Dark Ink Identity Banner -->
-      <section class="bg-slate-900 text-white rounded-2xl p-6 sm:p-7 space-y-5">
+      <!-- Royal Blue Identity Banner -->
+      <section class="bg-gradient-to-br from-[#0B2249] via-[#13366F] to-[#1D4ED8] text-white rounded-2xl p-6 sm:p-7 space-y-5 border border-blue-800/60 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <UAvatar :src="data.user.avatarUrl || undefined" :alt="data.user.name" size="xl" />
@@ -184,35 +184,35 @@ function formatDate(iso: string) {
                 <VerifiedUkswBadge v-if="data.user.isVerifiedUksw" tone="dark" />
                 <span
                   v-if="data.reputation.isVerifiedMentor"
-                  class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-teal-950 text-teal-200 border border-teal-700"
+                  class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white/15 text-blue-100 border border-white/25"
                 >
-                  <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5" aria-hidden="true" />
+                  <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5 text-sky-300" aria-hidden="true" />
                   Verified Peer Mentor
                 </span>
               </div>
-              <p class="text-sm text-slate-300">{{ data.user.email }}</p>
-              <p v-if="data.user.bio" class="text-xs sm:text-sm text-slate-200 pt-0.5">
+              <p class="text-sm text-blue-100">{{ data.user.email }}</p>
+              <p v-if="data.user.bio" class="text-xs sm:text-sm text-white/90 pt-0.5">
                 {{ data.user.bio }}
               </p>
-              <p v-if="data.user.campus || data.user.major" class="text-xs text-slate-400">
+              <p v-if="data.user.campus || data.user.major" class="text-xs text-blue-200">
                 {{ [data.user.major, data.user.campus].filter(Boolean).join(' · ') }}
               </p>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 text-center bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 tabular-nums shrink-0">
+          <div class="grid grid-cols-3 gap-3 text-center bg-white/10 border border-white/15 rounded-xl px-4 py-3 tabular-nums shrink-0">
             <div>
-              <p class="text-[11px] text-slate-400">Kredit</p>
-              <p class="text-lg font-bold font-mono text-teal-300">{{ data.user.creditBalance }}</p>
+              <p class="text-[11px] text-blue-200">Kredit</p>
+              <p class="text-lg font-bold font-mono text-sky-200">{{ data.user.creditBalance }}</p>
             </div>
             <div>
-              <p class="text-[11px] text-slate-400">Mengajar</p>
+              <p class="text-[11px] text-blue-200">Mengajar</p>
               <p class="text-lg font-bold font-mono text-white">{{ data.reputation.completedTeaching }}</p>
             </div>
             <div>
-              <p class="text-[11px] text-slate-400">Rating</p>
+              <p class="text-[11px] text-blue-200">Rating</p>
               <p class="text-lg font-bold font-mono text-white">
-                {{ data.reputation.reviewCount > 0 ? data.reputation.avgRating : '—' }}
+                {{ data.reputation.reviewCount > 0 ? data.reputation.avgRating : '0.0' }}
               </p>
             </div>
           </div>
@@ -220,10 +220,10 @@ function formatDate(iso: string) {
 
         <div
           v-if="!data.user.isVerifiedUksw"
-          class="rounded-xl bg-slate-800/70 border border-slate-700 px-4 py-3 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2"
+          class="rounded-xl bg-white/10 border border-white/15 px-4 py-3 text-xs text-blue-100 flex flex-wrap items-center justify-between gap-2"
         >
           <span>
-            Ingin mendapatkan badge <strong class="text-blue-300">Verified UKSW</strong>? Masuk menggunakan akun email <code class="font-mono text-white">@student.uksw.edu</code> atau <code class="font-mono text-white">@uksw.edu</code>.
+            Ingin mendapatkan badge <strong class="text-white">Verified UKSW</strong>? Masuk menggunakan akun email <code class="font-mono text-white">@student.uksw.edu</code> atau <code class="font-mono text-white">@uksw.edu</code>.
           </span>
         </div>
       </section>
@@ -238,7 +238,7 @@ function formatDate(iso: string) {
       />
 
       <!-- Tab Switcher -->
-      <div role="tablist" aria-label="Bagian Profil" class="flex flex-wrap gap-2 border-b border-stone-300 pb-3">
+      <div role="tablist" aria-label="Bagian Profil" class="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
         <button
           type="button"
           role="tab"
@@ -246,8 +246,8 @@ function formatDate(iso: string) {
           :class="[
             'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px] transition-colors',
             activeTab === 'identity'
-              ? 'bg-slate-900 text-white'
-              : 'bg-white border border-stone-300 text-slate-700 hover:bg-stone-100'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
           ]"
           @click="activeTab = 'identity'"
         >
@@ -260,8 +260,8 @@ function formatDate(iso: string) {
           :class="[
             'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px] transition-colors',
             activeTab === 'reputation'
-              ? 'bg-slate-900 text-white'
-              : 'bg-white border border-stone-300 text-slate-700 hover:bg-stone-100'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
           ]"
           @click="activeTab = 'reputation'"
         >
@@ -274,8 +274,8 @@ function formatDate(iso: string) {
           :class="[
             'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px] transition-colors',
             activeTab === 'account'
-              ? 'bg-slate-900 text-white'
-              : 'bg-white border border-stone-300 text-slate-700 hover:bg-stone-100'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
           ]"
           @click="activeTab = 'account'"
         >
@@ -286,11 +286,11 @@ function formatDate(iso: string) {
       <Transition name="panel-slide" mode="out-in">
         <!-- Tab 1: Identity, Photo & Skills -->
         <div v-if="activeTab === 'identity'" key="tab-identity" class="grid grid-cols-1 md:grid-cols-12 gap-5">
-          <section class="md:col-span-7 bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
+          <section class="md:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
             <h2 class="text-base font-bold text-slate-900">Edit Identitas &amp; Foto Profil</h2>
             <form class="space-y-4" @submit.prevent="saveProfile">
               <!-- Avatar Upload Row -->
-              <div class="flex items-center gap-4 pb-3 border-b border-stone-200">
+              <div class="flex items-center gap-4 pb-3 border-b border-slate-200">
                 <UAvatar :src="avatarInput || undefined" :alt="nameInput || 'Foto Profil'" size="lg" />
                 <div class="space-y-1.5">
                   <div class="flex flex-wrap gap-2">
@@ -304,7 +304,7 @@ function formatDate(iso: string) {
                     />
                     <button
                       type="button"
-                      class="px-3.5 py-2 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-xs font-semibold text-slate-900 min-h-[38px]"
+                      class="px-3.5 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-xs font-semibold text-blue-800 min-h-[38px]"
                       @click="fileInputRef?.click()"
                     >
                       Ganti Foto
@@ -312,7 +312,7 @@ function formatDate(iso: string) {
                     <button
                       v-if="avatarInput"
                       type="button"
-                      class="px-3 py-2 rounded-xl border border-stone-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
+                      class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
                       @click="avatarInput = null"
                     >
                       Hapus
@@ -332,7 +332,7 @@ function formatDate(iso: string) {
                   name="name"
                   type="text"
                   required
-                  class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm min-h-[44px]"
                 />
               </div>
 
@@ -346,7 +346,7 @@ function formatDate(iso: string) {
                   name="bio"
                   rows="2"
                   placeholder="Ceritakan singkat minat atau pengalaman belajarmu…"
-                  class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                 />
               </div>
 
@@ -361,7 +361,7 @@ function formatDate(iso: string) {
                     name="campus"
                     type="text"
                     placeholder="Contoh: UKSW"
-                    class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm min-h-[44px]"
                   />
                 </div>
                 <div>
@@ -374,18 +374,18 @@ function formatDate(iso: string) {
                     name="major"
                     type="text"
                     placeholder="Contoh: Teknik Informatika"
-                    class="w-full rounded-xl border border-stone-300 px-3 py-2.5 text-sm min-h-[44px]"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm min-h-[44px]"
                   />
                 </div>
               </div>
 
               <div class="flex items-center justify-between gap-3 pt-1" aria-live="polite">
                 <span v-if="saveError" class="text-xs font-semibold text-rose-600">{{ saveError }}</span>
-                <span v-else-if="saveMessage" class="text-xs font-semibold text-teal-700">{{ saveMessage }}</span>
+                <span v-else-if="saveMessage" class="text-xs font-semibold text-blue-700">{{ saveMessage }}</span>
                 <button
                   type="submit"
                   :disabled="saving"
-                  class="ml-auto px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold min-h-[42px]"
+                  class="ml-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold min-h-[42px]"
                 >
                   {{ saving ? 'Menyimpan…' : 'Simpan Profil' }}
                 </button>
@@ -393,10 +393,10 @@ function formatDate(iso: string) {
             </form>
           </section>
 
-          <section class="md:col-span-5 bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
+          <section class="md:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
             <div class="flex items-center justify-between">
               <h2 class="text-base font-bold text-slate-900">Daftar Skill Aktif</h2>
-              <NuxtLink to="/teach" class="text-xs font-semibold text-indigo-700 hover:underline">
+              <NuxtLink to="/teach" class="text-xs font-semibold text-blue-700 hover:underline">
                 Kelola Mengajar
               </NuxtLink>
             </div>
@@ -407,20 +407,20 @@ function formatDate(iso: string) {
                 <span
                   v-for="skill in teachSkills"
                   :key="skill.id"
-                  class="text-xs font-medium text-teal-800 bg-teal-50 border border-teal-200 rounded-lg px-3 py-1.5"
+                  class="text-xs font-medium text-sky-800 bg-sky-50 border border-sky-200 rounded-lg px-3 py-1.5"
                 >
                   {{ skill.title }}
                 </span>
               </div>
             </div>
 
-            <div class="space-y-2 pt-2 border-t border-stone-200">
+            <div class="space-y-2 pt-2 border-t border-slate-200">
               <p class="text-xs font-semibold text-slate-600">Minat Belajar ({{ learnSkills.length }})</p>
               <div class="flex flex-wrap gap-2">
                 <span
                   v-for="skill in learnSkills"
                   :key="skill.id"
-                  class="text-xs font-medium text-indigo-800 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-1.5"
+                  class="text-xs font-medium text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5"
                 >
                   {{ skill.title }}
                 </span>
@@ -431,45 +431,45 @@ function formatDate(iso: string) {
 
         <!-- Tab 2: Reputation & Verified Reviews -->
         <div v-else-if="activeTab === 'reputation'" key="tab-reputation" class="space-y-5">
-          <section class="bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
+          <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
             <div class="flex items-center justify-between gap-2">
               <h2 class="text-base font-bold text-slate-900">Syarat Badge Verified Peer Mentor</h2>
-              <span class="font-mono text-xs font-bold text-teal-700 tabular-nums">{{ milestoneProgress }}%</span>
+              <span class="font-mono text-xs font-bold text-blue-700 tabular-nums">{{ milestoneProgress }}%</span>
             </div>
-            <div class="h-2.5 w-full rounded-full bg-stone-100 overflow-hidden">
+            <div class="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden">
               <div
-                class="h-full bg-teal-700 transition-[width] duration-500 ease-out"
+                class="h-full bg-blue-600 transition-[width] duration-500 ease-out"
                 :style="{ width: `${milestoneProgress}%` }"
               />
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div class="p-3 rounded-xl bg-[#F7F5F0] border border-stone-200">
+              <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
                 <p class="font-semibold text-slate-900">1. Minimal 3 Sesi Selesai</p>
                 <p class="text-slate-600 mt-0.5 tabular-nums">Saat ini: {{ data.reputation.completedTeaching }}/3</p>
               </div>
-              <div class="p-3 rounded-xl bg-[#F7F5F0] border border-stone-200">
+              <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
                 <p class="font-semibold text-slate-900">2. Rating Rata-rata &ge; 4.5</p>
                 <p class="text-slate-600 mt-0.5 tabular-nums">
                   Saat ini: {{ data.reputation.reviewCount > 0 ? data.reputation.avgRating : 'Belum ada ulasan' }}
                 </p>
               </div>
-              <div class="p-3 rounded-xl bg-[#F7F5F0] border border-stone-200">
+              <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
                 <p class="font-semibold text-slate-900">3. Nol Penalti Aktif</p>
                 <p class="text-slate-600 mt-0.5 tabular-nums">Saat ini: {{ data.user.penaltyCount }} Penalti</p>
               </div>
             </div>
           </section>
 
-          <section class="bg-white border border-stone-200 rounded-2xl p-5 space-y-3">
+          <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
             <h2 class="text-base font-bold text-slate-900">Ulasan Terverifikasi Diterima</h2>
             <p v-if="data.receivedReviews.length === 0" class="text-sm text-slate-600">
               Belum ada ulasan yang diterima. Selesaikan sesi mengajar dengan check-in untuk menerima ulasan asli.
             </p>
-            <ul v-else class="divide-y divide-stone-200">
+            <ul v-else class="divide-y divide-slate-200">
               <li v-for="rev in data.receivedReviews" :key="rev.id" class="py-3 first:pt-0 last:pb-0 space-y-1">
                 <div class="flex items-center justify-between text-xs">
                   <span class="font-semibold text-slate-900">{{ rev.reviewerName }}</span>
-                  <span class="font-semibold text-teal-700 tabular-nums">
+                  <span class="font-semibold text-blue-700 tabular-nums">
                     Rating {{ rev.rating }}/5 · Verified Attendance
                   </span>
                 </div>
@@ -484,10 +484,10 @@ function formatDate(iso: string) {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <NuxtLink
               to="/wallet"
-              class="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-2xl hover:bg-stone-50 min-h-[56px]"
+              class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:bg-blue-50/40 min-h-[56px]"
             >
               <span class="inline-flex items-center gap-2.5 text-sm font-semibold text-slate-900">
-                <UIcon name="i-ph-wallet" class="w-5 h-5 text-teal-700" aria-hidden="true" />
+                <UIcon name="i-ph-wallet" class="w-5 h-5 text-blue-700" aria-hidden="true" />
                 Dompet Kredit &amp; Ledger
               </span>
               <UIcon name="i-ph-caret-right" class="w-4 h-4 text-slate-500" aria-hidden="true" />
@@ -496,10 +496,10 @@ function formatDate(iso: string) {
             <NuxtLink
               v-if="data.user.role === 'admin'"
               to="/admin"
-              class="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-2xl hover:bg-stone-50 min-h-[56px]"
+              class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl hover:bg-blue-50/40 min-h-[56px]"
             >
               <span class="inline-flex items-center gap-2.5 text-sm font-semibold text-slate-900">
-                <UIcon name="i-ph-shield-check" class="w-5 h-5 text-indigo-600" aria-hidden="true" />
+                <UIcon name="i-ph-shield-check" class="w-5 h-5 text-blue-600" aria-hidden="true" />
                 Dashboard Admin &amp; Simulasi
               </span>
               <UIcon name="i-ph-caret-right" class="w-4 h-4 text-slate-500" aria-hidden="true" />
@@ -530,7 +530,7 @@ function formatDate(iso: string) {
           <div class="flex justify-end gap-2.5">
             <button
               type="button"
-              class="px-4 py-2 rounded-xl border border-stone-300 bg-white text-sm font-semibold text-slate-800 min-h-[42px]"
+              class="px-4 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-800 min-h-[42px]"
               @click="logoutConfirmOpen = false"
             >
               Batal

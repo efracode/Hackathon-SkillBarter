@@ -145,8 +145,8 @@ function exportCsv() {
         :class="[
           'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px]',
           activeTab === 'metrics'
-            ? 'bg-indigo-600 text-white'
-            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
         ]"
         @click="activeTab = 'metrics'"
       >
@@ -159,8 +159,8 @@ function exportCsv() {
         :class="[
           'px-4 py-2 rounded-xl text-sm font-semibold min-h-[44px]',
           activeTab === 'disputes'
-            ? 'bg-indigo-600 text-white'
-            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white border border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
         ]"
         @click="activeTab = 'disputes'"
       >
@@ -200,7 +200,7 @@ function exportCsv() {
 
           <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
             <p class="text-xs font-medium text-slate-600">Rasio 30m vs 60m</p>
-            <p class="mt-1 text-3xl font-bold text-indigo-600 font-mono tabular-nums">
+            <p class="mt-1 text-3xl font-bold text-blue-600 font-mono tabular-nums">
               {{ data.metrics.count30m }} / {{ data.metrics.count60m }}
             </p>
             <p class="mt-1 text-xs text-slate-500">Micro-session 30m vs Standar 60m</p>
@@ -208,7 +208,7 @@ function exportCsv() {
 
           <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
             <p class="text-xs font-medium text-slate-600">Total Kredit Berputar</p>
-            <p class="mt-1 text-3xl font-bold text-teal-700 font-mono tabular-nums">
+            <p class="mt-1 text-3xl font-bold text-sky-700 font-mono tabular-nums">
               {{ data.metrics.totalEscrowed }}
             </p>
             <p class="mt-1 text-xs text-slate-500 tabular-nums">
@@ -237,7 +237,7 @@ function exportCsv() {
             <button
               type="button"
               :disabled="simulating"
-              class="px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold min-h-[40px]"
+              class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold min-h-[40px]"
               @click="runSimulation('release_disputes')"
             >
               Selesaikan Jeda Sengketa 24 Jam
@@ -245,7 +245,7 @@ function exportCsv() {
             <button
               type="button"
               :disabled="simulating"
-              class="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-semibold min-h-[40px]"
+              class="px-4 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold min-h-[40px]"
               @click="runSimulation('expire_queues')"
             >
               Kedaluwarsakan Hold Queue 48 Jam
@@ -298,14 +298,14 @@ function exportCsv() {
             <div v-if="row.report.status === 'open'" class="flex flex-wrap gap-2">
               <button
                 type="button"
-                class="px-3.5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold min-h-[40px]"
+                class="px-3.5 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold min-h-[40px]"
                 @click="resolveReport(row.report.id, 'refund')"
               >
                 Refund Pembelajar
               </button>
               <button
                 type="button"
-                class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold min-h-[40px]"
+                class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold min-h-[40px]"
                 @click="resolveReport(row.report.id, 'release')"
               >
                 Cairkan ke Pengajar

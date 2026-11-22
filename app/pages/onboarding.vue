@@ -150,13 +150,13 @@ async function submitOnboarding() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#F7F5F0] py-8 px-4">
+  <main class="min-h-screen bg-[#F4F7FB] py-8 px-4">
     <div class="max-w-4xl mx-auto space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <SkillBarterLogo size="md" />
         <div class="flex items-center gap-2">
           <VerifiedUkswBadge v-if="sessionUser?.isVerifiedUksw" />
-          <span class="text-xs sm:text-sm font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
+          <span class="text-xs sm:text-sm font-semibold text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
             Onboarding 1 Langkah · +2 Kredit Belajar
           </span>
         </div>
@@ -183,7 +183,7 @@ async function submitOnboarding() {
 
       <form class="space-y-6" @submit.prevent="submitOnboarding">
         <!-- Step 1: Custom Identity & Photo Upload -->
-        <section class="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+        <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
           <div class="flex flex-col sm:flex-row sm:items-center gap-5">
             <div class="flex items-center gap-4">
               <UAvatar
@@ -204,7 +204,7 @@ async function submitOnboarding() {
                   />
                   <button
                     type="button"
-                    class="px-3.5 py-2 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-xs font-semibold text-slate-900 min-h-[38px]"
+                    class="px-3.5 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-xs font-semibold text-blue-800 min-h-[38px]"
                     @click="fileInputRef?.click()"
                   >
                     Upload Foto
@@ -212,7 +212,7 @@ async function submitOnboarding() {
                   <button
                     v-if="avatarUrl"
                     type="button"
-                    class="px-3 py-2 rounded-xl border border-stone-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
+                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
                     @click="avatarUrl = null"
                   >
                     Hapus Foto
@@ -223,7 +223,7 @@ async function submitOnboarding() {
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-stone-200">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-200">
             <div>
               <label for="display-name" class="block text-sm font-medium text-slate-800 mb-1">
                 Nama Tampilan
@@ -235,7 +235,7 @@ async function submitOnboarding() {
                 type="text"
                 required
                 placeholder="Nama panggilan atau nama lengkap…"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               />
             </div>
 
@@ -249,7 +249,7 @@ async function submitOnboarding() {
                 name="bio"
                 type="text"
                 placeholder="Contoh: Mahasiswa TI semester 5, suka UI/UX & backend…"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               />
             </div>
 
@@ -263,7 +263,7 @@ async function submitOnboarding() {
                 name="campus"
                 type="text"
                 placeholder="Nama universitas atau politeknik…"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               />
             </div>
 
@@ -277,7 +277,7 @@ async function submitOnboarding() {
                 name="major"
                 type="text"
                 placeholder="Contoh: Teknik Informatika / DKV…"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               />
             </div>
           </div>
@@ -285,7 +285,7 @@ async function submitOnboarding() {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <!-- Learn Skills Card -->
-          <section class="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
             <div>
               <h2 class="text-lg font-semibold text-slate-900">1. Apa yang ingin kamu pelajari?</h2>
               <p class="mt-1 text-sm text-slate-600">
@@ -303,8 +303,8 @@ async function submitOnboarding() {
                   :class="[
                     'text-xs px-3 py-1.5 rounded-lg border transition-colors min-h-[36px]',
                     learnSkills.some((s: { category: string; title: string }) => s.title === chip.title)
-                      ? 'bg-indigo-50 border-indigo-600 text-indigo-700 font-semibold'
-                      : 'bg-[#F7F5F0] border-stone-200 text-slate-700 hover:bg-stone-200/70'
+                      ? 'bg-blue-600 border-blue-600 text-white font-semibold'
+                      : 'bg-blue-50/60 border-blue-100 text-slate-700 hover:bg-blue-100/70'
                   ]"
                   @click="toggleQuickLearn(chip)"
                 >
@@ -320,7 +320,7 @@ async function submitOnboarding() {
               <select
                 id="learn-category"
                 v-model="learnCategory"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               >
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
               </select>
@@ -331,12 +331,12 @@ async function submitOnboarding() {
                   v-model="learnInput"
                   type="text"
                   placeholder="Contoh: Dasar SQL / Public Speaking…"
-                  class="flex-1 rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                  class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
                   @keydown.enter.prevent="addLearnSkill"
                 />
                 <button
                   type="button"
-                  class="px-4 py-2.5 rounded-xl border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 text-sm font-medium text-slate-800 min-h-[44px]"
+                  class="px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-sm font-semibold text-blue-800 min-h-[44px]"
                   @click="addLearnSkill"
                 >
                   Tambah
@@ -348,7 +348,7 @@ async function submitOnboarding() {
               <span
                 v-for="(item, idx) in learnSkills"
                 :key="`${item.category}-${item.title}`"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-medium"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 text-xs font-medium"
               >
                 <span>{{ item.title }}</span>
                 <button
@@ -364,7 +364,7 @@ async function submitOnboarding() {
           </section>
 
           <!-- Draft Teach Skill Card -->
-          <section class="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
             <div>
               <h2 class="text-lg font-semibold text-slate-900">2. Topik santai yang bisa kamu bantu</h2>
               <p class="mt-1 text-sm text-slate-600">
@@ -382,8 +382,8 @@ async function submitOnboarding() {
                   :class="[
                     'text-xs px-3 py-1.5 rounded-lg border transition-colors duration-150 min-h-[36px]',
                     teachTemplateTag === tpl.tag
-                      ? 'bg-teal-50 border-teal-700 text-teal-700 font-semibold'
-                      : 'bg-[#F7F5F0] border-stone-200 text-slate-700 hover:bg-stone-200/70'
+                      ? 'bg-sky-700 border-sky-700 text-white font-semibold'
+                      : 'bg-blue-50/60 border-blue-100 text-slate-700 hover:bg-blue-100/70'
                   ]"
                   @click="applyTemplate(tpl)"
                 >
@@ -399,7 +399,7 @@ async function submitOnboarding() {
               <select
                 id="teach-category"
                 v-model="teachCategory"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               >
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
               </select>
@@ -414,7 +414,7 @@ async function submitOnboarding() {
                 v-model="teachTitle"
                 type="text"
                 required
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
               />
             </div>
 
@@ -427,7 +427,7 @@ async function submitOnboarding() {
                 v-model="teachDescription"
                 rows="2"
                 placeholder="Bisa diubah kapan saja dari menu Mengajar…"
-                class="w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-slate-900"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
               />
             </div>
           </section>
@@ -437,7 +437,7 @@ async function submitOnboarding() {
           <button
             type="submit"
             :disabled="submitting"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold text-sm transition-colors duration-150 min-h-[48px]"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold text-sm transition-colors duration-150 min-h-[48px]"
           >
             <UIcon name="i-ph-check-circle" class="w-5 h-5" aria-hidden="true" />
             <span>{{ submitting ? 'Menyiapkan Dashboard…' : 'Simpan & Masuk Dashboard (+2 Kredit)' }}</span>

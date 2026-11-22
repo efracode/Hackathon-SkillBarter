@@ -196,12 +196,12 @@ function formatDateTime(iso: string) {
       <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <UIcon name="i-ph-seal-check-duotone" class="w-5 h-5 text-teal-700" aria-hidden="true" />
+            <UIcon name="i-ph-seal-check-duotone" class="w-5 h-5 text-blue-700" aria-hidden="true" />
             <h2 class="text-base font-semibold text-slate-900">Progres Badge Verified Peer Mentor</h2>
           </div>
           <span
             v-if="data.isVerifiedMentor"
-            class="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 border border-teal-200"
+            class="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-blue-800 border border-blue-200"
           >
             Aktif Terverifikasi
           </span>
@@ -209,17 +209,17 @@ function formatDateTime(iso: string) {
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm tabular-nums">
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
             <p class="text-xs text-slate-600">Sesi Selesai (Syarat >= 3)</p>
             <p class="font-semibold text-slate-900 mt-0.5">{{ Math.min(3, data.completedCount) }}/3 Sesi</p>
           </div>
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
             <p class="text-xs text-slate-600">Rating Rata-rata (Syarat >= 4.5)</p>
             <p class="font-semibold text-slate-900 mt-0.5">
               {{ data.reviewCount > 0 ? `${data.avgRating} / 5.0` : 'Belum ada ulasan' }}
             </p>
           </div>
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
             <p class="text-xs text-slate-600">Penalti Aktif (Syarat 0)</p>
             <p class="font-semibold text-slate-900 mt-0.5">{{ data.penaltyCount }} Penalti</p>
           </div>
@@ -339,7 +339,7 @@ function formatDateTime(iso: string) {
             <button
               type="submit"
               :disabled="creatingSlot || inCooldown || data.skills.length === 0"
-              class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
+              class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px] transition-colors"
             >
               {{ creatingSlot ? 'Mempublikasikan...' : 'Publikasikan Slot ke Direktori' }}
             </button>
