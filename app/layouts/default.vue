@@ -38,9 +38,16 @@ const isActive = (path: string) =>
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+  <div class="min-h-screen flex flex-col bg-[#F7F5F0] text-slate-900">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-indigo-600 focus:text-white focus:text-sm focus:font-semibold"
+    >
+      Lewati ke konten utama
+    </a>
+
     <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-stone-200">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <NuxtLink
           to="/dashboard"
@@ -56,12 +63,8 @@ const isActive = (path: string) =>
             v-for="item in desktopNav"
             :key="item.to"
             :to="item.to"
-            :class="[
-              'inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-150 min-h-[44px]',
-              isActive(item.to)
-                ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            ]"
+            :aria-current="isActive(item.to) ? 'page' : undefined"
+            class="nav-link inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-stone-100 transition-colors duration-150 min-h-[44px]"
           >
             <UIcon :name="item.icon" class="w-4 h-4" aria-hidden="true" />
             <span>{{ item.label }}</span>
@@ -77,7 +80,8 @@ const isActive = (path: string) =>
         <div class="flex items-center gap-2.5">
           <NuxtLink
             to="/wallet"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors duration-150 min-h-[40px] text-xs sm:text-sm font-medium text-slate-800 tabular-nums"
+            :aria-current="isActive('/wallet') ? 'page' : undefined"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-stone-300 bg-[#F7F5F0] hover:bg-stone-200/70 transition-colors duration-150 min-h-[40px] text-xs sm:text-sm font-semibold text-slate-900 tabular-nums"
             aria-label="Lihat Dompet Kredit dan Escrow"
           >
             <UIcon name="i-ph-wallet" class="w-4 h-4 text-teal-700" aria-hidden="true" />
@@ -89,7 +93,8 @@ const isActive = (path: string) =>
 
           <NuxtLink
             to="/profile"
-            class="hidden md:inline-flex items-center justify-center rounded-full min-w-[44px] min-h-[44px] hover:bg-slate-100 transition-colors duration-150"
+            :aria-current="isActive('/profile') ? 'page' : undefined"
+            class="hidden md:inline-flex items-center justify-center rounded-full min-w-[44px] min-h-[44px] hover:bg-stone-100 transition-colors duration-150"
             aria-label="Profil Saya"
           >
             <UAvatar
@@ -103,24 +108,22 @@ const isActive = (path: string) =>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 w-full max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-10">
+    <main id="main-content" class="flex-1 w-full max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-10">
       <slot />
     </main>
 
     <!-- Mobile Fixed Bottom Navigation (5 Tabs) -->
     <nav
       aria-label="Navigasi Mobile"
-      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200"
+      class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-stone-200"
     >
       <div class="grid grid-cols-5">
         <NuxtLink
           v-for="item in mobileNav"
           :key="item.to"
           :to="item.to"
-          :class="[
-            'flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[11px] font-medium transition-colors duration-150',
-            isActive(item.to) ? 'text-indigo-600 font-semibold' : 'text-slate-600 hover:text-slate-900'
-          ]"
+          :aria-current="isActive(item.to) ? 'page' : undefined"
+          class="mobile-nav-link flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[11px] font-medium text-slate-600 hover:text-slate-900 transition-colors duration-150"
         >
           <span class="relative">
             <UIcon :name="item.icon" class="w-5 h-5" aria-hidden="true" />

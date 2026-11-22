@@ -74,9 +74,9 @@ const currentSim = computed(() => simulationSteps[activeStep.value] || simulatio
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="min-h-screen bg-[#F7F5F0] text-slate-900">
     <!-- Editorial Top Bar -->
-    <header class="bg-white/95 border-b border-slate-200 sticky top-0 z-30">
+    <header class="bg-white/95 backdrop-blur-xs border-b border-stone-200 sticky top-0 z-30">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <NuxtLink to="/" aria-label="SkillBarter Beranda" class="inline-flex items-center min-h-[44px]">
           <SkillBarterLogo size="md" />
@@ -109,10 +109,10 @@ const currentSim = computed(() => simulationSteps[activeStep.value] || simulatio
 
     <main>
       <!-- Hero Split Section -->
-      <section class="border-b border-slate-200 bg-white">
+      <section class="border-b border-stone-200 bg-white">
         <div class="max-w-6xl mx-auto px-4 py-12 sm:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div class="lg:col-span-6 space-y-6">
-            <p class="text-xs font-semibold uppercase tracking-wider text-indigo-700">
+            <p class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
               Pertukaran Skill Antar Mahasiswa
             </p>
 

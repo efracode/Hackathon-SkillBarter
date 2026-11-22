@@ -41,12 +41,15 @@ interface ExploreItem {
   }>
 }
 
-const search = ref('')
-const selectedCategory = ref('Semua')
-const selectedDuration = ref<string>('')
-const selectedMode = ref<string>('')
-const selectedFormat = ref<string>('')
-const availableOnly = ref(false)
+const route = useRoute()
+const router = useRouter()
+
+const search = ref(String(route.query.q || ''))
+const selectedCategory = ref(String(route.query.category || 'Semua'))
+const selectedDuration = ref<string>(String(route.query.duration || ''))
+const selectedMode = ref<string>(String(route.query.mode || ''))
+const selectedFormat = ref<string>(String(route.query.format || ''))
+const availableOnly = ref(route.query.availableOnly === 'true')
 
 const categories = ['Semua', 'Teknologi & Coding', 'Desain & UI/UX', 'Bahasa & Presentasi', 'Akademik & Riset', 'Karier & CV']
 
@@ -58,6 +61,14 @@ const queryParams = computed(() => ({
   format: selectedFormat.value || undefined,
   availableOnly: availableOnly.value ? 'true' : undefined
 }))
+
+watch(queryParams, (next: Record<string, string | undefined>) => {
+  const cleanQuery: Record<string, string> = {}
+  for (const [k, v] of Object.entries(next)) {
+    if (v) cleanQuery[k] = v
+  }
+  router.replace({ query: cleanQuery })
+})
 
 const { data, status, error, refresh } = useLazyFetch<{ items: ExploreItem[] }>('/api/explore', {
   query: queryParams,
@@ -156,7 +167,7 @@ function resetFilters() {
     </div>
 
     <!-- Search & Filter Bar -->
-    <section class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
+    <search class="block bg-white border border-stone-200 rounded-2xl p-4 shadow-xs space-y-3">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <div class="lg:col-span-2">
           <label for="explore-search" class="sr-only">Cari topik atau nama mentor</label>
@@ -169,9 +180,14 @@ function resetFilters() {
             <input
               id="explore-search"
               v-model="search"
+              name="q"
               type="search"
-              placeholder="Cari topik, skill, atau nama mentor..."
-              class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 min-h-[44px]"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="Cari topik, skill, atau nama mentor…"
+              class="w-full pl-9 pr-3 py-2 rounded-lg border border-stone-300 bg-white text-sm text-slate-900 min-h-[44px]"
             />
           </div>
         </div>
@@ -252,21 +268,21 @@ function resetFilters() {
           Slot Tersedia Saja
         </button>
       </div>
-    </section>
+    </search>
 
     <!-- Loading State -->
-    <div v-if="status === 'pending'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div v-if="status === 'pending'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-busy="true">
       <div
         v-for="n in 3"
         :key="n"
-        class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 animate-pulse"
+        class="bg-white border border-stone-200 rounded-2xl p-5 space-y-3 animate-pulse"
       >
-        <div class="h-4 w-28 bg-slate-200 rounded" />
-        <div class="h-5 w-full bg-slate-200 rounded" />
-        <div class="h-4 w-3/4 bg-slate-200 rounded" />
-        <div class="h-10 w-full bg-slate-100 rounded-xl" />
+        <div class="h-4 w-28 bg-stone-200 rounded" />
+        <div class="h-5 w-full bg-stone-200 rounded" />
+        <div class="h-4 w-3/4 bg-stone-200 rounded" />
+        <div class="h-10 w-full bg-stone-100 rounded-xl" />
       </div>
-      <p class="sr-only">Sedang memuat daftar mentor SkillBarter...</p>
+      <p class="sr-only">Memuat daftar mentor SkillBarter…</p>
     </div>
 
     <!-- Error State -->
@@ -481,20 +497,22 @@ function resetFilters() {
             <p>Batal minimal 12 jam sebelum sesi mendapat refund 100%. Sisa saldo setelah transaksi: <strong class="tabular-nums text-slate-900">{{ Math.max(0, creditBalance - 1) }} Kredit</strong>.</p>
           </div>
 
-          <UAlert
-            v-if="bookingError"
-            color="error"
-            variant="subtle"
-            icon="i-ph-warning-circle"
-            :title="bookingError"
-          />
-          <UAlert
-            v-if="bookingSuccess"
-            color="secondary"
-            variant="subtle"
-            icon="i-ph-check-circle"
-            :title="bookingSuccess"
-          />
+          <div aria-live="polite" class="space-y-2">
+            <UAlert
+              v-if="bookingError"
+              color="error"
+              variant="subtle"
+              icon="i-ph-warning-circle"
+              :title="bookingError"
+            />
+            <UAlert
+              v-if="bookingSuccess"
+              color="secondary"
+              variant="subtle"
+              icon="i-ph-check-circle"
+              :title="bookingSuccess"
+            />
+          </div>
 
           <button
             type="button"
@@ -506,7 +524,7 @@ function resetFilters() {
               creditBalance < 1
                 ? 'Saldo Kredit Tidak Cukup (0 Kredit)'
                 : bookingLoading
-                  ? 'Memproses Escrow...'
+                  ? 'Memproses Escrow…'
                   : activeItem.slots.length > 0
                     ? 'Kunci 1 Kredit di Escrow & Booking'
                     : 'Kunci 1 Kredit & Masuk Hold Queue'

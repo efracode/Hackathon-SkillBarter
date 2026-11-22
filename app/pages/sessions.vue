@@ -56,11 +56,30 @@ interface SessionsPayload {
   }>
 }
 
+const route = useRoute()
+const router = useRouter()
+
 const { data, status, error, refresh } = useLazyFetch<SessionsPayload>('/api/sessions')
 const { refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
 
-const activeTab = ref<'active' | 'queue' | 'history'>('active')
+const validTabs = ['active', 'queue', 'history'] as const
+type SessionTab = (typeof validTabs)[number]
+const initialTab = validTabs.includes(route.query.tab as SessionTab)
+  ? (route.query.tab as SessionTab)
+  : 'active'
+
+const activeTab = ref<SessionTab>(initialTab)
+watch(activeTab, (tab: SessionTab) => {
+  router.replace({ query: tab === 'active' ? {} : { tab } })
+})
+
 const actionError = ref('')
+
+// Confirmation modal state for destructive late cancellation (< 12h)
+const cancelConfirmOpen = ref(false)
+const pendingCancelBookingId = ref<string | null>(null)
+const pendingCancelIsLate = ref(false)
+const cancellingBooking = ref(false)
 
 // Tutor Hold Queue Accept Modal state
 const acceptModalOpen = ref(false)
@@ -113,8 +132,26 @@ function formatDateTime(iso: string) {
   })
 }
 
+function requestCancelBooking(bookingId: string, isLate: boolean) {
+  if (!isLate) {
+    cancelBooking(bookingId)
+    return
+  }
+  pendingCancelBookingId.value = bookingId
+  pendingCancelIsLate.value = true
+  cancelConfirmOpen.value = true
+}
+
+async function confirmLateCancel() {
+  if (!pendingCancelBookingId.value) return
+  await cancelBooking(pendingCancelBookingId.value)
+  cancelConfirmOpen.value = false
+  pendingCancelBookingId.value = null
+}
+
 async function cancelBooking(bookingId: string) {
   actionError.value = ''
+  cancellingBooking.value = true
   try {
     await $fetch(`/api/bookings/${bookingId}/cancel`, { method: 'POST' })
     await Promise.all([refresh(), refreshMe()])
@@ -122,6 +159,8 @@ async function cancelBooking(bookingId: string) {
     const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
     actionError.value =
       fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal membatalkan booking.'
+  } finally {
+    cancellingBooking.value = false
   }
 }
 
@@ -301,13 +340,14 @@ async function declineQueue(bookingId: string) {
             <button
               v-if="row.booking.status === 'confirmed' && row.session"
               type="button"
+              :disabled="cancellingBooking"
               :class="[
                 'px-3.5 py-2 rounded-xl border text-xs font-semibold min-h-[44px]',
                 isWithin12Hours(row.session.scheduledAt)
                   ? 'border-rose-600 text-rose-600 hover:bg-rose-50'
                   : 'border-slate-300 text-slate-700 hover:bg-slate-50'
               ]"
-              @click="cancelBooking(row.booking.id)"
+              @click="requestCancelBooking(row.booking.id, isWithin12Hours(row.session.scheduledAt))"
             >
               {{ isWithin12Hours(row.session.scheduledAt) ? 'Batal (<12j, Hangus 1 Kredit)' : 'Batal Gratis' }}
             </button>
@@ -484,6 +524,38 @@ async function declineQueue(bookingId: string) {
         </NuxtLink>
       </article>
     </div>
+
+    <!-- Late Cancellation Confirmation Modal -->
+    <UModal v-model:open="cancelConfirmOpen" title="Konfirmasi Pembatalan Terlambat">
+      <template #body>
+        <div class="space-y-4">
+          <UAlert
+            color="error"
+            variant="subtle"
+            icon="i-ph-warning-circle"
+            title="1 Kredit Escrow Akan Hangus"
+            description="Karena pembatalan dilakukan kurang dari 12 jam sebelum jadwal sesi, 1 kredit akan diserahkan ke pengajar sebagai kompensasi waktu."
+          />
+          <div class="flex justify-end gap-2.5">
+            <button
+              type="button"
+              class="px-4 py-2.5 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-sm font-semibold text-slate-800 min-h-[44px]"
+              @click="cancelConfirmOpen = false"
+            >
+              Tetap Ikut Sesi
+            </button>
+            <button
+              type="button"
+              :disabled="cancellingBooking"
+              class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold min-h-[44px]"
+              @click="confirmLateCancel"
+            >
+              {{ cancellingBooking ? 'Membatalkan…' : 'Ya, Batalkan Sesi' }}
+            </button>
+          </div>
+        </div>
+      </template>
+    </UModal>
 
     <!-- Tutor Accept & Schedule Modal -->
     <UModal v-model:open="acceptModalOpen" title="Terima &amp; Jadwalkan Hold Queue">

@@ -276,7 +276,8 @@ async function submitReport() {
   }
 }
 
-async function sendMessage() {
+async function sendMessage(e?: KeyboardEvent) {
+  if (e?.isComposing) return
   const body = messageInput.value.trim()
   if (!body || sendingMessage.value) return
   sendingMessage.value = true
@@ -411,17 +412,24 @@ function formatDateTime(iso: string) {
             <p class="text-xs text-slate-600">
               Masukkan kode 6 digit yang ditampilkan pengajar untuk memverifikasi kehadiran.
             </p>
-            <UAlert v-if="checkinError" color="error" variant="subtle" :title="checkinError" />
+            <div aria-live="polite">
+              <UAlert v-if="checkinError" color="error" variant="subtle" :title="checkinError" />
+            </div>
             <div class="flex flex-wrap gap-2">
               <label for="checkin-code-input" class="sr-only">Kode Check-in 6 Digit</label>
               <input
                 id="checkin-code-input"
                 v-model="checkinInput"
+                name="checkin_code"
                 type="text"
                 inputmode="numeric"
+                autocomplete="one-time-code"
+                autocorrect="off"
+                autocapitalize="none"
+                spellcheck="false"
                 maxlength="6"
                 placeholder="123456"
-                class="flex-1 min-w-[140px] rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
+                class="flex-1 min-w-[140px] rounded-xl border border-stone-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
               />
               <button
                 type="button"
@@ -595,14 +603,17 @@ function formatDateTime(iso: string) {
           </div>
         </div>
 
-        <form class="p-3 border-t border-slate-200 flex gap-2 bg-white rounded-b-2xl" @submit.prevent="sendMessage">
+        <form class="p-3 border-t border-stone-200 flex gap-2 bg-white rounded-b-2xl" @submit.prevent="sendMessage()">
           <label for="chat-input" class="sr-only">Tulis pesan koordinasi sesi</label>
           <input
             id="chat-input"
             v-model="messageInput"
+            name="chat_message"
             type="text"
-            placeholder="Tulis pesan atau tempel tautan Meet/lokasi kampus..."
-            class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2 text-sm min-h-[44px]"
+            autocomplete="off"
+            placeholder="Tulis pesan atau tempel tautan Meet/lokasi kampus…"
+            class="flex-1 rounded-xl border border-stone-300 px-3.5 py-2 text-sm min-h-[44px]"
+            @keydown.enter.exact="sendMessage($event)"
           />
           <button
             type="submit"
