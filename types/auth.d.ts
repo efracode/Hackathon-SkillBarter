@@ -6,6 +6,7 @@ declare module '#auth-utils' {
     name: string
     avatarUrl: string | null
     role: string
+    isVerifiedUksw: boolean
     onboardingCompleted: boolean
   }
 }

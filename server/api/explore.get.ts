@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, inArray } from 'drizzle-orm'
 import { useDb, schema } from '../database'
 import { runLazyChecks } from '../utils/creditEngine'
+import { isUkswEmail } from '../utils/uksw'
 
 export default defineEventHandler(async (event) => {
   const userSession = await getUserSession(event)
@@ -28,6 +29,7 @@ export default defineEventHandler(async (event) => {
           tutor: {
             id: schema.users.id,
             name: schema.users.name,
+            email: schema.users.email,
             avatarUrl: schema.users.avatarUrl,
             campus: schema.users.campus,
             major: schema.users.major,
@@ -121,11 +123,18 @@ export default defineEventHandler(async (event) => {
       return {
         skill,
         tutor: {
-          ...tutor,
+          id: tutor.id,
+          name: tutor.name,
+          avatarUrl: tutor.avatarUrl,
+          campus: tutor.campus,
+          major: tutor.major,
+          penaltyCount: tutor.penaltyCount,
+          teachingCooldownUntil: tutor.teachingCooldownUntil,
           completedCount,
           avgRating,
           reviewCount: tutorReviews.length,
           isVerifiedMentor,
+          isVerifiedUksw: isUkswEmail(tutor.email),
           inCooldown: tutorCooldownActive
         },
         slots: tutorCooldownActive ? [] : slots,

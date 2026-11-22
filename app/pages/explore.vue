@@ -30,6 +30,7 @@ interface ExploreItem {
     avgRating: number
     reviewCount: number
     isVerifiedMentor: boolean
+    isVerifiedUksw: boolean
   }
   slots: ExploreSlot[]
   reviews: Array<{
@@ -353,6 +354,7 @@ function resetFilters() {
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5">
                 <span class="text-sm font-medium text-slate-900 truncate">{{ item.tutor.name }}</span>
+                <VerifiedUkswBadge v-if="item.tutor.isVerifiedUksw" />
                 <span
                   v-if="item.tutor.isVerifiedMentor"
                   class="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md"

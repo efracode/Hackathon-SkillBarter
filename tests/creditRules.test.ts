@@ -11,6 +11,7 @@ import {
   isGroupQuorumFailed,
   isWithinCheckinWindow
 } from '../server/utils/creditRules'
+import { isUkswEmail } from '../server/utils/uksw'
 
 test('cooldown escalation follows 1 -> 3 -> 7 days cap', () => {
   assert.equal(computeCooldownDays(1), 1)
@@ -46,4 +47,13 @@ test('group quorum fails at T-2h when fewer than 2 learners confirmed', () => {
   assert.equal(isGroupQuorumFailed('group', scheduled, 2, scheduled - TWO_HOURS_MS), false)
   assert.equal(isGroupQuorumFailed('group', scheduled, 1, scheduled - TWO_HOURS_MS - 1), false)
   assert.equal(isGroupQuorumFailed('1on1', scheduled, 1, scheduled - TWO_HOURS_MS), false)
+})
+
+test('Verified UKSW badge matches @student.uksw.edu and @uksw.edu only', () => {
+  assert.equal(isUkswEmail('672022001@student.uksw.edu'), true)
+  assert.equal(isUkswEmail('dosen@uksw.edu'), true)
+  assert.equal(isUkswEmail('USER@STUDENT.UKSW.EDU'), true)
+  assert.equal(isUkswEmail('user@gmail.com'), false)
+  assert.equal(isUkswEmail('fake@notuksw.edu'), false)
+  assert.equal(isUkswEmail(null), false)
 })

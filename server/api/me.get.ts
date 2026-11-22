@@ -1,5 +1,6 @@
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { useDb, schema } from '../database'
+import { isUkswEmail } from '../utils/uksw'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
@@ -94,6 +95,7 @@ export default defineEventHandler(async (event) => {
       penaltyCount: user.penaltyCount,
       teachingCooldownUntil: user.teachingCooldownUntil,
       role: user.role,
+      isVerifiedUksw: isUkswEmail(user.email),
       onboardingCompleted: Boolean(user.onboardingCompletedAt)
     },
     skills

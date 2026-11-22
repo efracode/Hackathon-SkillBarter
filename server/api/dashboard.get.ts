@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, inArray, ne, sql } from 'drizzle-orm'
 import { useDb, schema } from '../database'
 import { runLazyChecks } from '../utils/creditEngine'
+import { isUkswEmail } from '../utils/uksw'
 
 export default defineEventHandler(async (event) => {
   const userSession = await getUserSession(event)
@@ -23,7 +24,8 @@ export default defineEventHandler(async (event) => {
     completedTutorSessions,
     tutorReviews,
     recommendedSkills,
-    openSlots
+    openSlots,
+    recentLedger
   ] = await Promise.all([
     db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1),
     db
@@ -61,7 +63,7 @@ export default defineEventHandler(async (event) => {
         )
       )
       .orderBy(schema.sessions.scheduledAt)
-      .limit(3),
+      .limit(4),
     db
       .select({
         sessionId: schema.sessions.id,
@@ -80,7 +82,7 @@ export default defineEventHandler(async (event) => {
         )
       )
       .orderBy(schema.sessions.scheduledAt)
-      .limit(3),
+      .limit(4),
     db
       .select({ id: schema.sessions.id })
       .from(schema.sessions)
@@ -90,6 +92,7 @@ export default defineEventHandler(async (event) => {
       .select({
         skill: schema.userSkills,
         tutorName: schema.users.name,
+        tutorEmail: schema.users.email,
         tutorMajor: schema.users.major,
         tutorCampus: schema.users.campus
       })
@@ -97,17 +100,24 @@ export default defineEventHandler(async (event) => {
       .innerJoin(schema.users, eq(schema.userSkills.userId, schema.users.id))
       .where(and(eq(schema.userSkills.direction, 'teach'), ne(schema.userSkills.userId, userId)))
       .orderBy(desc(schema.userSkills.createdAt))
-      .limit(8),
+      .limit(10),
     db
       .select({
         id: schema.sessions.id,
         skillId: schema.sessions.skillId,
         scheduledAt: schema.sessions.scheduledAt,
         durationMinutes: schema.sessions.durationMinutes,
-        mode: schema.sessions.mode
+        mode: schema.sessions.mode,
+        format: schema.sessions.format
       })
       .from(schema.sessions)
-      .where(and(eq(schema.sessions.status, 'confirmed'), gte(schema.sessions.scheduledAt, now)))
+      .where(and(eq(schema.sessions.status, 'confirmed'), gte(schema.sessions.scheduledAt, now))),
+    db
+      .select()
+      .from(schema.creditLedger)
+      .where(eq(schema.creditLedger.userId, userId))
+      .orderBy(desc(schema.creditLedger.createdAt))
+      .limit(4)
   ])
 
   const user = userRows[0]
@@ -140,16 +150,22 @@ export default defineEventHandler(async (event) => {
 
   const prioritizedRecommendations = recommendedSkills
     .map((item) => ({
-      ...item,
+      skill: item.skill,
+      tutorName: item.tutorName,
+      tutorMajor: item.tutorMajor,
+      tutorCampus: item.tutorCampus,
+      tutorVerifiedUksw: isUkswEmail(item.tutorEmail),
       matchesInterest: learnCategories.has(item.skill.category),
       nextSlot: openSlots.find((s) => s.skillId === item.skill.id) || null
     }))
     .sort((a, b) => Number(b.matchesInterest) - Number(a.matchesInterest))
-    .slice(0, 4)
+    .slice(0, 6)
 
   return {
     user: {
       name: user.name,
+      email: user.email,
+      isVerifiedUksw: isUkswEmail(user.email),
       creditBalance: user.creditBalance,
       escrowBalance: escrowRows[0]?.escrowTotal ?? 0,
       penaltyCount: user.penaltyCount,
@@ -165,6 +181,7 @@ export default defineEventHandler(async (event) => {
     incomingQueueCount: incomingQueues.length,
     upcomingLearner: learnerUpcoming,
     upcomingTutor: tutorUpcoming,
-    recommendations: prioritizedRecommendations
+    recommendations: prioritizedRecommendations,
+    recentLedger
   }
 })

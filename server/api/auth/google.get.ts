@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { useDb, schema } from '../../database'
+import { isUkswEmail } from '../../utils/uksw'
 
 export default defineOAuthGoogleEventHandler({
   config: {
@@ -23,6 +24,7 @@ export default defineOAuthGoogleEventHandler({
           email: googleUser.email,
           name: googleUser.name || googleUser.email.split('@')[0],
           avatarUrl: googleUser.picture || null,
+          campus: isUkswEmail(googleUser.email) ? 'Universitas Kristen Satya Wacana (UKSW)' : null,
           creditBalance: 0,
           role: 'user'
         })
@@ -42,6 +44,7 @@ export default defineOAuthGoogleEventHandler({
         name: existing.name,
         avatarUrl: existing.avatarUrl,
         role: existing.role,
+        isVerifiedUksw: isUkswEmail(existing.email),
         onboardingCompleted: Boolean(existing.onboardingCompletedAt)
       }
     })

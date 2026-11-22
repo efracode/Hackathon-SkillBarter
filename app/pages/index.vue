@@ -3,33 +3,64 @@ definePageMeta({
   layout: false
 })
 
+interface PreviewItem {
+  id: string
+  category: string
+  title: string
+  description: string | null
+  tutorName: string
+  tutorMeta: string
+  isVerifiedUksw: boolean
+  isVerifiedMentor: boolean
+  completedSessions: number
+  avgRating: number
+  reviewCount: number
+  latestReview: {
+    rating: number
+    comment: string
+    reviewerName: string
+  } | null
+  hasOpenSlot: boolean
+  slotBadge: string
+}
+
 interface PreviewPayload {
   stats: {
     activeSkills: number
     completedSessions: number
     verifiedReviews: number
   }
-  previews: Array<{
-    id: string
-    category: string
-    title: string
-    description: string | null
-    tutorName: string
-    tutorMeta: string
-    isVerifiedMentor: boolean
-    avgRating: number
-    reviewCount: number
-    slotBadge: string
-  }>
+  previews: PreviewItem[]
 }
 
 const { loggedIn } = useUserSession()
 const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload>('/api/preview')
+
+const selectedCategory = ref('Semua')
+const expandedSkillId = ref<string | null>(null)
+
+const categories = computed(() => {
+  const list = previewData.value?.previews || []
+  const unique = Array.from(new Set(list.map((p) => p.category)))
+  return ['Semua', ...unique]
+})
+
+const spotlightItem = computed(() => previewData.value?.previews?.[0] || null)
+
+const directoryList = computed(() => {
+  const list = previewData.value?.previews || []
+  if (selectedCategory.value === 'Semua') return list
+  return list.filter((p) => p.category === selectedCategory.value)
+})
+
+function toggleExpand(id: string) {
+  expandedSkillId.value = expandedSkillId.value === id ? null : id
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-[#F7F5F0] text-slate-900">
-    <!-- Editorial Top Bar -->
+    <!-- Top Header -->
     <header class="bg-white/95 backdrop-blur-xs border-b border-stone-200 sticky top-0 z-30">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <NuxtLink to="/" aria-label="SkillBarter Beranda" class="inline-flex items-center min-h-[44px]">
@@ -38,8 +69,8 @@ const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload
 
         <nav aria-label="Navigasi Landing" class="hidden sm:flex items-center gap-6 text-sm font-medium text-slate-600">
           <a href="#simulasi" class="hover:text-slate-900 transition-colors">Simulasi Kredit</a>
-          <a href="#mentor-preview" class="hover:text-slate-900 transition-colors">Pratinjau Mentor</a>
           <a href="#cara-kerja" class="hover:text-slate-900 transition-colors">Mekanisme Trust</a>
+          <a href="#mentor-preview" class="hover:text-slate-900 transition-colors">Direktori Mentor</a>
         </nav>
 
         <div class="flex items-center gap-2.5">
@@ -66,25 +97,28 @@ const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload
       <section class="border-b border-stone-200 bg-white">
         <div class="max-w-6xl mx-auto px-4 py-12 sm:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div class="lg:col-span-6 space-y-6">
-            <p class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
-              Pertukaran Skill Antar Mahasiswa
-            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
+                Pertukaran Skill Mahasiswa
+              </span>
+              <VerifiedUkswBadge />
+            </div>
 
-            <h1 class="text-4xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-[1.12]">
+            <h1 class="text-4xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-[1.1]">
               Belajar skill praktis
               <span class="font-serif italic font-normal text-indigo-600">tanpa uang,</span>
               mengajar untuk kredit.
             </h1>
 
             <p class="text-base text-slate-600 leading-relaxed max-w-xl">
-              Dapatkan 2 kredit awal setelah masuk. Gunakan untuk sesi singkat 30 menit bersama rekan mahasiswa yang memiliki ulasan terverifikasi check-in QR.
+              Masuk dengan Google dan langsung dapatkan 2 kredit belajar. Akun <strong class="font-semibold text-slate-900">@student.uksw.edu</strong> atau <strong class="font-semibold text-slate-900">@uksw.edu</strong> otomatis terverifikasi dengan badge Verified UKSW.
             </p>
 
             <div class="flex flex-wrap items-center gap-3 pt-1">
               <a
                 v-if="!loggedIn"
                 href="/api/auth/google"
-                class="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm min-h-[48px] transition-colors"
+                class="inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm min-h-[48px] transition-colors"
               >
                 <UIcon name="i-ph-google-logo-bold" class="w-5 h-5" aria-hidden="true" />
                 <span>Masuk dengan Google</span>
@@ -92,16 +126,16 @@ const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload
               <NuxtLink
                 v-else
                 to="/dashboard"
-                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm min-h-[48px]"
+                class="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm min-h-[48px]"
               >
                 <span>Ke Dashboard Saya</span>
               </NuxtLink>
 
               <a
                 href="#mentor-preview"
-                class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm min-h-[48px]"
+                class="inline-flex items-center justify-center px-5 py-3.5 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-slate-800 font-semibold text-sm min-h-[48px]"
               >
-                Lihat Pratinjau Mentor
+                Lihat Direktori Mentor
               </a>
             </div>
 
@@ -110,7 +144,7 @@ const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload
               <span class="px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
                 {{ previewData.stats.activeSkills }} Penawaran Skill Aktif
               </span>
-              <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              <span class="px-3 py-1.5 rounded-full bg-[#F7F5F0] text-slate-700 border border-stone-200">
                 {{ previewData.stats.completedSessions }} Sesi Selesai
               </span>
               <span class="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -119,144 +153,261 @@ const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload
             </div>
           </div>
 
-          <!-- Animated Interactive Credit & Escrow Flow Simulator -->
           <div id="simulasi" class="lg:col-span-6">
             <CreditFlowSimulator />
           </div>
         </div>
       </section>
 
-      <!-- Ruled Mechanism Section (Varying Rhythm) -->
-      <section id="cara-kerja" class="max-w-6xl mx-auto px-4 py-12">
-        <div class="mb-6">
-          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Dirancang agar pengajar pemula tidak ragu memulai
-          </h2>
-          <p class="text-sm text-slate-600 mt-1">
-            Setiap aturan di SkillBarter dibuat untuk menjaga keadilan waktu dan keaslian ulasan.
-          </p>
-        </div>
+      <!-- Section 2: Ruled Mechanism + Interactive Check-in Playground -->
+      <section id="cara-kerja" class="max-w-6xl mx-auto px-4 py-12 sm:py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div class="lg:col-span-7 space-y-6">
+            <div>
+              <p class="font-mono text-xs font-semibold uppercase tracking-wider text-teal-700">
+                Mengapa Berbeda dari Grup Chat Biasa
+              </p>
+              <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-1">
+                Dibangun agar pengajar pemula berani mulai dan ulasan tidak bisa dipalsukan
+              </h2>
+            </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-200">
-          <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-3 items-baseline">
-            <span class="md:col-span-2 font-mono text-xs font-semibold text-indigo-700">01 · MICRO-SESSION</span>
-            <h3 class="md:col-span-4 text-base font-semibold text-slate-900">
-              Mulai dari 30 menit tanpa materi berat
-            </h3>
-            <p class="md:col-span-6 text-sm text-slate-600 leading-relaxed">
-              Pilih template siap pakai seperti Review Tugas, Q&amp;A Dasar, atau Latihan Presentasi. Masuk dulu ke dashboard untuk belajar memakai 2 kredit awal sebelum kamu siap mengajar.
-            </p>
+            <div class="bg-white border border-stone-200 rounded-2xl divide-y divide-stone-200">
+              <div class="p-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-baseline">
+                <span class="sm:col-span-3 font-mono text-xs font-semibold text-indigo-700">01 · MICRO-30M</span>
+                <div class="sm:col-span-9 space-y-1">
+                  <h3 class="text-sm font-bold text-slate-900">Bukan kuliah panjang, cukup 30 menit</h3>
+                  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Template siap pakai seperti Review Portofolio, Q&amp;A Dasar, atau Latihan Presentasi menurunkan beban mental pengajar baru.
+                  </p>
+                </div>
+              </div>
+
+              <div class="p-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-baseline">
+                <span class="sm:col-span-3 font-mono text-xs font-semibold text-amber-700">02 · ESCROW 1:1</span>
+                <div class="sm:col-span-9 space-y-1">
+                  <h3 class="text-sm font-bold text-slate-900">Ekonomi kredit anti-minus &amp; anti-inflasi</h3>
+                  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Batal &ge; 12 jam refund 100%, sesi grup dibatasi maksimal 2 kredit untuk pengajar, dan no-show dikenai cooldown 1 sampai 7 hari.
+                  </p>
+                </div>
+              </div>
+
+              <div class="p-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-baseline">
+                <span class="sm:col-span-3 font-mono text-teal-700 font-semibold">03 · UKSW TRUST</span>
+                <div class="sm:col-span-9 space-y-1">
+                  <h3 class="text-sm font-bold text-slate-900">Verifikasi kampus UKSW &amp; Check-in QR</h3>
+                  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Login dengan email <strong class="text-slate-900">@student.uksw.edu</strong> atau <strong class="text-slate-900">@uksw.edu</strong> otomatis memperoleh badge Verified UKSW di profil dan direktori.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-3 items-baseline">
-            <span class="md:col-span-2 font-mono text-xs font-semibold text-amber-700">02 · ESCROW 1:1</span>
-            <h3 class="md:col-span-4 text-base font-semibold text-slate-900">
-              Saldo bilangan bulat dan anti-minus
-            </h3>
-            <p class="md:col-span-6 text-sm text-slate-600 leading-relaxed">
-              Batal minimal 12 jam sebelum sesi otomatis mengembalikan 100% kredit. Sesi grup berkapasitas 2 sampai 5 orang tetap dibatasi maksimal 2 kredit untuk pengajar agar ekonomi bebas inflasi.
-            </p>
-          </div>
-
-          <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-3 items-baseline">
-            <span class="md:col-span-2 font-mono text-xs font-semibold text-teal-700">03 · CHECK-IN QR</span>
-            <h3 class="md:col-span-4 text-base font-semibold text-slate-900">
-              Ulasan hanya terbuka setelah hadir
-            </h3>
-            <p class="md:col-span-6 text-sm text-slate-600 leading-relaxed">
-              Pembelajar wajib memvalidasi kode 6 digit atau memindai QR pengajar saat sesi berlangsung. Pengajar dengan minimal 3 sesi selesai, rating 4.5+, dan 0 penalti memperoleh badge Verified Peer Mentor.
-            </p>
+          <div class="lg:col-span-5">
+            <CheckinPreviewWidget />
           </div>
         </div>
       </section>
 
-      <!-- Live Public Mentor Preview from Database -->
+      <!-- Section 3: Asymmetric Spotlight + Interactive Filterable Directory (Zero Copy-Paste Cards) -->
       <section id="mentor-preview" class="max-w-6xl mx-auto px-4 pb-16">
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-stone-300 mb-6">
           <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Pratinjau Penawaran Skill Saat Ini
-            </h2>
-            <p class="text-sm text-slate-600 mt-1">
-              Data langsung dari direktori kampus. Masuk dengan akun Google untuk melihat semua jadwal.
+            <p class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
+              Data Langsung Dari Direktori Kampus
             </p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-1">
+              Pratinjau Penawaran &amp; Mentor Aktif
+            </h2>
           </div>
-          <NuxtLink
-            :to="loggedIn ? '/explore' : '/login'"
-            class="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
-          >
-            {{ loggedIn ? 'Buka Direktori Lengkap' : 'Masuk untuk Booking' }}
-          </NuxtLink>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              v-for="cat in categories"
+              :key="cat"
+              type="button"
+              :class="[
+                'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors min-h-[36px]',
+                selectedCategory === cat
+                  ? 'bg-slate-900 border-slate-900 text-white'
+                  : 'bg-white border-stone-300 text-slate-700 hover:bg-stone-100'
+              ]"
+              @click="selectedCategory = cat"
+            >
+              {{ cat }}
+            </button>
+          </div>
         </div>
 
-        <div v-if="previewStatus === 'pending'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div
-            v-for="n in 3"
-            :key="n"
-            class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 animate-pulse"
-          >
-            <div class="h-4 w-24 bg-slate-200 rounded" />
-            <div class="h-5 w-full bg-slate-200 rounded" />
-            <div class="h-4 w-2/3 bg-slate-200 rounded" />
-          </div>
+        <div v-if="previewStatus === 'pending'" class="grid grid-cols-1 lg:grid-cols-12 gap-6" aria-busy="true">
+          <div class="lg:col-span-5 h-64 bg-slate-900/90 rounded-2xl animate-pulse" />
+          <div class="lg:col-span-7 h-64 bg-white border border-stone-200 rounded-2xl animate-pulse" />
         </div>
 
         <div
           v-else-if="!previewData?.previews?.length"
-          class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-600"
+          class="bg-white border border-stone-200 rounded-2xl p-8 text-center text-sm text-slate-600"
         >
-          Belum ada penawaran skill publik yang tersedia saat ini. Masuk untuk membuat penawaran pertama.
+          Belum ada penawaran skill publik saat ini. Masuk untuk menjadi mentor pertama.
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <!-- Left: Dark Ink Spotlight Card for Top Verified Mentor -->
           <article
-            v-for="item in previewData.previews"
-            :key="item.id"
-            class="bg-white border border-stone-200 rounded-2xl p-5 flex flex-col justify-between gap-4 hover:-translate-y-0.5 hover:border-stone-300 transition-[transform,border-color] duration-150"
+            v-if="spotlightItem"
+            class="lg:col-span-5 bg-slate-900 text-white rounded-2xl p-6 space-y-5 border border-slate-800"
           >
-            <div class="space-y-2.5">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-100 text-slate-700">
-                  {{ item.category }}
-                </span>
-                <span class="text-xs font-medium text-slate-600">{{ item.slotBadge }}</span>
-              </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-teal-300">
+                Mentor Terverifikasi
+              </span>
+              <span class="text-xs font-medium px-2.5 py-1 rounded-md bg-slate-800 text-slate-200 border border-slate-700">
+                {{ spotlightItem.slotBadge }}
+              </span>
+            </div>
 
-              <h3 class="text-base font-semibold text-slate-900 leading-snug">
-                {{ item.title }}
+            <div class="space-y-2">
+              <h3 class="text-xl font-bold text-white leading-snug">
+                {{ spotlightItem.title }}
               </h3>
-
-              <p v-if="item.description" class="text-xs text-slate-600 line-clamp-2">
-                {{ item.description }}
+              <p v-if="spotlightItem.description" class="text-sm text-slate-300 leading-relaxed">
+                {{ spotlightItem.description }}
               </p>
             </div>
 
-            <div class="pt-3 border-t border-slate-100 space-y-2">
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span class="text-sm font-medium text-slate-900">{{ item.tutorName }}</span>
-                <span
-                  v-if="item.isVerifiedMentor"
-                  class="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md"
-                >
-                  <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5" aria-hidden="true" />
-                  Verified Peer Mentor
-                </span>
-              </div>
-              <p v-if="item.tutorMeta" class="text-xs text-slate-500">{{ item.tutorMeta }}</p>
-              <p class="text-xs font-medium text-slate-700 tabular-nums">
-                {{
-                  item.reviewCount > 0
-                    ? `Rating ${item.avgRating} (${item.reviewCount} ulasan terverifikasi)`
-                    : 'Belum ada ulasan terverifikasi'
-                }}
+            <!-- Real Verified Review Quote -->
+            <blockquote
+              v-if="spotlightItem.latestReview"
+              class="p-4 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1.5"
+            >
+              <p class="text-xs font-semibold text-teal-300 tabular-nums">
+                Ulasan Terverifikasi · Rating {{ spotlightItem.latestReview.rating }}/5
               </p>
+              <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                "{{ spotlightItem.latestReview.comment }}"
+              </p>
+              <footer class="text-[11px] text-slate-400">
+                Oleh {{ spotlightItem.latestReview.reviewerName }}
+              </footer>
+            </blockquote>
+
+            <div class="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="text-sm font-semibold text-white">{{ spotlightItem.tutorName }}</span>
+                  <VerifiedUkswBadge v-if="spotlightItem.isVerifiedUksw" tone="dark" />
+                </div>
+                <p v-if="spotlightItem.tutorMeta" class="text-xs text-slate-300">
+                  {{ spotlightItem.tutorMeta }}
+                </p>
+              </div>
+
+              <NuxtLink
+                :to="loggedIn ? '/explore' : '/login'"
+                class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold min-h-[42px] inline-flex items-center"
+              >
+                {{ loggedIn ? 'Booking (1 Kredit)' : 'Masuk & Booking' }}
+              </NuxtLink>
             </div>
           </article>
+
+          <!-- Right: Interactive Expandable Directory Rows -->
+          <div class="lg:col-span-7 bg-white border border-stone-200 rounded-2xl overflow-hidden">
+            <header class="px-5 py-3.5 bg-[#F7F5F0] border-b border-stone-200 flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-700">
+                Penawaran Skill ({{ directoryList.length }})
+              </span>
+              <NuxtLink
+                :to="loggedIn ? '/explore' : '/login'"
+                class="text-xs font-semibold text-indigo-700 hover:underline"
+              >
+                {{ loggedIn ? 'Buka Direktori Lengkap' : 'Masuk untuk Semua Jadwal' }}
+              </NuxtLink>
+            </header>
+
+            <TransitionGroup name="list-stagger" tag="ul" class="divide-y divide-stone-200">
+              <li
+                v-for="item in directoryList"
+                :key="item.id"
+                class="p-4 sm:p-5 hover:bg-stone-50/80 transition-colors"
+              >
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="min-w-0 space-y-1">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-stone-100 text-slate-700">
+                        {{ item.category }}
+                      </span>
+                      <span
+                        :class="[
+                          'text-[11px] font-semibold px-2 py-0.5 rounded',
+                          item.hasOpenSlot
+                            ? 'bg-teal-50 text-teal-700'
+                            : 'bg-amber-50 text-amber-700'
+                        ]"
+                      >
+                        {{ item.slotBadge }}
+                      </span>
+                    </div>
+
+                    <h3 class="text-sm sm:text-base font-semibold text-slate-900">
+                      {{ item.title }}
+                    </h3>
+
+                    <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-600">
+                      <span class="font-medium text-slate-800">{{ item.tutorName }}</span>
+                      <VerifiedUkswBadge v-if="item.isVerifiedUksw" />
+                      <span
+                        v-if="item.isVerifiedMentor"
+                        class="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded"
+                      >
+                        <UIcon name="i-ph-seal-check-duotone" class="w-3 h-3" aria-hidden="true" />
+                        Verified Peer Mentor
+                      </span>
+                      <span v-if="item.tutorMeta" class="text-slate-500">· {{ item.tutorMeta }}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    :aria-expanded="expandedSkillId === item.id"
+                    class="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-stone-300 bg-white hover:bg-stone-100 text-xs font-semibold text-slate-800 min-h-[38px]"
+                    @click="toggleExpand(item.id)"
+                  >
+                    <span>{{ expandedSkillId === item.id ? 'Tutup' : 'Pratinjau' }}</span>
+                    <UIcon
+                      :name="expandedSkillId === item.id ? 'i-ph-caret-up' : 'i-ph-caret-down'"
+                      class="w-3.5 h-3.5"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+
+                <Transition name="panel-slide">
+                  <div
+                    v-if="expandedSkillId === item.id"
+                    class="mt-3 pt-3 border-t border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600"
+                  >
+                    <p class="leading-relaxed">
+                      {{ item.description || 'Micro-session 30 menit tanya-jawab langsung sesuai kebutuhanmu.' }}
+                    </p>
+                    <NuxtLink
+                      :to="loggedIn ? '/explore' : '/login'"
+                      class="shrink-0 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs text-center min-h-[36px] inline-flex items-center justify-center"
+                    >
+                      {{ loggedIn ? 'Booking Sekarang' : 'Masuk untuk Booking' }}
+                    </NuxtLink>
+                  </div>
+                </Transition>
+              </li>
+            </TransitionGroup>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer class="border-t border-slate-200 bg-white py-6">
+    <footer class="border-t border-stone-200 bg-white py-6">
       <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
         <span>SkillBarter · Case 1: Smarter Campus and Learning</span>
         <span>Tim pecut agen</span>
@@ -264,3 +415,16 @@ const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload
     </footer>
   </div>
 </template>
+
+<style scoped>
+.list-stagger-enter-active,
+.list-stagger-leave-active {
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.list-stagger-enter-from,
+.list-stagger-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+</style>

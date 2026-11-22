@@ -6,28 +6,33 @@ definePageMeta({
 const route = useRoute()
 const hasOAuthError = computed(() => route.query.error === 'oauth_failed')
 
+const previewDomain = ref<'uksw' | 'general'>('uksw')
 const activePillar = ref(0)
+
 const pillars = [
   {
     code: '01',
-    badge: '+2 Kredit Modal Awal',
-    title: 'Mulai belajar dari 2 kredit modal awal',
+    badge: '+2 Kredit Awal',
+    title: 'Masuk langsung dapat 2 kredit belajar',
     desc: 'Tidak harus langsung mengajar. Masuk ke dashboard, pilih mentor, dan pesan sesi pertamamu.',
-    preview: 'Saldo Awal: 2 Kredit · Langsung bisa booking 2 sesi 1-on-1.'
+    sampleTitle: 'Dompet Kredit Awal',
+    sampleMetric: '2 Kredit Tersedia · 0 Escrow'
   },
   {
     code: '02',
     badge: 'Micro-Session 30m',
-    title: 'Micro-session 30 menit berbasis template',
-    desc: 'Fokus tanya-jawab, bedah error, atau review portofolio tanpa menyiapkan slide panjang.',
-    preview: 'Template siap pakai: Review Tugas, Q&A Dasar, Latihan Presentasi.'
+    title: 'Sesi singkat 30 menit berbasis template',
+    desc: 'Fokus tanya-jawab, bedah error, atau review portofolio tanpa menyiapkan materi kuliah panjang.',
+    sampleTitle: 'Template Populer',
+    sampleMetric: 'Review Portofolio · Q&A Dasar · Presentasi'
   },
   {
     code: '03',
-    badge: 'Check-in 6-Digit / QR',
-    title: 'Ulasan 100% terverifikasi via Check-in QR',
-    desc: 'Rating hanya terbuka setelah kehadiran dicatat di tempat dengan kode 6 digit atau QR.',
-    preview: 'Anti-ulasan palsu · Syarat Verified Peer Mentor: >= 3 sesi & rating >= 4.5.'
+    badge: 'Check-in QR & UKSW',
+    title: 'Ulasan terverifikasi & badge Verified UKSW',
+    desc: 'Rating hanya terbuka setelah check-in QR, dan email @student.uksw.edu / @uksw.edu terverifikasi otomatis.',
+    sampleTitle: 'Verifikasi Ganda',
+    sampleMetric: 'Verified UKSW + Verified Attendance'
   }
 ]
 
@@ -49,13 +54,13 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
       </div>
 
       <div class="pt-10 sm:pt-14 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
-        <!-- Editorial Value Column -->
+        <!-- Editorial Interactive Column -->
         <section class="lg:col-span-7 space-y-6">
           <div class="space-y-3">
             <p class="font-mono text-xs font-semibold uppercase tracking-wider text-indigo-700">
               Ekonomi Waktu Kampus · 1:1 Adil
             </p>
-            <h1 class="text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-[1.12]">
+            <h1 class="text-3xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-[1.1]">
               Tukar waktumu jadi
               <span class="font-serif italic font-normal text-indigo-600">kredit belajar,</span>
               bukan biaya uang.
@@ -73,8 +78,8 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
               type="button"
               :aria-pressed="activePillar === idx"
               :class="[
-                'w-full text-left py-4 px-3 -mx-3 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-1.5 sm:gap-4 items-baseline transition-colors duration-150',
-                activePillar === idx ? 'bg-white/80' : 'hover:bg-white/50'
+                'w-full text-left py-4 px-3.5 -mx-3.5 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-1.5 sm:gap-4 items-baseline transition-colors duration-150',
+                activePillar === idx ? 'bg-white shadow-xs' : 'hover:bg-white/60'
               ]"
               @click="activePillar = idx"
             >
@@ -101,14 +106,19 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
             </button>
           </div>
 
-          <!-- Micro Proof Bar synced with active pillar -->
+          <!-- Animated Mini Product Preview Strip -->
           <Transition name="panel-slide" mode="out-in">
             <div
               :key="activePillar"
-              class="rounded-xl bg-white border border-stone-300 px-4 py-3 flex items-center gap-3 text-xs text-slate-700"
+              class="rounded-2xl bg-slate-900 text-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
-              <UIcon name="i-ph-seal-check-duotone" class="w-4 h-4 text-teal-700 shrink-0" aria-hidden="true" />
-              <span>{{ currentPillar.preview }}</span>
+              <div class="space-y-0.5">
+                <p class="font-mono text-[11px] uppercase tracking-wider text-teal-300">
+                  {{ currentPillar.sampleTitle }}
+                </p>
+                <p class="text-sm font-semibold text-white">{{ currentPillar.sampleMetric }}</p>
+              </div>
+              <VerifiedUkswBadge tone="dark" />
             </div>
           </Transition>
         </section>
@@ -122,6 +132,56 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
               <p class="text-sm text-slate-600">
                 Gunakan akun Google untuk masuk instan tanpa kode OTP berulang.
               </p>
+            </div>
+
+            <!-- Interactive Domain Trust Simulator -->
+            <div class="rounded-xl bg-[#F7F5F0] border border-stone-200 p-4 space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-semibold text-slate-800">Cek Status Domain Emailmu:</p>
+                <div class="inline-flex rounded-lg border border-stone-300 bg-white p-0.5 text-[11px] font-semibold">
+                  <button
+                    type="button"
+                    :class="[
+                      'px-2.5 py-1 rounded-md transition-colors',
+                      previewDomain === 'uksw' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                    ]"
+                    @click="previewDomain = 'uksw'"
+                  >
+                    @student.uksw.edu
+                  </button>
+                  <button
+                    type="button"
+                    :class="[
+                      'px-2.5 py-1 rounded-md transition-colors',
+                      previewDomain === 'general' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                    ]"
+                    @click="previewDomain = 'general'"
+                  >
+                    Gmail Umum
+                  </button>
+                </div>
+              </div>
+
+              <Transition name="panel-slide" mode="out-in">
+                <div
+                  v-if="previewDomain === 'uksw'"
+                  key="domain-uksw"
+                  class="flex items-center justify-between gap-2 bg-white border border-blue-200 rounded-lg px-3 py-2.5"
+                >
+                  <span class="text-xs text-slate-700">Email `@student.uksw.edu` / `@uksw.edu`</span>
+                  <VerifiedUkswBadge />
+                </div>
+                <div
+                  v-else
+                  key="domain-general"
+                  class="flex items-center justify-between gap-2 bg-white border border-stone-200 rounded-lg px-3 py-2.5"
+                >
+                  <span class="text-xs text-slate-700">Akun Gmail biasa tetap bisa masuk</span>
+                  <span class="text-[11px] font-semibold text-slate-600 px-2 py-0.5 rounded bg-stone-100">
+                    Akun Standar
+                  </span>
+                </div>
+              </Transition>
             </div>
 
             <div aria-live="polite">
@@ -143,12 +203,9 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
               <span>Masuk dengan Google</span>
             </a>
 
-            <div class="rounded-xl bg-[#F7F5F0] border border-stone-200 p-4 space-y-1.5 text-xs text-slate-700">
-              <p class="font-semibold text-slate-900">Apa yang terjadi setelah masuk?</p>
-              <p>
-                Pengguna baru memilih minat belajar dalam 1 langkah lalu langsung menerima <strong class="font-mono text-teal-700">+2 kredit</strong> di Dashboard.
-              </p>
-            </div>
+            <p class="text-xs text-slate-600 text-center">
+              Pengguna baru langsung menerima <strong class="font-mono text-teal-700">+2 kredit</strong> setelah 1 langkah onboarding.
+            </p>
           </div>
         </section>
       </div>
