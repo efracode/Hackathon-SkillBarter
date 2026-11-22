@@ -81,7 +81,7 @@ function resetDemo() {
 
         <button
           type="button"
-          class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-sm font-semibold min-h-[46px] transition-colors"
+          class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-sm font-semibold min-h-[46px] transition-colors"
           @click="verifyDemoCheckin"
         >
           <UIcon name="i-ph-check-circle" class="w-4 h-4" aria-hidden="true" />

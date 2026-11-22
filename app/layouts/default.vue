@@ -38,7 +38,7 @@ const isActive = (path: string) =>
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F4F7FB] text-slate-900">
+  <div class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
     <a
       href="#main-content"
       class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-blue-600 focus:text-white focus:text-sm focus:font-semibold"
@@ -81,12 +81,12 @@ const isActive = (path: string) =>
           <NuxtLink
             to="/wallet"
             :aria-current="isActive('/wallet') ? 'page' : undefined"
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-200 bg-blue-50/80 hover:bg-blue-100/80 transition-colors duration-150 min-h-[40px] text-xs sm:text-sm font-semibold text-blue-950 tabular-nums"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-200 bg-white hover:border-blue-600 hover:bg-blue-50/50 transition-colors duration-150 min-h-[40px] text-xs sm:text-sm font-semibold text-slate-900 tabular-nums"
             aria-label="Lihat Dompet Kredit dan Escrow"
           >
-            <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-700" aria-hidden="true" />
+            <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-600" aria-hidden="true" />
             <span>{{ creditBalance }} Kredit</span>
-            <span v-if="escrowBalance > 0" class="text-sky-700 font-semibold">
+            <span v-if="escrowBalance > 0" class="text-blue-700 font-semibold">
               · {{ escrowBalance }} Escrow
             </span>
           </NuxtLink>

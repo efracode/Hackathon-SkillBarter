@@ -200,20 +200,20 @@ function formatDateTime(iso: string) {
                 Rasio Dompet Kredit
               </p>
               <div class="mt-1 flex items-baseline gap-4 tabular-nums">
-                <p class="text-2xl sm:text-3xl font-bold font-mono text-blue-700">
-                  {{ data.user.creditBalance }} <span class="text-xs font-sans font-semibold">Tersedia</span>
+                <p class="text-2xl sm:text-3xl font-bold font-mono text-blue-600">
+                  {{ data.user.creditBalance }} <span class="text-xs font-sans font-semibold text-slate-600">Tersedia</span>
                 </p>
-                <p class="text-lg font-bold font-mono text-sky-700">
-                  {{ data.user.escrowBalance }} <span class="text-xs font-sans font-semibold">Di Escrow</span>
+                <p class="text-lg font-bold font-mono text-slate-700">
+                  {{ data.user.escrowBalance }} <span class="text-xs font-sans font-semibold text-slate-500">Di Escrow</span>
                 </p>
               </div>
             </div>
 
             <NuxtLink
               to="/wallet"
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-xs font-semibold text-blue-800 min-h-[38px] transition-colors"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-xs font-semibold text-blue-700 min-h-[38px] transition-colors"
             >
-              <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-700" aria-hidden="true" />
+              <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-600" aria-hidden="true" />
               <span>Buka Ledger</span>
             </NuxtLink>
           </div>
@@ -225,7 +225,7 @@ function formatDateTime(iso: string) {
               :style="{ width: `${availablePercent}%` }"
             />
             <div
-              class="bg-sky-400 transition-[width] duration-500 ease-out"
+              class="bg-blue-200 transition-[width] duration-500 ease-out"
               :style="{ width: `${escrowPercent}%` }"
             />
           </div>
@@ -234,35 +234,35 @@ function formatDateTime(iso: string) {
           </p>
         </div>
 
-        <div class="lg:col-span-5 bg-gradient-to-br from-[#0B2249] via-[#13366F] to-[#1D4ED8] text-white rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 border border-blue-800/60 shadow-sm">
+        <div class="lg:col-span-5 bg-white text-slate-900 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 border-2 border-blue-600">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="font-mono text-[11px] uppercase tracking-wider text-blue-200">
+              <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
                 Reputasi Peer Mentor
               </p>
-              <h2 class="text-lg font-bold text-white mt-0.5">
+              <h2 class="text-lg font-bold text-slate-900 mt-0.5">
                 {{ data.mentorProgress.isVerifiedMentor ? 'Verified Peer Mentor Aktif' : 'Menuju Verified Peer Mentor' }}
               </h2>
             </div>
-            <UIcon name="i-ph-seal-check-duotone" class="w-6 h-6 text-sky-300 shrink-0" aria-hidden="true" />
+            <UIcon name="i-ph-seal-check-duotone" class="w-6 h-6 text-blue-600 shrink-0" aria-hidden="true" />
           </div>
 
           <div class="space-y-2">
-            <div class="flex justify-between text-xs text-blue-100 tabular-nums">
+            <div class="flex justify-between text-xs text-slate-600 tabular-nums">
               <span>Progres Sesi Mengajar ({{ Math.min(3, data.mentorProgress.completedCount) }}/3)</span>
               <span>Rating: {{ data.mentorProgress.reviewCount > 0 ? `${data.mentorProgress.avgRating}/5` : 'Belum ada' }}</span>
             </div>
-            <div class="h-2.5 w-full rounded-full bg-white/15 overflow-hidden">
+            <div class="h-2.5 w-full rounded-full bg-blue-100 overflow-hidden">
               <div
-                class="h-full bg-sky-300 transition-[width] duration-500 ease-out"
+                class="h-full bg-blue-600 transition-[width] duration-500 ease-out"
                 :style="{ width: `${mentorProgressPercent}%` }"
               />
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-xs text-blue-100 pt-1">
-            <span>Penalti aktif: <strong class="text-white font-mono">{{ data.user.penaltyCount }}</strong></span>
-            <NuxtLink to="/profile" class="text-white hover:underline font-semibold">
+          <div class="flex items-center justify-between text-xs text-slate-600 pt-1">
+            <span>Penalti aktif: <strong class="text-slate-900 font-mono">{{ data.user.penaltyCount }}</strong></span>
+            <NuxtLink to="/profile" class="text-blue-700 hover:underline font-semibold">
               Lihat Detail Reputasi
             </NuxtLink>
           </div>
@@ -272,7 +272,7 @@ function formatDateTime(iso: string) {
       <!-- Action Banner for Incoming Hold Queue -->
       <UAlert
         v-if="data.incomingQueueCount > 0"
-        color="warning"
+        color="primary"
         variant="subtle"
         icon="i-ph-clock"
         :title="`Ada ${data.incomingQueueCount} permintaan Hold Queue menunggu responmu`"
@@ -281,7 +281,7 @@ function formatDateTime(iso: string) {
         <template #actions>
           <NuxtLink
             to="/sessions?tab=queue"
-            class="px-3.5 py-2 rounded-lg bg-amber-700 text-white text-xs font-semibold"
+            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
           >
             Lihat Antrean
           </NuxtLink>
@@ -414,9 +414,9 @@ function formatDateTime(iso: string) {
 
               <div
                 v-if="data.upcomingLearner.length === 0 && data.upcomingTutor.length === 0"
-                class="p-4 rounded-xl bg-[#EFF5FD] border border-blue-100 space-y-1.5"
+                class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5"
               >
-                <p class="text-xs font-semibold text-blue-950">Jadwalmu masih kosong</p>
+                <p class="text-xs font-semibold text-slate-900">Jadwalmu masih kosong</p>
                 <p class="text-xs text-slate-600">
                   Pesan sesi 30 menit pertama dari menu Jelajah memakai saldo kreditmu.
                 </p>
@@ -426,7 +426,7 @@ function formatDateTime(iso: string) {
                 <li
                   v-for="s in data.upcomingLearner"
                   :key="s.bookingId"
-                  class="p-3.5 rounded-xl bg-[#EFF5FD] border border-blue-100 flex items-center justify-between gap-3"
+                  class="p-3.5 rounded-xl bg-white border border-blue-200 flex items-center justify-between gap-3"
                 >
                   <div class="min-w-0">
                     <p class="text-xs font-semibold text-blue-700 tabular-nums">
@@ -444,17 +444,17 @@ function formatDateTime(iso: string) {
                 <li
                   v-for="t in data.upcomingTutor"
                   :key="t.sessionId"
-                  class="p-3.5 rounded-xl bg-sky-50/80 border border-sky-200 flex items-center justify-between gap-3"
+                  class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center justify-between gap-3"
                 >
                   <div class="min-w-0">
-                    <p class="text-xs font-semibold text-sky-700 tabular-nums">
+                    <p class="text-xs font-semibold text-blue-700 tabular-nums">
                       Mengajar · {{ formatDateTime(t.scheduledAt) }}
                     </p>
                     <p class="text-sm font-semibold text-slate-900 truncate">{{ t.skillTitle }}</p>
                   </div>
                   <NuxtLink
                     :to="`/sessions/${t.sessionId}`"
-                    class="px-3.5 py-2 rounded-lg bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
+                    class="px-3.5 py-2 rounded-lg border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
                   >
                     Check-in
                   </NuxtLink>

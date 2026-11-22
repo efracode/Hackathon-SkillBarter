@@ -66,7 +66,7 @@ function formatDateTime(iso: string) {
         </div>
         <div class="p-5 sm:p-6">
           <p class="text-xs font-medium text-slate-600">Terkunci di Escrow</p>
-          <p class="mt-1 text-3xl font-bold text-sky-700 font-mono tabular-nums">
+          <p class="mt-1 text-3xl font-bold text-slate-900 font-mono tabular-nums">
             {{ data.escrowBalance }} <span class="text-base font-sans font-medium">Kredit</span>
           </p>
           <p class="mt-1 text-xs text-slate-500">Menunggu sesi selesai atau batas antrean Hold Queue.</p>

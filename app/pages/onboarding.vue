@@ -150,7 +150,7 @@ async function submitOnboarding() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#F4F7FB] py-8 px-4">
+  <main class="min-h-screen bg-slate-50 py-8 px-4">
     <div class="max-w-4xl mx-auto space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <SkillBarterLogo size="md" />
@@ -382,8 +382,8 @@ async function submitOnboarding() {
                   :class="[
                     'text-xs px-3 py-1.5 rounded-lg border transition-colors duration-150 min-h-[36px]',
                     teachTemplateTag === tpl.tag
-                      ? 'bg-sky-700 border-sky-700 text-white font-semibold'
-                      : 'bg-blue-50/60 border-blue-100 text-slate-700 hover:bg-blue-100/70'
+                      ? 'bg-blue-600 border-blue-600 text-white font-semibold'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
                   ]"
                   @click="applyTemplate(tpl)"
                 >

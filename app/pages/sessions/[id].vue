@@ -352,7 +352,7 @@ function formatDateTime(iso: string) {
           <p class="text-sm text-slate-600 mt-1">
             {{ formatDateTime(data.session.scheduledAt) }}
           </p>
-          <div class="mt-2 flex items-center gap-2 text-xs text-slate-700 bg-[#EFF5FD] border border-blue-100 rounded-lg px-3 py-2">
+          <div class="mt-2 flex items-center gap-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
             <UIcon
               :name="data.session.format === 'online' ? 'i-ph-video-camera' : 'i-ph-map-pin'"
               class="w-4 h-4 text-blue-600 shrink-0"
@@ -565,7 +565,7 @@ function formatDateTime(iso: string) {
           <span class="text-xs text-slate-500">Sinkronisasi otomatis</span>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F4F7FB]/70">
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
           <div v-if="!chatData?.messages?.length" class="text-center py-12 text-sm text-slate-500">
             Belum ada pesan. Koordinasikan link Meet atau titik temu kampus di sini.
           </div>

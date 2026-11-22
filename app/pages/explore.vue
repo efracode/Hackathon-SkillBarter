@@ -261,8 +261,8 @@ function resetFilters() {
           :class="[
             'px-3 py-1.5 rounded-lg text-xs font-medium border min-h-[36px] transition-colors',
             availableOnly
-              ? 'bg-sky-700 border-sky-700 text-white font-semibold'
-              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+              ? 'bg-blue-600 border-blue-600 text-white font-semibold'
+              : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
           ]"
           @click="availableOnly = !availableOnly"
         >
@@ -357,7 +357,7 @@ function resetFilters() {
                 <VerifiedUkswBadge v-if="item.tutor.isVerifiedUksw" />
                 <span
                   v-if="item.tutor.isVerifiedMentor"
-                  class="inline-flex items-center gap-1 text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-md"
+                  class="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-white border border-blue-600 px-2 py-0.5 rounded-md"
                 >
                   <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5" aria-hidden="true" />
                   Verified Peer Mentor

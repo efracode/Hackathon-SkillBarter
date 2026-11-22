@@ -51,7 +51,7 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#F4F7FB] text-slate-900 flex flex-col justify-between px-4 py-8 sm:py-12">
+  <main class="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between px-4 py-8 sm:py-12">
     <div class="max-w-5xl w-full mx-auto">
       <div class="flex items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <NuxtLink
@@ -97,7 +97,7 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
               <span
                 :class="[
                   'sm:col-span-2 font-mono text-xs font-semibold',
-                  activePillar === idx ? 'text-blue-700' : 'text-sky-700'
+                  activePillar === idx ? 'text-blue-700' : 'text-slate-500'
                 ]"
               >
                 {{ item.code }}
@@ -117,19 +117,19 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
             </button>
           </div>
 
-          <!-- Animated Mini Product Preview Strip -->
+          <!-- Animated Mini Product Preview Strip (Primary Stroke) -->
           <Transition name="panel-slide" mode="out-in">
             <div
               :key="activePillar"
-              class="rounded-2xl bg-gradient-to-r from-[#0B2249] to-[#1D4ED8] text-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-blue-800/50 shadow-sm"
+              class="rounded-2xl bg-white border-2 border-blue-600 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div class="space-y-0.5">
-                <p class="font-mono text-[11px] uppercase tracking-wider text-blue-200">
+                <p class="font-mono text-[11px] uppercase tracking-wider text-blue-700">
                   {{ currentPillar.sampleTitle }}
                 </p>
-                <p class="text-sm font-semibold text-white">{{ currentPillar.sampleMetric }}</p>
+                <p class="text-sm font-semibold text-slate-900">{{ currentPillar.sampleMetric }}</p>
               </div>
-              <VerifiedUkswBadge tone="dark" />
+              <VerifiedUkswBadge />
             </div>
           </Transition>
         </section>

@@ -357,7 +357,7 @@ async function declineQueue(bookingId: string) {
 
         <p
           v-if="row.session?.mode === 'group'"
-          class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 tabular-nums"
+          class="text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 tabular-nums"
         >
           Kuorum: {{ row.confirmedCount }}/2 terkonfirmasi · Auto-batal jika &lt; 2 pada T-2 jam
         </p>
@@ -370,7 +370,7 @@ async function declineQueue(bookingId: string) {
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <span class="text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">
+            <span class="text-xs font-semibold text-blue-700 bg-white border border-blue-600 px-2.5 py-0.5 rounded-md">
               Sebagai Pengajar · {{ t.confirmedCount }}/{{ t.session.maxLearners }} Peserta
             </span>
             <h2 class="text-base font-semibold text-slate-900 mt-1.5">{{ t.skill.title }}</h2>
@@ -390,7 +390,7 @@ async function declineQueue(bookingId: string) {
 
         <p
           v-if="t.session.mode === 'group'"
-          class="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 tabular-nums"
+          class="text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 tabular-nums"
         >
           Kuorum: {{ t.confirmedCount }}/2 terkonfirmasi · Auto-batal jika &lt; 2 pada T-2 jam
         </p>
@@ -414,11 +414,11 @@ async function declineQueue(bookingId: string) {
       <article
         v-for="q in data?.incomingHoldQueue || []"
         :key="q.booking.id"
-        class="bg-white border border-amber-300 rounded-2xl p-5 shadow-xs space-y-3"
+        class="bg-white border-2 border-blue-600 rounded-2xl p-5 space-y-3"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md">
+            <span class="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
               Permintaan Masuk (Tutor)
             </span>
             <h2 class="text-base font-semibold text-slate-900 mt-1.5">{{ q.skill.title }}</h2>
@@ -456,7 +456,7 @@ async function declineQueue(bookingId: string) {
         class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-wrap items-center justify-between gap-3"
       >
         <div>
-          <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md">
+          <span class="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-md">
             Menunggu Pengajar · 1 Kredit Terkunci di Escrow
           </span>
           <h2 class="text-base font-semibold text-slate-900 mt-1.5">{{ row.skill.title }}</h2>

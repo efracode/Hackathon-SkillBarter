@@ -263,29 +263,15 @@ const ringDashOffset = computed(
 )
 
 const ringStrokeColor = computed(() => {
-  switch (currentStep.value.badgeTone) {
-    case 'amber':
-      return '#0284C7'
-    case 'teal':
-      return '#1D4ED8'
-    case 'rose':
-      return '#E11D48'
-    default:
-      return '#2563EB'
-  }
+  if (currentStep.value.badgeTone === 'rose') return '#E11D48'
+  return '#2563EB'
 })
 
 const badgeClasses = computed(() => {
-  switch (currentStep.value.badgeTone) {
-    case 'amber':
-      return 'bg-sky-50 text-sky-800 border-sky-200'
-    case 'teal':
-      return 'bg-blue-50 text-blue-800 border-blue-200'
-    case 'rose':
-      return 'bg-rose-50 text-rose-700 border-rose-200'
-    default:
-      return 'bg-blue-50 text-blue-700 border-blue-200'
+  if (currentStep.value.badgeTone === 'rose') {
+    return 'bg-rose-50 text-rose-700 border-rose-200'
   }
+  return 'bg-blue-50 text-blue-700 border-blue-200'
 })
 
 function stopPlayback() {
@@ -344,7 +330,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-[#EFF5FD] border border-blue-200/80 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">
     <!-- Top Header & Controls -->
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
@@ -362,7 +348,7 @@ onUnmounted(() => {
         </span>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-white hover:bg-blue-50 text-xs font-semibold text-blue-900 min-h-[36px]"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-white hover:border-blue-600 text-xs font-semibold text-blue-700 min-h-[36px] transition-colors"
           :aria-label="isPlaying ? 'Jeda simulasi otomatis' : 'Putar ulang simulasi'"
           @click="togglePlay"
         >
@@ -386,8 +372,8 @@ onUnmounted(() => {
         :class="[
           'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors min-h-[36px]',
           activeScenario === key
-            ? 'bg-[#0F2B5B] border-[#0F2B5B] text-white'
-            : 'bg-white border-blue-200 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+            ? 'bg-blue-600 border-blue-600 text-white'
+            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
         ]"
         @click="selectScenario(key)"
       >
@@ -396,7 +382,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Sculptural Exchange Ring SVG + Clean HTML Telemetry Strip -->
-    <div class="bg-white border border-blue-100 rounded-xl p-4 space-y-3 overflow-hidden">
+    <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-3 overflow-hidden">
       <svg
         viewBox="0 0 460 198"
         class="w-full h-auto block"
@@ -431,7 +417,7 @@ onUnmounted(() => {
           v-if="currentStep.activeArc === 'left'"
           d="M 96 112 Q 140 52 178 88"
           fill="none"
-          stroke="#0284C7"
+          stroke="#2563EB"
           stroke-width="3"
           stroke-dasharray="6 6"
           class="flow-rail-forward"
@@ -449,7 +435,7 @@ onUnmounted(() => {
           v-if="currentStep.activeArc === 'refund'"
           d="M 184 136 Q 140 178 92 142"
           fill="none"
-          stroke="#0284C7"
+          stroke="#2563EB"
           stroke-width="3"
           stroke-dasharray="6 6"
           class="flow-rail-forward"
@@ -461,7 +447,7 @@ onUnmounted(() => {
             cx="0"
             cy="0"
             r="28"
-            :fill="currentStep.activeArc === 'refund' ? '#EFF6FF' : '#F8FAFC'"
+            :fill="currentStep.activeArc === 'refund' ? '#EFF6FF' : '#FFFFFF'"
             :stroke="currentStep.activeArc === 'refund' ? '#2563EB' : '#CBD5E1'"
             stroke-width="2"
           />
@@ -472,7 +458,7 @@ onUnmounted(() => {
         <!-- Center Node: Sculptural Escrow Progress Vault -->
         <g transform="translate(230, 108)">
           <!-- Outer Progress Track -->
-          <circle cx="0" cy="0" r="50" fill="none" stroke="#DBEAFE" stroke-width="6" />
+          <circle cx="0" cy="0" r="50" fill="none" stroke="#E2E8F0" stroke-width="5" />
           <!-- Animated Progress Ring -->
           <circle
             cx="0"
@@ -480,46 +466,48 @@ onUnmounted(() => {
             r="50"
             fill="none"
             :stroke="ringStrokeColor"
-            stroke-width="6"
+            stroke-width="5"
             stroke-linecap="round"
             :stroke-dasharray="RING_CIRCUMFERENCE"
             :stroke-dashoffset="ringDashOffset"
             transform="rotate(-90)"
             style="transition: stroke-dashoffset 480ms cubic-bezier(0.22, 1, 0.36, 1), stroke 250ms ease"
           />
-          <!-- Royal Navy Inner Vault Core -->
+          <!-- Primary Stroke Vault Core -->
           <circle
             cx="0"
             cy="0"
             r="39"
-            :fill="currentStep.coreIcon === 'check' ? '#1D4ED8' : currentStep.coreIcon === 'alert' ? '#9F1239' : '#0B2249'"
-            style="transition: fill 250ms ease"
+            :fill="currentStep.coreIcon === 'alert' ? '#FFF1F2' : '#EFF6FF'"
+            :stroke="currentStep.coreIcon === 'alert' ? '#E11D48' : '#2563EB'"
+            stroke-width="2"
+            style="transition: fill 250ms ease, stroke 250ms ease"
           />
 
           <!-- Crisp Vector Icon Inside Vault -->
           <g v-if="currentStep.coreIcon === 'lock'">
-            <rect x="-11" y="-2" width="22" height="16" rx="4" fill="none" stroke="#7DD3FC" stroke-width="2.4" />
-            <path d="M -6 -2 V -7 A 6 6 0 0 1 6 -7 V -2" fill="none" stroke="#7DD3FC" stroke-width="2.4" />
-            <circle cx="0" cy="6" r="2" fill="#7DD3FC" />
+            <rect x="-11" y="-2" width="22" height="16" rx="4" fill="none" stroke="#2563EB" stroke-width="2.4" />
+            <path d="M -6 -2 V -7 A 6 6 0 0 1 6 -7 V -2" fill="none" stroke="#2563EB" stroke-width="2.4" />
+            <circle cx="0" cy="6" r="2" fill="#2563EB" />
           </g>
           <g v-else-if="currentStep.coreIcon === 'clock'">
-            <circle cx="0" cy="0" r="14" fill="none" stroke="#93C5FD" stroke-width="2.4" />
-            <path d="M 0 -7 V 1 L 6 4" fill="none" stroke="#93C5FD" stroke-width="2.4" stroke-linecap="round" />
+            <circle cx="0" cy="0" r="14" fill="none" stroke="#2563EB" stroke-width="2.4" />
+            <path d="M 0 -7 V 1 L 6 4" fill="none" stroke="#2563EB" stroke-width="2.4" stroke-linecap="round" />
           </g>
           <g v-else-if="currentStep.coreIcon === 'qr'">
-            <rect x="-12" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#7DD3FC" stroke-width="2.2" />
-            <rect x="3" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#7DD3FC" stroke-width="2.2" />
-            <rect x="-12" y="3" width="9" height="9" rx="1.5" fill="none" stroke="#7DD3FC" stroke-width="2.2" />
-            <rect x="4" y="4" width="7" height="7" rx="1" fill="#7DD3FC" />
+            <rect x="-12" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#2563EB" stroke-width="2.2" />
+            <rect x="3" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#2563EB" stroke-width="2.2" />
+            <rect x="-12" y="3" width="9" height="9" rx="1.5" fill="none" stroke="#2563EB" stroke-width="2.2" />
+            <rect x="4" y="4" width="7" height="7" rx="1" fill="#2563EB" />
           </g>
           <g v-else-if="currentStep.coreIcon === 'alert'">
-            <path d="M 0 -13 L 13 10 H -13 Z" fill="none" stroke="#FECDD3" stroke-width="2.4" stroke-linejoin="round" />
-            <line x1="0" y1="-5" x2="0" y2="2" stroke="#FECDD3" stroke-width="2.4" stroke-linecap="round" />
-            <circle cx="0" cy="6" r="1.5" fill="#FECDD3" />
+            <path d="M 0 -13 L 13 10 H -13 Z" fill="none" stroke="#E11D48" stroke-width="2.4" stroke-linejoin="round" />
+            <line x1="0" y1="-5" x2="0" y2="2" stroke="#E11D48" stroke-width="2.4" stroke-linecap="round" />
+            <circle cx="0" cy="6" r="1.5" fill="#E11D48" />
           </g>
           <g v-else>
-            <circle cx="0" cy="0" r="15" fill="none" stroke="#DBEAFE" stroke-width="2.2" />
-            <path d="M -7 0 L -2 5 L 8 -5" fill="none" stroke="#DBEAFE" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="0" cy="0" r="15" fill="none" stroke="#2563EB" stroke-width="2.2" />
+            <path d="M -7 0 L -2 5 L 8 -5" fill="none" stroke="#2563EB" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
           </g>
         </g>
 
@@ -529,7 +517,7 @@ onUnmounted(() => {
             cx="0"
             cy="0"
             r="28"
-            :fill="currentStep.activeArc === 'right' ? '#EFF6FF' : '#F8FAFC'"
+            :fill="currentStep.activeArc === 'right' ? '#EFF6FF' : '#FFFFFF'"
             :stroke="currentStep.activeArc === 'right' ? '#2563EB' : '#CBD5E1'"
             stroke-width="2"
           />
@@ -550,7 +538,7 @@ onUnmounted(() => {
             width="46"
             height="26"
             rx="13"
-            :fill="currentStep.badgeTone === 'rose' ? '#E11D48' : currentStep.badgeTone === 'teal' ? '#1D4ED8' : '#2563EB'"
+            :fill="currentStep.badgeTone === 'rose' ? '#E11D48' : '#2563EB'"
           />
           <text
             x="0"
@@ -571,15 +559,15 @@ onUnmounted(() => {
             {{ currentStep.learnerBalance }}
           </p>
         </div>
-        <div class="p-2.5 rounded-lg bg-sky-50 border border-sky-200 text-center">
-          <p class="text-[11px] font-medium text-sky-800">Brankas Escrow</p>
-          <p class="text-sm sm:text-base font-bold font-mono text-sky-900 mt-0.5">
+        <div class="p-2.5 rounded-lg bg-white border border-blue-200 text-center">
+          <p class="text-[11px] font-medium text-blue-700">Brankas Escrow</p>
+          <p class="text-sm sm:text-base font-bold font-mono text-blue-700 mt-0.5">
             {{ currentStep.escrowBalance }}
           </p>
         </div>
-        <div class="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-center">
-          <p class="text-[11px] font-medium text-blue-800">Pengajar</p>
-          <p class="text-sm sm:text-base font-bold font-mono text-blue-900 mt-0.5">
+        <div class="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200 text-center">
+          <p class="text-[11px] font-medium text-blue-700">Pengajar</p>
+          <p class="text-sm sm:text-base font-bold font-mono text-blue-700 mt-0.5">
             {{ currentStep.tutorDelta }}
           </p>
         </div>
@@ -601,8 +589,8 @@ onUnmounted(() => {
         :class="[
           'text-left px-3 py-2 rounded-xl border text-xs transition-colors min-h-[48px]',
           activeStep === idx
-            ? 'bg-blue-600 border-blue-600 text-white font-semibold shadow-xs'
-            : 'bg-white border-blue-100 text-slate-700 hover:bg-blue-50'
+            ? 'bg-blue-600 border-blue-600 text-white font-semibold'
+            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
         ]"
         @click="selectStep(idx)"
       >
@@ -615,7 +603,7 @@ onUnmounted(() => {
     <Transition name="panel-slide" mode="out-in">
       <div
         :key="`${activeScenario}-${activeStep}`"
-        class="bg-white border border-blue-100 rounded-xl p-4 space-y-1"
+        class="bg-white border border-slate-200 rounded-xl p-4 space-y-1"
       >
         <h3 class="text-sm font-bold text-slate-900">{{ currentStep.title }}</h3>
         <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">

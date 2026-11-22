@@ -27,7 +27,7 @@ const sizeMap = {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect width="36" height="36" rx="9" fill="#EFF6FF" />
+      <rect x="0.75" y="0.75" width="34.5" height="34.5" rx="8.25" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5" />
       <path
         d="M10 13.5H23.5L19.5 9.5"
         stroke="#2563EB"
@@ -37,7 +37,7 @@ const sizeMap = {
       />
       <path
         d="M26 22.5H12.5L16.5 26.5"
-        stroke="#0284C7"
+        stroke="#1D4ED8"
         stroke-width="2.4"
         stroke-linecap="round"
         stroke-linejoin="round"

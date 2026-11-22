@@ -208,7 +208,7 @@ function exportCsv() {
 
           <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
             <p class="text-xs font-medium text-slate-600">Total Kredit Berputar</p>
-            <p class="mt-1 text-3xl font-bold text-sky-700 font-mono tabular-nums">
+            <p class="mt-1 text-3xl font-bold text-blue-700 font-mono tabular-nums">
               {{ data.metrics.totalEscrowed }}
             </p>
             <p class="mt-1 text-xs text-slate-500 tabular-nums">
@@ -245,7 +245,7 @@ function exportCsv() {
             <button
               type="button"
               :disabled="simulating"
-              class="px-4 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold min-h-[40px]"
+              class="px-4 py-2 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-xs font-semibold min-h-[40px]"
               @click="runSimulation('expire_queues')"
             >
               Kedaluwarsakan Hold Queue 48 Jam
@@ -298,7 +298,7 @@ function exportCsv() {
             <div v-if="row.report.status === 'open'" class="flex flex-wrap gap-2">
               <button
                 type="button"
-                class="px-3.5 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold min-h-[40px]"
+                class="px-3.5 py-2 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-xs font-semibold min-h-[40px]"
                 @click="resolveReport(row.report.id, 'refund')"
               >
                 Refund Pembelajar

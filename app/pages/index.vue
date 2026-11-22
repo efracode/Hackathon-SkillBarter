@@ -77,7 +77,7 @@ function getInitials(name: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F4F7FB] text-slate-900">
+  <div class="min-h-screen bg-slate-50 text-slate-900">
     <!-- Top Header -->
     <header class="bg-white/95 backdrop-blur-xs border-b border-slate-200 sticky top-0 z-30">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -151,7 +151,7 @@ function getInitials(name: string) {
 
               <a
                 href="#mentor-preview"
-                class="inline-flex items-center justify-center px-5 py-3.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-800 font-semibold text-sm min-h-[48px] transition-colors"
+                class="inline-flex items-center justify-center px-5 py-3.5 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 font-semibold text-sm min-h-[48px] transition-colors"
               >
                 Lihat Direktori Mentor
               </a>
@@ -159,13 +159,13 @@ function getInitials(name: string) {
 
             <!-- Real Telemetry Pills from DB -->
             <div v-if="previewData?.stats" class="flex flex-wrap items-center gap-2 pt-2 text-xs font-medium tabular-nums">
-              <span class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+              <span class="px-3 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200">
                 {{ previewData.stats.activeSkills }} Penawaran Skill Aktif
               </span>
-              <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              <span class="px-3 py-1.5 rounded-full bg-white text-slate-700 border border-slate-200">
                 {{ previewData.stats.completedSessions }} Sesi Selesai
               </span>
-              <span class="px-3 py-1.5 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
+              <span class="px-3 py-1.5 rounded-full bg-white text-slate-700 border border-slate-200">
                 {{ previewData.stats.verifiedReviews }} Ulasan Terverifikasi
               </span>
             </div>
@@ -202,7 +202,7 @@ function getInitials(name: string) {
               </div>
 
               <div class="p-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-baseline">
-                <span class="sm:col-span-3 font-mono text-xs font-semibold text-sky-700">02 · ESCROW 1:1</span>
+                <span class="sm:col-span-3 font-mono text-xs font-semibold text-blue-700">02 · ESCROW 1:1</span>
                 <div class="sm:col-span-9 space-y-1">
                   <h3 class="text-sm font-bold text-slate-900">Ekonomi kredit anti-minus &amp; anti-inflasi</h3>
                   <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -212,7 +212,7 @@ function getInitials(name: string) {
               </div>
 
               <div class="p-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-baseline">
-                <span class="sm:col-span-3 font-mono text-blue-800 font-semibold">03 · UKSW TRUST</span>
+                <span class="sm:col-span-3 font-mono text-blue-700 font-semibold">03 · UKSW TRUST</span>
                 <div class="sm:col-span-9 space-y-1">
                   <h3 class="text-sm font-bold text-slate-900">Verifikasi kampus UKSW &amp; Check-in QR</h3>
                   <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -260,7 +260,7 @@ function getInitials(name: string) {
         </div>
 
         <div v-if="previewStatus === 'pending'" class="grid grid-cols-1 lg:grid-cols-12 gap-6" aria-busy="true">
-          <div class="lg:col-span-5 h-72 bg-blue-950/90 rounded-2xl animate-pulse" />
+          <div class="lg:col-span-5 h-72 bg-white border-2 border-blue-200 rounded-2xl animate-pulse" />
           <div class="lg:col-span-7 h-72 bg-white border border-slate-200 rounded-2xl animate-pulse" />
         </div>
 
@@ -272,29 +272,29 @@ function getInitials(name: string) {
         </div>
 
         <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <!-- Left: Royal Blue Anchor Spotlight Card -->
+          <!-- Left: Primary Blue Stroke Spotlight Card -->
           <Transition name="panel-slide" mode="out-in">
             <article
               v-if="spotlightItem"
               :key="spotlightItem.id"
-              class="lg:col-span-5 bg-gradient-to-br from-[#0B2249] via-[#13366F] to-[#1D4ED8] text-white rounded-2xl p-6 sm:p-7 space-y-5 border border-blue-800/60 shadow-md"
+              class="lg:col-span-5 bg-white text-slate-900 rounded-2xl p-6 sm:p-7 space-y-5 border-2 border-blue-600"
             >
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <span class="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-200">
-                  <UIcon name="i-ph-seal-check-duotone" class="w-4 h-4 text-sky-300" aria-hidden="true" />
+                <span class="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
+                  <UIcon name="i-ph-seal-check-duotone" class="w-4 h-4 text-blue-600" aria-hidden="true" />
                   {{ spotlightItem.isVerifiedMentor ? 'Mentor Terverifikasi' : 'Sorotan Penawaran' }}
                 </span>
-                <span class="text-xs font-medium px-2.5 py-1 rounded-md bg-white/12 text-blue-50 border border-white/20">
+                <span class="text-xs font-medium px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                   {{ spotlightItem.slotBadge }}
                 </span>
               </div>
 
               <div class="space-y-2">
-                <p class="text-xs font-semibold text-sky-200">{{ spotlightItem.category }}</p>
-                <h3 class="text-xl sm:text-2xl font-bold text-white leading-snug">
+                <p class="text-xs font-semibold text-blue-700">{{ spotlightItem.category }}</p>
+                <h3 class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
                   {{ spotlightItem.title }}
                 </h3>
-                <p v-if="spotlightItem.description" class="text-sm text-blue-100/90 leading-relaxed">
+                <p v-if="spotlightItem.description" class="text-sm text-slate-600 leading-relaxed">
                   {{ spotlightItem.description }}
                 </p>
               </div>
@@ -302,43 +302,43 @@ function getInitials(name: string) {
               <!-- Real Verified Review Quote or Readiness Callout -->
               <blockquote
                 v-if="spotlightItem.latestReview"
-                class="p-4 rounded-xl bg-white/10 border border-white/15 space-y-2"
+                class="p-4 rounded-xl bg-blue-50/50 border border-blue-200 space-y-2"
               >
-                <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-200 tabular-nums">
-                  <UIcon name="i-ph-star-fill" class="w-3.5 h-3.5 text-sky-300" aria-hidden="true" />
+                <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 tabular-nums">
+                  <UIcon name="i-ph-star-fill" class="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
                   <span>Ulasan Terverifikasi · Rating {{ spotlightItem.latestReview.rating }}/5</span>
                 </p>
-                <p class="text-xs sm:text-sm text-white/95 leading-relaxed">
+                <p class="text-xs sm:text-sm text-slate-800 leading-relaxed">
                   "{{ spotlightItem.latestReview.comment }}"
                 </p>
-                <footer class="text-[11px] text-blue-200">
+                <footer class="text-[11px] text-slate-500">
                   Oleh {{ spotlightItem.latestReview.reviewerName }}
                 </footer>
               </blockquote>
               <div
                 v-else
-                class="p-4 rounded-xl bg-white/10 border border-white/15 space-y-1"
+                class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1"
               >
-                <p class="text-xs font-semibold text-sky-200">Sistem Ulasan Check-in QR</p>
-                <p class="text-xs text-blue-100 leading-relaxed">
+                <p class="text-xs font-semibold text-blue-700">Sistem Ulasan Check-in QR</p>
+                <p class="text-xs text-slate-600 leading-relaxed">
                   Ulasan terverifikasi untuk sesi ini akan tampil otomatis setelah check-in kehadiran pertama selesai.
                 </p>
               </div>
 
-              <div class="pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-4">
+              <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3 min-w-0">
                   <span
-                    class="w-10 h-10 rounded-full bg-white/15 border border-white/25 text-white text-xs font-bold flex items-center justify-center shrink-0"
+                    class="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0"
                     aria-hidden="true"
                   >
                     {{ getInitials(spotlightItem.tutorName) }}
                   </span>
                   <div class="min-w-0 space-y-0.5">
                     <div class="flex flex-wrap items-center gap-1.5">
-                      <span class="text-sm font-semibold text-white truncate">{{ spotlightItem.tutorName }}</span>
-                      <VerifiedUkswBadge v-if="spotlightItem.isVerifiedUksw" tone="dark" />
+                      <span class="text-sm font-semibold text-slate-900 truncate">{{ spotlightItem.tutorName }}</span>
+                      <VerifiedUkswBadge v-if="spotlightItem.isVerifiedUksw" />
                     </div>
-                    <p v-if="spotlightItem.tutorMeta" class="text-xs text-blue-200 truncate">
+                    <p v-if="spotlightItem.tutorMeta" class="text-xs text-slate-500 truncate">
                       {{ spotlightItem.tutorMeta }}
                     </p>
                   </div>
@@ -346,7 +346,7 @@ function getInitials(name: string) {
 
                 <NuxtLink
                   :to="loggedIn ? '/explore' : '/login'"
-                  class="px-4 py-2.5 rounded-xl bg-white hover:bg-blue-50 text-[#0B2249] text-xs font-bold min-h-[42px] inline-flex items-center shadow-xs transition-colors shrink-0"
+                  class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold min-h-[42px] inline-flex items-center transition-colors shrink-0"
                 >
                   {{ loggedIn ? 'Booking (1 Kredit)' : 'Masuk & Booking' }}
                 </NuxtLink>
@@ -355,11 +355,11 @@ function getInitials(name: string) {
           </Transition>
 
           <!-- Right: Structured 3-Tier Directory Card -->
-          <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-            <header class="px-5 py-3.5 bg-blue-50/70 border-b border-blue-100 flex items-center justify-between gap-3">
+          <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <header class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-3">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-slate-900">Penawaran Skill</span>
-                <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white tabular-nums">
+                <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 tabular-nums">
                   {{ directoryList.length }}
                 </span>
               </div>
@@ -379,13 +379,13 @@ function getInitials(name: string) {
                 :class="[
                   'p-4 sm:p-5 transition-colors border-l-4',
                   spotlightItem?.id === item.id || expandedSkillId === item.id
-                    ? 'border-l-blue-600 bg-blue-50/35'
-                    : 'border-l-transparent hover:bg-slate-50/80'
+                    ? 'border-l-blue-600 bg-blue-50/30'
+                    : 'border-l-transparent hover:bg-slate-50'
                 ]"
               >
                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div class="min-w-0 flex-1 space-y-2">
-                    <!-- Tier 1: Title + Single Clean Availability Tag -->
+                    <!-- Tier 1: Title + Single Clean Availability Stroke Tag -->
                     <div class="flex flex-wrap items-center gap-2">
                       <h3 class="text-sm sm:text-base font-bold text-slate-900 leading-snug">
                         {{ item.title }}
@@ -395,7 +395,7 @@ function getInitials(name: string) {
                           'text-[11px] font-semibold px-2 py-0.5 rounded-md border shrink-0',
                           item.hasOpenSlot
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-slate-100 text-slate-600 border-slate-200'
+                            : 'bg-white text-slate-600 border-slate-300'
                         ]"
                       >
                         {{ item.hasOpenSlot ? 'Slot Tersedia' : 'Hold Queue' }}
@@ -405,7 +405,7 @@ function getInitials(name: string) {
                     <!-- Tier 2: Mentor Identity & Trust Credentials -->
                     <div class="flex flex-wrap items-center gap-2 text-xs">
                       <span
-                        class="w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold flex items-center justify-center shrink-0"
+                        class="w-6 h-6 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold flex items-center justify-center shrink-0"
                         aria-hidden="true"
                       >
                         {{ getInitials(item.tutorName) }}
@@ -414,7 +414,7 @@ function getInitials(name: string) {
                       <VerifiedUkswBadge v-if="item.isVerifiedUksw" />
                       <span
                         v-if="item.isVerifiedMentor"
-                        class="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-md"
+                        class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-white border border-blue-600 px-2 py-0.5 rounded-md"
                       >
                         <UIcon name="i-ph-seal-check-duotone" class="w-3 h-3" aria-hidden="true" />
                         Verified Peer Mentor

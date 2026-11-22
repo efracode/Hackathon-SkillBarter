@@ -1,7 +1,7 @@
-# Product Requirements Document (PRD): SkillBarter MVP
+# Product Requirements Document (PRD) v2.0: SkillBarter MVP
 
 > **Learning Without Money, Teaching for Credits**  
-> Dokumen ini merangkum spesifikasi produk dan kebutuhan teknis MVP **SkillBarter** untuk **Case 1: Smarter Campus and Learning** berdasarkan abstrak tim **pecut agen** serta keputusan desain yang telah disepakati.
+> Dokumen ini merupakan spesifikasi produk dan teknis terbaru MVP **SkillBarter** untuk **Case 1: Smarter Campus and Learning** oleh tim **pecut agen**, mencakup arsitektur ekonomi kredit, verifikasi kehadiran QR, verifikasi identitas kampus UKSW, personalisasi profil, dan aturan antarmuka **Single-Hue Primary Blue + Stroke** ([DESIGN.md](file:///D:/Project/Hackathon/DESIGN.md)).
 
 ---
 
@@ -10,40 +10,40 @@
 | Atribut | Detail |
 | :--- | :--- |
 | **Nama Produk** | SkillBarter: Learning Without Money, Teaching for Credits |
-| **Tim** | pecut agen — Teofilus Tri Adinugraha Moelyono (Leader), Archyeza Gaciyama Feodora, Cynthia Elena Gunadi, Efraim Bias Adisya |
+| **Tim** | pecut agen (Teofilus Tri Adinugraha Moelyono, Archyeza Gaciyama Feodora, Cynthia Elena Gunadi, Efraim Bias Adisya) |
 | **Kasus Kompetisi** | Case 1: Smarter Campus and Learning |
-| **Skor Awal & Catatan Juri** | **86.0 / 100** (Judge 13) — P2 & P5 sudah 5/5; P1, P3, dan P4 masih 4/5 dengan catatan bahwa *"konsep skill barter bukan hal baru"*, sementara **ulasan terverifikasi** menjadi pembeda kuat dibanding grup media sosial. |
-| **Target Tahap Ini** | Membangun **MVP web app yang siap diuji dan didemokan** lengkap dengan alur ekonomi kredit yang anti-eksploitasi, verifikasi kehadiran, dan metrik evaluasi uji coba. |
+| **Pembeda Utama** | Ekonomi kredit 1:1 berbasis *escrow* anti-minus, ulasan 100% terverifikasi via Check-in QR/6-digit (*attendance-gated*), micro-session 30 menit berbasis template, serta verifikasi otomatis email kampus UKSW (`Verified UKSW`). |
+| **Target MVP** | Aplikasi web fullstack siap uji dan demo yang cepat dimuat, bebas hambatan masuk, dan memiliki alat simulasi waktu langsung untuk juri. |
 
 ### Masalah & Bukti Survei (30 Mahasiswa)
 1. **Kebutuhan belajar lintas bidang tinggi:** Rata-rata **4,3 / 5**.
-2. **Kesulitan mencari teman yang bisa mengajari:** Rata-rata **3,4 / 5**.
+2. **Kesulitan menemukan teman yang bisa mengajari:** Rata-rata **3,4 / 5**.
 3. **Kesenjangan kesiapan mengajar:** Dari 30 responden, hanya **6** yang bersedia mengajar tanpa syarat, sedangkan **17 ragu-ragu** dan **6 bersedia bersyarat**.
 
 > [!IMPORTANT]
-> Karena 23 dari 30 responden masih ragu atau bersyarat untuk mengajar, MVP dirancang khusus untuk menurunkan beban psikologis pengajar pemula lewat **micro-session 30 menit berbasis template topik**, bukan menuntut sesi kuliah penuh sejak awal.
+> Untuk mengatasi keraguan 23/30 mahasiswa yang belum percaya diri mengajar, pengguna baru langsung diarahkan ke **Dashboard Belajar** dengan modal **+2 kredit awal** (tidak dipaksa langsung membuka kelas), sementara penawaran mengajar disimpan sebagai draf **micro-session 30 menit berbasis template**.
 
 ---
 
 ## 2. Target Pengguna (Personas)
 
-1. **Pembelajar (*Learner*):** Mahasiswa yang ingin menguasai skill praktis di luar jurusannya tanpa biaya uang, dengan jaminan kualitas pengajar lewat ulasan terverifikasi.
-2. **Pengajar Rekan (*Peer Tutor / Mentor*):** Mahasiswa yang memiliki keterampilan praktis (coding, desain, bahasa, presentasi, dsb.) dan ingin menukar waktu mengajarnya menjadi kredit belajar serta reputasi (*badge*).
-3. **Admin / Tim Penyelenggara:** Mengelola laporan pelanggaran perilaku dan memantau metrik evaluasi v1 selama *small user test* dan demo kompetisi.
+1. **Pembelajar (*Learner*):** Mahasiswa yang ingin mempelajari skill praktis lintas jurusan tanpa uang, melihat pratinjau mentor nyata sebelum mendaftar, dan memilih mentor berdasarkan ulasan terverifikasi check-in.
+2. **Pengajar Rekan (*Peer Tutor / Mentor*):** Mahasiswa yang berbagi keterampilan praktis lewat micro-session 30 menit atau grup 60 menit untuk memperoleh kredit belajar dan reputasi (`Verified Peer Mentor` & `Verified UKSW`).
+3. **Admin / Juri Demo:** Memantau metrik evaluasi v1 (ekspor CSV/JSON), menyelesaikan antrean sengketa per `booking_id`, dan menjalankan simulasi *fast-forward* siklus kredit secara langsung.
 
 ---
 
 ## 3. Arsitektur & Stack Teknologi
 
-| Lapisan | Pilihan Teknologi | Catatan Implementasi |
+| Lapisan | Teknologi | Catatan Implementasi |
 | :--- | :--- | :--- |
-| **Framework Fullstack** | **Nuxt (TypeScript)** | Menangani SSR/CSR UI serta API routes backend dalam satu repositori. |
-| **Styling** | **Tailwind CSS v4** | Desain responsif *mobile-first* untuk desktop dan ponsel mahasiswa. |
-| **Database** | **PostgreSQL** | Transaksi ACID untuk menjamin integritas saldo kredit dan *escrow*. |
-| **ORM** | **Drizzle ORM** | Skema *type-safe* dan transaksi atomik untuk mutasi ledger kredit. |
-| **Autentikasi** | **Google OAuth** | Login simpel tanpa OTP; profil memiliki kolom opsional kampus/jurusan. |
-| **Pertemuan Sesi** | **Tatap muka / Link eksternal** | Pengguna mengisi titik temu kampus atau link Google Meet / Zoom / Discord (tanpa WebRTC bawaan). |
-| **Real-Time Chat** | **Polling ringan (3–5 dtk) / SSE** | Tanpa server WebSocket/Redis terpisah agar *deployment* MVP tetap sederhana. |
+| **Framework Fullstack** | **Nuxt 3 (compat v4) + TypeScript** | SSR/CSR + Nitro API routes dalam satu repositori. |
+| **UI & Styling** | **Tailwind CSS v4 + Nuxt UI v3 + Phosphor Icons** | Sistem **Single-Hue Primary Blue + Stroke** (`#2563EB`, `#FFFFFF`, `slate-*`, error-only `rose-600`). |
+| **Database** | **PostgreSQL (Neon)** | Transaksi ACID untuk saldo kredit, *escrow*, dan ledger atomik. |
+| **ORM** | **Drizzle ORM** | Skema *type-safe* di `server/database/schema.ts`. |
+| **Autentikasi & Sesi** | **Google OAuth (`nuxt-auth-utils`)** | 1 pintu masuk di `/login` dengan cookie sesi terenkripsi (`NUXT_SESSION_PASSWORD`). |
+| **Foto Profil** | **Kompresi WebP Klien (256×256)** | Crop 1:1 di browser (`app/utils/avatarUpload.ts`), disimpan sebagai DataURL tervalidasi (`avatarUrlSchema`) tanpa ketergantungan storage eksternal. |
+| **Pertemuan & Chat** | **Link Eksternal / Tatap Muka + Polling (3–5 dtk)** | Auto-link Google Meet/Zoom/Discord di ruang chat khusus sesi `Confirmed`. |
 
 ---
 
@@ -51,104 +51,95 @@
 
 ```mermaid
 flowchart LR
-    A["Login Google OAuth"] --> B["Onboarding 1 Langkah (Skill Ajar + Belajar, +2 Kredit)"]
-    B --> C["Direktori Skill (Filter Kategori & Jadwal)"]
-    C --> D{"Slot Pengajar Tersedia?"}
-    D -- Ya --> E["Kirim Request / Booking (Kunci Kredit di Escrow)"]
-    D -- Penuh --> F["Masuk Hold Queue (Escrow Terkunci, Auto-Expire 48 Jam)"]
-    F -- Diterima --> E
-    E --> G["Koordinasi di Chat Sesi"]
-    G --> H["Pelaksanaan Sesi & Kode Check-in 6 Digit / QR"]
-    H --> I["Ulasan Terverifikasi Terbuka & Pencairan Kredit (Jeda Sengketa 24 Jam)"]
+    Landing["/ Pratinjau Publik & Simulasi"] --> Login["/login (1 Tombol Google OAuth)"]
+    Login --> Check{"User Baru?"}
+    Check -- Ya --> Onb["/onboarding (Nama Kustom, Foto, Bio, Minat +2 Kredit)"]
+    Check -- Tidak --> Dash["/dashboard (Mode Belajar & Mengajar)"]
+    Onb --> Dash
+    Dash --> Explore["/explore (Direktori Filterable)"]
+    Explore --> Slot{"Slot Tersedia?"}
+    Slot -- Ya --> Book["Booking Langsung (Kunci 1 Kredit Escrow)"]
+    Slot -- Penuh --> Queue["Hold Queue (Escrow 48 Jam)"]
+    Queue -- Diterima Tutor --> Book
+    Book --> Chat["Workspace /sessions/[id] (Chat & Check-in 6-Digit/QR)"]
+    Chat --> Review["Ulasan Terverifikasi Terbuka & Jeda Sengketa 24 Jam"]
+    Review --> Payout["Pencairan Kredit ke Saldo Pengajar"]
 ```
 
 ---
 
 ## 5. Spesifikasi Fungsional Rinci
 
-### 5.1 Autentikasi & Onboarding 1 Langkah
-- **FR-1.1 Login Google OAuth:** Pengguna masuk menggunakan akun Google tanpa verifikasi OTP email.
-- **FR-1.2 Onboarding Wajib:** Sebelum mengakses direktori, pengguna baru wajib melengkapi:
-  - Minimal **1 skill yang bisa diajarkan** (dapat memilih template topik *micro-session* yang sudah disediakan).
-  - Minimal **1 skill yang ingin dipelajari**.
-  - Kolom opsional nama kampus dan jurusan.
-- **FR-1.3 Saldo Awal:** Akun baru otomatis menerima **2 kredit** sebagai modal awal belajar.
+### 5.0 Halaman Pratinjau Publik (`/`)
+- **FR-0.1 Pratinjau Tanpa Login:** Pengunjung dapat langsung melihat ringkasan nilai produk, angka statistik nyata dari database (skill aktif, sesi selesai, ulasan terverifikasi), dan daftar pratinjau mentor aktif sebelum masuk.
+- **FR-0.2 Simulasi Interaktif Ekonomi Kredit & Check-in:**
+  - `CreditFlowSimulator`: simulasi interaktif 3 skenario (*1-on-1*, *Grup Cap 2*, dan *Refund 100% / Tutor No-Show*) yang dapat diputar, dijeda, dan diklik per langkah.
+  - `CheckinPreviewWidget`: simulasi alur pembuatan kode check-in 6 digit/QR hingga terbukanya form ulasan terverifikasi.
+- **FR-0.3 Direktori Master-Detail Publik:** Pengunjung dapat memfilter kategori pratinjau mentor dan memilih penawaran untuk melihat sorotan detail serta ulasan terverifikasi.
 
-### 5.2 Profil, Listing Skill & Micro-Session
-- **FR-2.1 Penawaran Sesi:** Pengajar dapat membuat penawaran skill dengan pilihan:
-  - **Durasi:** *Micro-session* **30 menit** (tanya-jawab, *review* tugas/desain, bedah studi kasus) atau sesi standar **60 menit**.
-  - **Mode:** **1-on-1** atau **Grup (2–5 pembelajar, khusus 60 menit)**.
-  - **Format Pertemuan:** Tatap muka (lokasi kampus) atau Online (tautan Google Meet / Zoom / Discord).
-  - **Ketersediaan:** Slot hari dan jam yang dapat difilter pembelajar.
-- **FR-2.2 Template Micro-Session:** Sistem menyediakan template topik siap pakai (misalnya *"Code/Portfolio Review 30 Menit"*, *"Q&A Dasar"*, *"Latihan Presentasi"*) untuk membantu pengajar pemula.
+### 5.1 Autentikasi Tunggal, Badge Verified UKSW & Onboarding Kustom
+- **FR-1.1 Satu Pintu Login (`/login`):** Hanya tersedia **1 tombol OAuth Google** di halaman `/login`. Seluruh tombol masuk lain di `/` me-route ke `/login`. Pengguna yang sudah memiliki sesi aktif otomatis diarahkan dari `/login` ke `/dashboard` (atau `/onboarding`).
+- **FR-1.2 Verifikasi Otomatis Kampus UKSW (`Verified UKSW`):** Akun yang masuk dengan domain email `@student.uksw.edu` atau `@uksw.edu` otomatis ditandai `isVerifiedUksw = true`, memperoleh badge **Verified UKSW** di profil, dashboard, dan direktori, serta prefill kampus `Universitas Kristen Satya Wacana (UKSW)`. Akun Gmail umum tetap dapat mendaftar dan memakai seluruh fitur.
+- **FR-1.3 Personalisasi Identitas di Onboarding (`/onboarding`) & Profil (`/profile`):**
+  - Pengguna dapat mengubah **Nama Tampilan** (tidak terikat nama bawaan Google), mengunggah atau menghapus **Foto Profil** (PNG/JPEG/WebP maks 5 MB, dikompres otomatis ke WebP 256×256), serta mengisi **Bio Singkat**, **Kampus**, dan **Jurusan**.
+  - Memilih minimal 1 minat belajar dan 1 draf topik mengajar 30 menit (tersedia chip cepat & template).
+  - Menyelesaikan onboarding memberikan **+2 kredit modal awal** dan mengarahkan langsung ke `/dashboard`.
 
-### 5.3 Direktori Pencarian, Request & Hold Queue
-- **FR-3.1 Direktori Filterable:** Pengguna mencari mentor berdasarkan kategori skill, tipe sesi (1-on-1 / grup), format (online / tatap muka), dan jadwal tersedia. Tanpa AI matchmaking di v1.
-- **FR-3.2 Request Langsung:** Pembelajar memilih slot pengajar dan mengirim permintaan sesi. Sistem memverifikasi saldo mencukupi lalu langsung mengunci kredit ke *escrow*.
-- **FR-3.3 Hold Queue (Mitigasi Skill Permintaan Tinggi):**
-  - Jika slot pengajar sedang penuh, pembelajar dapat masuk ke **Hold Queue** yang menempel pada penawaran skill (`skill_id`, dengan `session_id` masih `NULL` dan catatan preferensi waktu).
-  - Kredit pembelajar **langsung dikunci di *escrow*** saat masuk antrean agar antrean hanya berisi peminat serius.
-  - Pengajar dapat **Menerima & Menjadwalkan** antrean (membuat slot `SESSIONS` baru lalu menautkan `booking_id`) atau **Menolak** (kredit langsung *refund*).
-  - Jika tidak diterima pengajar dalam **48 jam**, permintaan otomatis kedaluwarsa (*expired*) dan kredit dikembalikan ke saldo pembelajar.
+### 5.2 Dashboard Aktivitas (`/dashboard`)
+- **FR-2.1 Pusat Aktivitas 2-Mode:** Pengguna dapat beralih antara **Mode Belajar** dan **Mode Mengajar**.
+- **FR-2.2 Ringkasan Dompet & Reputasi:** Menampilkan rasio saldo tersedia vs escrow secara visual, progres menuju badge `Verified Peer Mentor`, rekomendasi mentor yang cocok dengan minat belajar, agenda sesi terdekat, peringatan Hold Queue masuk, dan riwayat ledger terbaru.
 
-### 5.4 Ekonomi Kredit (Bilangan Bulat & Anti-Minus)
-Seluruh kredit menggunakan **bilangan bulat (`1, 2, 3, ...`)** dan saldo **tidak pernah boleh kurang dari `0`**.
+### 5.3 Listing Skill, Micro-Session & Mengajar (`/teach`)
+- **FR-3.1 Penawaran Sesi:** Pengajar dapat menambahkan topik skill dan mempublikasikan slot jadwal:
+  - **Durasi:** *Micro-session* **30 menit** atau standar **60 menit**.
+  - **Mode:** **1-on-1** atau **Grup (2–5 peserta, khusus 60 menit)**.
+  - **Format:** Online (tautan Meet/Zoom/Discord) atau Tatap Muka (lokasi kampus).
+- **FR-3.2 Pengaman Cooldown:** Jika pengajar sedang dalam masa *cooldown*, formulir publikasi slot dinonaktifkan dan banner status ditampilkan jelas.
 
-| Jenis Sesi | Durasi | Biaya Pembelajar | Pendapatan Pengajar | Catatan Ekonomi |
+### 5.4 Direktori Pencarian, Booking & Hold Queue (`/explore`, `/sessions`)
+- **FR-4.1 Filter Direktori:** Pencarian teks (judul/topik/mentor), filter kategori, durasi (`30m`/`60m`), tipe (`1-on-1`/`Grup`), format (`Online`/`Kampus`), dan filter slot tersedia.
+- **FR-4.2 Booking Langsung & Hold Queue 48 Jam:**
+  - Slot tersedia: memotong `1` kredit ke *escrow* dan langsung membuat booking `Confirmed`.
+  - Slot penuh: pembelajar dapat masuk **Hold Queue** pada `skill_id` (`session_id = NULL`) dengan catatan waktu pilihan dan penguncian `1` kredit di *escrow*.
+  - Pengajar dapat **Terima & Jadwalkan** (membuat sesi dan membuka chat) atau **Tolak** (refund 100%). Jika tidak direspons dalam **48 jam**, *lazy-check* otomatis mengembalikan kredit 100%.
+
+### 5.5 Ekonomi Kredit (Bilangan Bulat & Anti-Minus)
+
+| Jenis Sesi | Durasi | Biaya Pembelajar | Pendapatan Pengajar | Aturan Ekonomi |
 | :--- | :--- | :--- | :--- | :--- |
-| **1-on-1 (Micro / Standar)** | 30 atau 60 menit | `1` kredit | `1` kredit | Pertukaran 1:1 bersih. |
-| **Grup (2–5 Pembelajar)** | 60 menit | `1` kredit / orang | Flat maksimal **`2` kredit** | Kuorum minimal **2 pembelajar** pada `T - 2 jam`. Total kredit masuk selalu $\ge 2$, mencegah inflasi kredit. |
+| **1-on-1 (Micro / Standar)** | 30 atau 60 menit | `1` kredit | `1` kredit | Pertukaran 1:1 langsung tanpa biaya uang. |
+| **Grup (2–5 Pembelajar)** | 60 menit | `1` kredit / orang | Maksimal flat **`2` kredit** | Kuorum minimal **2 peserta** pada `T - 2 jam`; mencegah inflasi kredit. |
 
-- **FR-4.1 Kuorum Sesi Grup:** Jika hingga **2 jam sebelum sesi dimulai (`T - 2 jam`)** jumlah pembelajar terkonfirmasi kurang dari **2 orang**, sesi grup otomatis dibatalkan dan seluruh kredit *escrow* dikembalikan ke pembelajar.
-- **FR-4.2 Transaksi Atomik:** Pemotongan saldo, penguncian *escrow*, pencairan, dan *refund* wajib berjalan di dalam transaksi database PostgreSQL dengan penguncian baris agar tidak terjadi *double-spend* atau saldo negatif.
-- **FR-4.3 Pelacakan Parsial Sesi Grup:** Kehadiran (`checked_in_at`), ulasan, dan sengketa dilacak per `booking_id`. Pembelajar yang check-in dapat memberi ulasan dan masuk jeda sengketa 24 jam; pembelajar yang *no-show* hangus `1` kreditnya; total pendapatan pengajar tetap dibatasi maksimal `2` kredit per sesi grup. Sengketa pada satu `booking_id` tidak menahan pencairan peserta lain yang sah.
+- **FR-5.1 Transaksi Atomik & Ledger (`/wallet`):** Semua mutasi `credit_balance` berjalan atomik di PostgreSQL (`balance >= 0`) dan dicatat kronologis pada `credit_ledger`.
+- **FR-5.2 Pelacakan Parsial Grup:** Check-in, ulasan, pembatalan, dan sengketa dilacak per `booking_id` sehingga sengketa 1 peserta tidak menahan pencairan peserta lain yang sah.
 
-### 5.5 Verifikasi Kehadiran, Ulasan Terverifikasi & Badge
-- **FR-5.1 Check-in 6 Digit / QR:** Pengajar dapat membuat **kode check-in 6 digit (beserta QR)** di halaman sesi mulai **`T - 10 menit`** hingga **`T + 15 menit`** dari `scheduled_at`. Pembelajar memasukkan kode tersebut untuk mencatat kehadiran terverifikasi.
-- **FR-5.2 Ulasan Terverifikasi (*Attendance-Gated*):** Fitur pemberian rating (1–5) dan ulasan teks **hanya terbuka** setelah kehadiran tercatat.
-- **FR-5.3 Pencairan Escrow & Jeda Sengketa:** Setelah check-in sukses, pencairan kredit ke pengajar menunggu **jeda sengketa 24 jam** (atau langsung cair jika tidak ada laporan pelanggaran dalam 24 jam).
-- **FR-5.4 Badge "Verified Peer Mentor":** Diberikan otomatis kepada pengajar yang memenuhi ketiga syarat berikut:
-  - Menyelesaikan **$\ge 3$ sesi mengajar**.
-  - Rating rata-rata **$\ge 4,5 / 5,0$**.
-  - Memiliki **0 penalti aktif**.
+### 5.6 Verifikasi Kehadiran, Ulasan, Pembatalan & Cooldown (`/sessions/[id]`)
+- **FR-6.1 Window Check-in (`T - 10m` s.d. `T + 15m`):** Pengajar membuat kode 6 digit + QR; pembelajar mengetik kode atau memindai QR via kamera.
+- **FR-6.2 Ulasan Terverifikasi (*Attendance-Gated*):** Form rating (1–5) dan komentar hanya muncul setelah status booking `CheckedIn` atau `Completed`.
+- **FR-6.3 Jeda Sengketa 24 Jam:** Setelah check-in, kredit menunggu 24 jam sebelum cair otomatis ke pengajar agar pembelajar dapat melapor jika terjadi pelanggaran.
+- **FR-6.4 Badge `Verified Peer Mentor`:** Otomatis aktif bila pengajar memiliki $\ge 3$ sesi mengajar selesai, rating rata-rata $\ge 4,5$, dan `0` penalti aktif.
+- **FR-6.5 Pembatalan & Penalti Cooldown:**
+  - Batal $\ge 12$ jam sebelum sesi: refund 100% gratis.
+  - Batal $< 12$ jam atau Learner No-Show: 1 kredit diserahkan ke pengajar.
+  - Tutor No-Show (lewat `T + 15m` tanpa kode check-in): refund 100% ke pembelajar + *cooldown* mengajar bertingkat **1 hari $\rightarrow$ 3 hari $\rightarrow$ 7 hari** (maksimal, tanpa saldo minus).
 
-### 5.6 Pembatalan, No-Show & Penalti Cooldown
 ```mermaid
 stateDiagram-v2
     [*] --> Queued: "Hold Queue (Escrow Terkunci)"
-    Queued --> Expired: "48 Jam Tidak Diterima (Refund)"
-    Queued --> Confirmed: "Diterima Pengajar"
+    Queued --> Expired: "48 Jam Tidak Direspons (Refund 100%)"
+    Queued --> Confirmed: "Diterima & Dijadwalkan Pengajar"
     [*] --> Confirmed: "Booking Slot Tersedia (Escrow Terkunci)"
     Confirmed --> CancelledFree: "Batal >= 12 Jam (Refund 100%)"
     Confirmed --> ForfeitedToTutor: "Batal < 12 Jam / Learner No-Show"
-    Confirmed --> TutorPenalized: "Tutor No-Show (Refund 100% + Cooldown 1-7 Hari)"
-    Confirmed --> CheckedIn: "Kode Check-in Tervalidasi"
+    Confirmed --> TutorPenalized: "Tutor No-Show (Refund + Cooldown 1-7h)"
+    Confirmed --> CheckedIn: "Check-in 6-Digit / QR Tervalidasi"
     CheckedIn --> Completed: "Jeda Sengketa 24 Jam Selesai (Kredit Cair)"
-    CheckedIn --> Disputed: "Ada Laporan (Masuk Antrean Admin)"
+    CheckedIn --> Disputed: "Laporan Sengketa Masuk Admin"
 ```
 
-- **FR-6.1 Batal Gratis ($\ge 12$ jam):** Pembelajar atau pengajar membatalkan minimal 12 jam sebelum jadwal mulai $\rightarrow$ kredit *escrow* dikembalikan 100% tanpa penalti.
-- **FR-6.2 Batal Terlambat / Learner No-Show ($< 12$ jam atau tidak check-in dalam 15 menit):** Kredit *escrow* pembelajar hangus dan diserahkan ke pengajar sebagai kompensasi waktu.
-- **FR-6.3 Tutor No-Show (Penalti Cooldown, Bukan Saldo Minus):**
-  - **Deteksi:** Jika lewat **`15 menit`** dari `scheduled_at` pengajar belum membuat `checkin_code`, *lazy-check* otomatis memicu `TutorPenalized`. Jika kode sempat dibuat tetapi pengajar tidak hadir, pembelajar dapat mengajukan laporan sengketa manual ke Admin.
-  - Kredit *escrow* pembelajar dikembalikan 100%.
-  - Pengajar dikenai **masa jeda (*cooldown*) tidak dapat membuat atau menerima sesi mengajar** berdasarkan `penalty_count`:
-    - Pelanggaran ke-1: **1 hari (24 jam)**.
-    - Pelanggaran ke-2: **3 hari**.
-    - Pelanggaran ke-3 dan seterusnya: **7 hari** (maksimal), termasuk jika saldo pengajar `0`.
-
-### 5.7 Fitur Chatting Terikat Sesi
-- **FR-7.1 Ruang Chat Otomatis:** Setiap sesi yang berstatus `Confirmed` (1-on-1 maupun grup) otomatis memiliki satu ruang chat khusus untuk peserta sesi tersebut. Tidak ada DM bebas di luar konteks sesi maupun sebelum permintaan `Queued` disetujui untuk mencegah *spam*.
-- **FR-7.2 Konten Chat:** Mendukung pesan teks dan pendeteksian tautan otomatis (untuk membagikan link Google Meet/Zoom, lokasi kampus, atau referensi belajar). Upload file/gambar tidak disertakan di MVP.
-- **FR-7.3 Sinkronisasi Pesan:** Menggunakan *polling* ringan (interval 3–5 detik saat halaman chat aktif) atau SSE ke endpoint Nuxt.
-
-### 5.8 Admin, Metrik Evaluasi v1 & Alat Demo
-- **FR-8.1 Antrean Laporan & Sengketa:** Admin (ditentukan langsung melalui kolom `USERS.role = 'admin'` di database atau *seed data*) dapat meninjau laporan pelanggaran perilaku atau sengketa sesi per `booking_id` dalam jeda 24 jam, lalu memutuskan *refund* ke pembelajar, pencairan ke pengajar, atau penalti *cooldown*.
-- **FR-8.2 Dashboard Metrik Evaluasi:** Menampilkan dan mengekspor (CSV/JSON) metrik evaluasi dari abstrak:
-  - Jumlah sesi selesai (1-on-1 vs grup, 30 menit vs 60 menit).
-  - Total perputaran kredit (masuk *escrow*, cair, *refund*, kedaluwarsa).
-  - Rekap ulasan, rating rata-rata, dan umpan balik peserta uji coba.
-- **FR-8.3 Simulasi Waktu Demo Juri:** Dashboard Admin menyediakan kontrol simulasi (*fast-forward*) untuk mempercepat evaluasi jeda sengketa 24 jam, kedaluwarsa *Hold Queue* 48 jam, dan batas kuorum `T - 2 jam` pada data uji coba saat demo langsung.
+### 5.7 Ruang Chat Terikat Sesi & Admin (`/admin`)
+- **FR-7.1 Chat Sesi Otomatis:** Ruang chat aktif hanya untuk peserta sesi `Confirmed` ke atas dengan deteksi tautan otomatis (tanpa DM bebas dan tanpa upload file).
+- **FR-7.2 Dashboard Admin & Simulasi Juri:** Metrik evaluasi v1 + ekspor CSV/JSON, penyelesaian laporan sengketa (`Refund Pembelajar`, `Cairkan ke Pengajar`, `Terapkan Cooldown Tutor`), dan tombol *fast-forward* waktu untuk demo langsung.
 
 ---
 
@@ -173,11 +164,14 @@ erDiagram
         text google_id
         text email
         text name
+        text avatar_url
+        text bio
         text campus
         text major
         int credit_balance
         int penalty_count
         timestamp teaching_cooldown_until
+        timestamp onboarding_completed_at
         text role
     }
     USER_SKILLS {
@@ -186,6 +180,7 @@ erDiagram
         text direction
         text category
         text title
+        text description
         text template_tag
         jsonb availability_slots
     }
@@ -217,7 +212,7 @@ erDiagram
     CREDIT_LEDGER {
         uuid id PK
         uuid user_id FK
-        uuid booking_id FK "nullable untuk modal awal"
+        uuid booking_id FK
         int delta
         int balance_after
         text reason
@@ -242,7 +237,7 @@ erDiagram
     REPORTS {
         uuid id PK
         uuid session_id FK
-        uuid booking_id FK "nullable"
+        uuid booking_id FK
         uuid reporter_id FK
         text reason
         text status
@@ -252,27 +247,16 @@ erDiagram
 
 ---
 
-## 7. Non-Functional Requirements & Batasan MVP
+## 7. Kebutuhan Non-Fungsional & Batasan MVP
 
-### Kebutuhan Non-Fungsional
-1. **Integritas Data Kredit:** Setiap perubahan `credit_balance` wajib dicatat di `credit_ledger` dalam satu transaksi DB atomik dengan `CHECK (credit_balance >= 0)`.
-2. **Responsivitas UI:** Seluruh alur inti (direktori, booking, QR check-in, dan chat) nyaman dipakai pada layar ponsel maupun desktop.
-3. **Otomasi Berbasis Waktu:** Status kedaluwarsa *hold queue* (`48 jam`), pembatalan kuorum grup (`T - 2 jam`), dan pencairan pasca-sengketa (`24 jam`) ditangani lewat pengecekan terjadwal atau evaluasi *lazy-check* saat *request* API agar reliabel di MVP.
+### Non-Functional Requirements
+1. **Integritas Kredit:** Saldo kredit tidak pernah negatif; setiap perubahan tercatat atomik di `credit_ledger`.
+2. **Konsistensi Visual & Aksesibilitas:** Seluruh UI wajib mematuhi sistem **Single-Hue Primary Blue + Stroke** dan kontras WCAG AA pada [DESIGN.md](file:///D:/Project/Hackathon/DESIGN.md).
+3. **Performa & Responsivitas:** Pengambilan data halaman terautentikasi dan publik bersifat *non-blocking* dengan state *Loading*, *Error*, dan *Empty* yang jelas di mobile maupun desktop.
+4. **Otomasi Berbasis Waktu:** Evaluasi kedaluwarsa Hold Queue (48 jam), kuorum grup (`T - 2 jam`), deteksi Tutor No-Show (`T + 15m`), dan pencairan pasca-sengketa (24 jam) berjalan otomatis lewat *lazy-check* API.
 
 ### Di Luar Ruang Lingkup (*Out of Scope* v1)
 - Pencocokan berbasis AI / ML (*AI matching*).
-- Verifikasi OTP email / pembatasan paksa domain `.ac.id`.
-- *Video/audio call* bawaan (WebRTC).
-- Upload file/gambar di ruang chat.
-- Pembayaran atau penarikan uang nyata (*fiat*).
-
----
-
-## 8. Rencana Tahapan Pengembangan & Kriteria Selesai
-
-| Fase | Fokus Pekerjaan | Kriteria Selesai (*Definition of Done*) |
-| :--- | :--- | :--- |
-| **Fase 1: Fondasi** | Setup Nuxt (TS), Tailwind v4, PostgreSQL, Drizzle schema, Google OAuth, Onboarding 1 langkah, saldo awal `2` kredit. | Pengguna bisa login Google, mengisi skill ajar/belajar, dan melihat saldo `2` kredit di profil. |
-| **Fase 2: Direktori & Escrow** | Listing skill/micro-session, filter direktori, booking 1-on-1 & grup, *hold queue* 48 jam, transaksi *escrow* atomik. | Kredit terkunci saat request/queue, batal $\ge 12$ jam refund penuh, kuorum grup `< 2` di `T - 2 jam` auto-batal. |
-| **Fase 3: Sesi, Trust & Chat** | Chat per sesi (polling/SSE), kode check-in 6 digit/QR, ulasan terverifikasi, badge *Verified Peer Mentor*, penalti *cooldown* 1–7 hari. | Pembelajar hanya bisa mengulas setelah check-in; tutor *no-show* otomatis kena *cooldown* mengajar. |
-| **Fase 4: Evaluasi & User Test** | Dashboard admin (resolusi laporan + ekspor metrik v1), *seeding* data demo, serta *small user test*. | Tim bisa mendemokan seluruh alur ujung-ke-ujung dan mengekspor metrik untuk presentasi juri. |
+- Verifikasi OTP email atau pemblokiran akun non-kampus.
+- Panggilan video/audio bawaan (WebRTC) dan unggah file di ruang chat.
+- Pembayaran atau penarikan uang fiat.

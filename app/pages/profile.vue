@@ -173,45 +173,45 @@ function formatDate(iso: string) {
     </UAlert>
 
     <template v-else-if="data">
-      <!-- Royal Blue Identity Banner -->
-      <section class="bg-gradient-to-br from-[#0B2249] via-[#13366F] to-[#1D4ED8] text-white rounded-2xl p-6 sm:p-7 space-y-5 border border-blue-800/60 shadow-sm">
+      <!-- Primary Stroke Identity Banner -->
+      <section class="bg-white text-slate-900 rounded-2xl p-6 sm:p-7 space-y-5 border-2 border-blue-600">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <UAvatar :src="data.user.avatarUrl || undefined" :alt="data.user.name" size="xl" />
             <div class="space-y-1">
               <div class="flex flex-wrap items-center gap-2">
-                <h1 class="text-xl sm:text-2xl font-bold text-white">{{ data.user.name }}</h1>
-                <VerifiedUkswBadge v-if="data.user.isVerifiedUksw" tone="dark" />
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{{ data.user.name }}</h1>
+                <VerifiedUkswBadge v-if="data.user.isVerifiedUksw" />
                 <span
                   v-if="data.reputation.isVerifiedMentor"
-                  class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white/15 text-blue-100 border border-white/25"
+                  class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white text-blue-700 border border-blue-600"
                 >
-                  <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5 text-sky-300" aria-hidden="true" />
+                  <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
                   Verified Peer Mentor
                 </span>
               </div>
-              <p class="text-sm text-blue-100">{{ data.user.email }}</p>
-              <p v-if="data.user.bio" class="text-xs sm:text-sm text-white/90 pt-0.5">
+              <p class="text-sm text-slate-600">{{ data.user.email }}</p>
+              <p v-if="data.user.bio" class="text-xs sm:text-sm text-slate-700 pt-0.5">
                 {{ data.user.bio }}
               </p>
-              <p v-if="data.user.campus || data.user.major" class="text-xs text-blue-200">
+              <p v-if="data.user.campus || data.user.major" class="text-xs text-slate-500">
                 {{ [data.user.major, data.user.campus].filter(Boolean).join(' · ') }}
               </p>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 text-center bg-white/10 border border-white/15 rounded-xl px-4 py-3 tabular-nums shrink-0">
+          <div class="grid grid-cols-3 gap-3 text-center bg-blue-50/60 border border-blue-200 rounded-xl px-4 py-3 tabular-nums shrink-0">
             <div>
-              <p class="text-[11px] text-blue-200">Kredit</p>
-              <p class="text-lg font-bold font-mono text-sky-200">{{ data.user.creditBalance }}</p>
+              <p class="text-[11px] text-slate-600">Kredit</p>
+              <p class="text-lg font-bold font-mono text-blue-700">{{ data.user.creditBalance }}</p>
             </div>
             <div>
-              <p class="text-[11px] text-blue-200">Mengajar</p>
-              <p class="text-lg font-bold font-mono text-white">{{ data.reputation.completedTeaching }}</p>
+              <p class="text-[11px] text-slate-600">Mengajar</p>
+              <p class="text-lg font-bold font-mono text-slate-900">{{ data.reputation.completedTeaching }}</p>
             </div>
             <div>
-              <p class="text-[11px] text-blue-200">Rating</p>
-              <p class="text-lg font-bold font-mono text-white">
+              <p class="text-[11px] text-slate-600">Rating</p>
+              <p class="text-lg font-bold font-mono text-slate-900">
                 {{ data.reputation.reviewCount > 0 ? data.reputation.avgRating : '0.0' }}
               </p>
             </div>
@@ -220,10 +220,10 @@ function formatDate(iso: string) {
 
         <div
           v-if="!data.user.isVerifiedUksw"
-          class="rounded-xl bg-white/10 border border-white/15 px-4 py-3 text-xs text-blue-100 flex flex-wrap items-center justify-between gap-2"
+          class="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2"
         >
           <span>
-            Ingin mendapatkan badge <strong class="text-white">Verified UKSW</strong>? Masuk menggunakan akun email <code class="font-mono text-white">@student.uksw.edu</code> atau <code class="font-mono text-white">@uksw.edu</code>.
+            Ingin mendapatkan badge <strong class="text-blue-700">Verified UKSW</strong>? Masuk menggunakan akun email <code class="font-mono text-slate-900">@student.uksw.edu</code> atau <code class="font-mono text-slate-900">@uksw.edu</code>.
           </span>
         </div>
       </section>
@@ -407,7 +407,7 @@ function formatDate(iso: string) {
                 <span
                   v-for="skill in teachSkills"
                   :key="skill.id"
-                  class="text-xs font-medium text-sky-800 bg-sky-50 border border-sky-200 rounded-lg px-3 py-1.5"
+                  class="text-xs font-medium text-blue-700 bg-white border border-blue-600 rounded-lg px-3 py-1.5"
                 >
                   {{ skill.title }}
                 </span>
@@ -443,17 +443,17 @@ function formatDate(iso: string) {
               />
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <p class="font-semibold text-slate-900">1. Minimal 3 Sesi Selesai</p>
                 <p class="text-slate-600 mt-0.5 tabular-nums">Saat ini: {{ data.reputation.completedTeaching }}/3</p>
               </div>
-              <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <p class="font-semibold text-slate-900">2. Rating Rata-rata &ge; 4.5</p>
                 <p class="text-slate-600 mt-0.5 tabular-nums">
                   Saat ini: {{ data.reputation.reviewCount > 0 ? data.reputation.avgRating : 'Belum ada ulasan' }}
                 </p>
               </div>
-              <div class="p-3 rounded-xl bg-[#EFF5FD] border border-blue-100">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <p class="font-semibold text-slate-900">3. Nol Penalti Aktif</p>
                 <p class="text-slate-600 mt-0.5 tabular-nums">Saat ini: {{ data.user.penaltyCount }} Penalti</p>
               </div>
