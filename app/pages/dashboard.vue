@@ -199,7 +199,7 @@ function formatDateTime(iso: string) {
             <li
               v-for="rec in data.recommendations"
               :key="rec.skill.id"
-              class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-stone-50/70 transition-colors"
+              class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-stone-50/90 transition-[background-color,transform] duration-150"
             >
               <div class="min-w-0 space-y-1.5">
                 <div class="flex flex-wrap items-center gap-1.5">

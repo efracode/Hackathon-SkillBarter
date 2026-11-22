@@ -25,52 +25,6 @@ interface PreviewPayload {
 
 const { loggedIn } = useUserSession()
 const { data: previewData, status: previewStatus } = useLazyFetch<PreviewPayload>('/api/preview')
-
-const activeStep = ref(0)
-const simulationSteps = [
-  {
-    code: '01',
-    label: 'Booking Slot',
-    title: 'Kredit dikunci aman di Escrow',
-    detail: 'Saat kamu memesan micro-session 30 menit, 1 kredit dipindahkan ke escrow agar pengajar yakin pemesan serius.',
-    learnerAvailable: 1,
-    escrowHeld: 1,
-    tutorEarned: 0,
-    statusBadge: 'Escrow Terkunci'
-  },
-  {
-    code: '02',
-    label: 'Micro-Session 30m',
-    title: 'Sesi santai berbasis template topik',
-    detail: 'Tanpa perlu slide kuliah berat. Fokus tanya-jawab, bedah error, atau review portofolio lewat Meet atau tatap muka kampus.',
-    learnerAvailable: 1,
-    escrowHeld: 1,
-    tutorEarned: 0,
-    statusBadge: 'Sesi Berlangsung'
-  },
-  {
-    code: '03',
-    label: 'Check-in QR / PIN',
-    title: 'Kehadiran terverifikasi di tempat',
-    detail: 'Pengajar memunculkan kode 6 digit & QR. Pembelajar memindai untuk mencatat bukti kehadiran nyata sebelum mengulas.',
-    learnerAvailable: 1,
-    escrowHeld: 1,
-    tutorEarned: 0,
-    statusBadge: 'Kehadiran Terverifikasi'
-  },
-  {
-    code: '04',
-    label: 'Ulasan & Cair',
-    title: 'Ulasan terbuka & kredit cair 1:1',
-    detail: 'Form rating hanya terbuka bagi peserta yang check-in. Setelah jeda sengketa 24 jam, 1 kredit cair ke pengajar.',
-    learnerAvailable: 1,
-    escrowHeld: 0,
-    tutorEarned: 1,
-    statusBadge: 'Selesai (+1 Kredit)'
-  }
-]
-
-const currentSim = computed(() => simulationSteps[activeStep.value] || simulationSteps[0]!)
 </script>
 
 <template>
@@ -165,69 +119,9 @@ const currentSim = computed(() => simulationSteps[activeStep.value] || simulatio
             </div>
           </div>
 
-          <!-- Interactive Credit & Escrow Preview Widget -->
+          <!-- Animated Interactive Credit & Escrow Flow Simulator -->
           <div id="simulasi" class="lg:col-span-6">
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-5">
-              <div class="flex items-center justify-between gap-2">
-                <div>
-                  <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Pratinjau Mekanisme
-                  </p>
-                  <h2 class="text-base font-bold text-slate-900">
-                    Simulasi Siklus 1 Kredit &amp; Escrow
-                  </h2>
-                </div>
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-indigo-700">
-                  {{ currentSim.statusBadge }}
-                </span>
-              </div>
-
-              <!-- Step Selector Tabs -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" role="tablist" aria-label="Tahapan Simulasi Kredit">
-                <button
-                  v-for="(step, idx) in simulationSteps"
-                  :key="step.code"
-                  type="button"
-                  role="tab"
-                  :aria-selected="activeStep === idx"
-                  :class="[
-                    'text-left p-2.5 rounded-xl border text-xs transition-colors min-h-[44px]',
-                    activeStep === idx
-                      ? 'bg-indigo-600 border-indigo-600 text-white font-semibold'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-                  ]"
-                  @click="activeStep = idx"
-                >
-                  <span class="font-mono block opacity-80">{{ step.code }}</span>
-                  <span class="truncate block">{{ step.label }}</span>
-                </button>
-              </div>
-
-              <!-- Active Simulation State Card -->
-              <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-4">
-                <div>
-                  <h3 class="text-sm font-bold text-slate-900">{{ currentSim.title }}</h3>
-                  <p class="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    {{ currentSim.detail }}
-                  </p>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2.5 pt-3 border-t border-slate-100 font-mono tabular-nums">
-                  <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
-                    <p class="text-[11px] font-sans text-slate-500">Saldo Pembelajar</p>
-                    <p class="text-lg font-bold text-slate-900">{{ currentSim.learnerAvailable }}</p>
-                  </div>
-                  <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200">
-                    <p class="text-[11px] font-sans text-amber-700">Escrow Terkunci</p>
-                    <p class="text-lg font-bold text-amber-700">{{ currentSim.escrowHeld }}</p>
-                  </div>
-                  <div class="p-2.5 rounded-lg bg-teal-50 border border-teal-200">
-                    <p class="text-[11px] font-sans text-teal-700">Kredit Pengajar</p>
-                    <p class="text-lg font-bold text-teal-700">+{{ currentSim.tutorEarned }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CreditFlowSimulator />
           </div>
         </div>
       </section>
@@ -318,7 +212,7 @@ const currentSim = computed(() => simulationSteps[activeStep.value] || simulatio
           <article
             v-for="item in previewData.previews"
             :key="item.id"
-            class="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between gap-4"
+            class="bg-white border border-stone-200 rounded-2xl p-5 flex flex-col justify-between gap-4 hover:-translate-y-0.5 hover:border-stone-300 transition-[transform,border-color] duration-150"
           >
             <div class="space-y-2.5">
               <div class="flex items-center justify-between gap-2">

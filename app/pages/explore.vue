@@ -323,7 +323,7 @@ function resetFilters() {
       <article
         v-for="item in data.items"
         :key="item.skill.id"
-        class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 transition-colors duration-150"
+        class="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between gap-4 hover:-translate-y-0.5 hover:border-stone-300 transition-[transform,border-color] duration-150"
       >
         <div class="space-y-3">
           <!-- 1. Header: Category + Slot Summary Pill -->

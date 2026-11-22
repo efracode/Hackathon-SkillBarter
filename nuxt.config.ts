@@ -28,6 +28,7 @@ export default defineNuxtConfig({
     }
   },
   app: {
+    pageTransition: { name: 'page-fade', mode: 'out-in' },
     head: {
       htmlAttrs: {
         lang: 'id'

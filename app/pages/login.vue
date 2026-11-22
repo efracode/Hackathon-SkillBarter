@@ -6,23 +6,32 @@ definePageMeta({
 const route = useRoute()
 const hasOAuthError = computed(() => route.query.error === 'oauth_failed')
 
+const activePillar = ref(0)
 const pillars = [
   {
     code: '01',
+    badge: '+2 Kredit Modal Awal',
     title: 'Mulai belajar dari 2 kredit modal awal',
-    desc: 'Tidak harus langsung mengajar. Masuk ke dashboard, pilih mentor, dan pesan sesi pertamamu.'
+    desc: 'Tidak harus langsung mengajar. Masuk ke dashboard, pilih mentor, dan pesan sesi pertamamu.',
+    preview: 'Saldo Awal: 2 Kredit · Langsung bisa booking 2 sesi 1-on-1.'
   },
   {
     code: '02',
+    badge: 'Micro-Session 30m',
     title: 'Micro-session 30 menit berbasis template',
-    desc: 'Fokus tanya-jawab, bedah error, atau review portofolio tanpa menyiapkan slide panjang.'
+    desc: 'Fokus tanya-jawab, bedah error, atau review portofolio tanpa menyiapkan slide panjang.',
+    preview: 'Template siap pakai: Review Tugas, Q&A Dasar, Latihan Presentasi.'
   },
   {
     code: '03',
+    badge: 'Check-in 6-Digit / QR',
     title: 'Ulasan 100% terverifikasi via Check-in QR',
-    desc: 'Rating hanya terbuka setelah kehadiran dicatat di tempat dengan kode 6 digit atau QR.'
+    desc: 'Rating hanya terbuka setelah kehadiran dicatat di tempat dengan kode 6 digit atau QR.',
+    preview: 'Anti-ulasan palsu · Syarat Verified Peer Mentor: >= 3 sesi & rating >= 4.5.'
   }
 ]
+
+const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 </script>
 
 <template>
@@ -56,21 +65,52 @@ const pillars = [
             </p>
           </div>
 
+          <!-- Interactive Pillars -->
           <div class="border-t border-stone-300 divide-y divide-stone-300">
-            <div
-              v-for="item in pillars"
+            <button
+              v-for="(item, idx) in pillars"
               :key="item.code"
-              class="py-4 grid grid-cols-1 sm:grid-cols-12 gap-1.5 sm:gap-4 items-baseline"
+              type="button"
+              :aria-pressed="activePillar === idx"
+              :class="[
+                'w-full text-left py-4 px-3 -mx-3 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-1.5 sm:gap-4 items-baseline transition-colors duration-150',
+                activePillar === idx ? 'bg-white/80' : 'hover:bg-white/50'
+              ]"
+              @click="activePillar = idx"
             >
-              <span class="sm:col-span-2 font-mono text-xs font-semibold text-teal-700">
+              <span
+                :class="[
+                  'sm:col-span-2 font-mono text-xs font-semibold',
+                  activePillar === idx ? 'text-indigo-700' : 'text-teal-700'
+                ]"
+              >
                 {{ item.code }}
               </span>
               <div class="sm:col-span-10 space-y-1">
-                <h2 class="text-sm font-semibold text-slate-900">{{ item.title }}</h2>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h2 class="text-sm font-semibold text-slate-900">{{ item.title }}</h2>
+                  <span
+                    v-if="activePillar === idx"
+                    class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200"
+                  >
+                    {{ item.badge }}
+                  </span>
+                </div>
                 <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">{{ item.desc }}</p>
               </div>
-            </div>
+            </button>
           </div>
+
+          <!-- Micro Proof Bar synced with active pillar -->
+          <Transition name="panel-slide" mode="out-in">
+            <div
+              :key="activePillar"
+              class="rounded-xl bg-white border border-stone-300 px-4 py-3 flex items-center gap-3 text-xs text-slate-700"
+            >
+              <UIcon name="i-ph-seal-check-duotone" class="w-4 h-4 text-teal-700 shrink-0" aria-hidden="true" />
+              <span>{{ currentPillar.preview }}</span>
+            </div>
+          </Transition>
         </section>
 
         <!-- Auth Card Column -->
@@ -97,7 +137,7 @@ const pillars = [
 
             <a
               href="/api/auth/google"
-              class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm transition-colors duration-150 min-h-[48px]"
+              class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm transition-[background-color,transform] duration-150 active:scale-[0.99] min-h-[48px]"
             >
               <UIcon name="i-ph-google-logo-bold" class="w-5 h-5" aria-hidden="true" />
               <span>Masuk dengan Google</span>

@@ -452,7 +452,7 @@ function formatDateTime(iso: string) {
 
           <div
             v-else-if="data.myBooking.status === 'checked_in' || data.myBooking.status === 'completed'"
-            class="space-y-4"
+            class="space-y-4 verified-reveal"
           >
             <UAlert
               color="secondary"

@@ -294,7 +294,8 @@ async function declineQueue(bookingId: string) {
     </UAlert>
 
     <!-- Tab 1: Active & Upcoming -->
-    <div v-else-if="activeTab === 'active'" class="space-y-4">
+    <Transition v-else name="panel-slide" mode="out-in">
+      <div v-if="activeTab === 'active'" key="tab-active" class="space-y-4">
       <div
         v-if="activeLearnerBookings.length === 0 && activeTutorSessions.length === 0"
         class="bg-white border border-slate-200 rounded-2xl p-8 text-center"
@@ -397,7 +398,7 @@ async function declineQueue(bookingId: string) {
     </div>
 
     <!-- Tab 2: Hold Queue -->
-    <div v-else-if="activeTab === 'queue'" class="space-y-4">
+    <div v-else-if="activeTab === 'queue'" key="tab-queue" class="space-y-4">
       <div
         v-if="myQueuedBookings.length === 0 && (!data?.incomingHoldQueue || data.incomingHoldQueue.length === 0)"
         class="bg-white border border-slate-200 rounded-2xl p-8 text-center"
@@ -477,7 +478,7 @@ async function declineQueue(bookingId: string) {
     </div>
 
     <!-- Tab 3: History -->
-    <div v-else class="space-y-3">
+    <div v-else key="tab-history" class="space-y-3">
       <div
         v-if="historyBookings.length === 0 && historyTutorSessions.length === 0"
         class="bg-white border border-slate-200 rounded-2xl p-8 text-center"
@@ -523,7 +524,8 @@ async function declineQueue(bookingId: string) {
           Lihat Detail
         </NuxtLink>
       </article>
-    </div>
+      </div>
+    </Transition>
 
     <!-- Late Cancellation Confirmation Modal -->
     <UModal v-model:open="cancelConfirmOpen" title="Konfirmasi Pembatalan Terlambat">
