@@ -2,10 +2,10 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { useDb, schema } from '../../../../database'
 import {
-  computeCooldownDays,
   getGroupSessionEarnedCredits,
   mutateUserCredit
 } from '../../../../utils/creditEngine'
+import { computeCooldownDays } from '../../../../utils/creditRules'
 
 const resolveSchema = z.object({
   decision: z.enum(['refund', 'release', 'penalize']),

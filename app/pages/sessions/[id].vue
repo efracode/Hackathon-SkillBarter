@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import QRCode from 'qrcode'
+import jsQR from 'jsqr'
 
 interface WorkspacePayload {
   roleInSession: 'tutor' | 'learner'
@@ -69,6 +70,13 @@ const checkinInput = ref('')
 const checkinLoading = ref(false)
 const checkinError = ref('')
 
+const scannerOpen = ref(false)
+const scannerError = ref('')
+const videoRef = ref<HTMLVideoElement | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+let cameraStream: MediaStream | null = null
+let scanRafId: number | null = null
+
 const reviewRating = ref(5)
 const reviewComment = ref('')
 const reviewLoading = ref(false)
@@ -92,7 +100,77 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
+  stopQrScanner()
 })
+
+function stopQrScanner() {
+  if (scanRafId !== null) {
+    cancelAnimationFrame(scanRafId)
+    scanRafId = null
+  }
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((track) => track.stop())
+    cameraStream = null
+  }
+}
+
+watch(scannerOpen, (open: boolean) => {
+  if (!open) {
+    stopQrScanner()
+  }
+})
+
+async function openQrScanner() {
+  scannerError.value = ''
+  scannerOpen.value = true
+  await nextTick()
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    scannerError.value = 'Browser ini tidak mendukung akses kamera. Silakan masukkan kode 6 digit secara manual.'
+    return
+  }
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    })
+    if (videoRef.value) {
+      videoRef.value.srcObject = cameraStream
+      await videoRef.value.play()
+      scanRafId = requestAnimationFrame(scanFrame)
+    }
+  } catch {
+    scannerError.value = 'Izin kamera ditolak atau kamera tidak tersedia. Masukkan kode 6 digit secara manual.'
+  }
+}
+
+function scanFrame() {
+  const video = videoRef.value
+  const canvas = canvasRef.value
+  if (!video || !canvas || !scannerOpen.value) return
+
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const decoded = jsQR(imageData.data, imageData.width, imageData.height)
+      if (decoded?.data) {
+        const match = decoded.data.match(/\d{6}/)
+        if (match) {
+          checkinInput.value = match[0]
+          scannerOpen.value = false
+          submitCheckin()
+          return
+        }
+      }
+    }
+  }
+
+  scanRafId = requestAnimationFrame(scanFrame)
+}
 
 watch(
   () => data.value?.session?.checkinCode,
@@ -334,7 +412,7 @@ function formatDateTime(iso: string) {
               Masukkan kode 6 digit yang ditampilkan pengajar untuk memverifikasi kehadiran.
             </p>
             <UAlert v-if="checkinError" color="error" variant="subtle" :title="checkinError" />
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <label for="checkin-code-input" class="sr-only">Kode Check-in 6 Digit</label>
               <input
                 id="checkin-code-input"
@@ -343,7 +421,7 @@ function formatDateTime(iso: string) {
                 inputmode="numeric"
                 maxlength="6"
                 placeholder="123456"
-                class="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
+                class="flex-1 min-w-[140px] rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
               />
               <button
                 type="button"
@@ -352,6 +430,14 @@ function formatDateTime(iso: string) {
                 @click="submitCheckin"
               >
                 {{ checkinLoading ? 'Validasi...' : 'Check-in' }}
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-sm font-semibold min-h-[44px]"
+                @click="openQrScanner"
+              >
+                <UIcon name="i-ph-qr-code" class="w-4 h-4" aria-hidden="true" />
+                <span>Scan QR</span>
               </button>
             </div>
           </div>
@@ -528,6 +614,22 @@ function formatDateTime(iso: string) {
         </form>
       </section>
     </div>
+
+    <!-- QR Scanner Modal -->
+    <UModal v-model:open="scannerOpen" title="Scan QR Check-in Pengajar">
+      <template #body>
+        <div class="space-y-3">
+          <UAlert v-if="scannerError" color="error" variant="subtle" :title="scannerError" />
+          <div class="relative rounded-xl overflow-hidden bg-slate-900 aspect-square max-h-[300px] mx-auto">
+            <video ref="videoRef" playsinline muted class="w-full h-full object-cover" />
+            <canvas ref="canvasRef" class="hidden" />
+          </div>
+          <p class="text-xs text-slate-600 text-center">
+            Arahkan kamera ke QR Code di layar pengajar. Check-in otomatis berjalan saat kode terbaca.
+          </p>
+        </div>
+      </template>
+    </UModal>
 
     <!-- Dispute Report Modal -->
     <UModal v-model:open="reportModalOpen" title="Laporkan Masalah / Sengketa">

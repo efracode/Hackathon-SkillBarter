@@ -18,6 +18,7 @@ watch(
 
 const creditBalance = computed(() => meData.value?.user?.creditBalance ?? 0)
 const escrowBalance = computed(() => meData.value?.user?.escrowBalance ?? 0)
+const hasSessionAlert = computed(() => Boolean(meData.value?.user?.hasActiveSessionAlert))
 const isAdmin = computed(() => (meData.value?.user?.role || user.value?.role) === 'admin')
 
 const desktopNav = computed(() => {
@@ -71,6 +72,11 @@ const isActive = (path: string) =>
           >
             <UIcon :name="item.icon" class="w-4 h-4" aria-hidden="true" />
             <span>{{ item.label }}</span>
+            <span
+              v-if="item.to === '/sessions' && hasSessionAlert"
+              class="w-2 h-2 rounded-full bg-indigo-600"
+              aria-label="Ada sesi atau permintaan aktif"
+            />
           </NuxtLink>
         </nav>
 
@@ -123,7 +129,14 @@ const isActive = (path: string) =>
             isActive(item.to) ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900'
           ]"
         >
-          <UIcon :name="item.icon" class="w-5 h-5" aria-hidden="true" />
+          <span class="relative">
+            <UIcon :name="item.icon" class="w-5 h-5" aria-hidden="true" />
+            <span
+              v-if="item.to === '/sessions' && hasSessionAlert"
+              class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-indigo-600"
+              aria-label="Ada sesi atau permintaan aktif"
+            />
+          </span>
           <span>{{ item.label }}</span>
         </NuxtLink>
       </div>

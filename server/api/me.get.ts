@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { useDb, schema } from '../database'
 
 export default defineEventHandler(async (event) => {
@@ -36,6 +36,54 @@ export default defineEventHandler(async (event) => {
     .from(schema.userSkills)
     .where(eq(schema.userSkills.userId, user.id))
 
+  const now = new Date()
+  const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  const windowStart = new Date(now.getTime() - 15 * 60 * 1000)
+
+  const [upcomingTutor] = await db
+    .select({ id: schema.sessions.id })
+    .from(schema.sessions)
+    .where(
+      and(
+        eq(schema.sessions.tutorId, user.id),
+        eq(schema.sessions.status, 'confirmed'),
+        gte(schema.sessions.scheduledAt, windowStart),
+        lte(schema.sessions.scheduledAt, next24h)
+      )
+    )
+    .limit(1)
+
+  const [upcomingLearner] = await db
+    .select({ id: schema.sessionBookings.id })
+    .from(schema.sessionBookings)
+    .innerJoin(schema.sessions, eq(schema.sessionBookings.sessionId, schema.sessions.id))
+    .where(
+      and(
+        eq(schema.sessionBookings.learnerId, user.id),
+        eq(schema.sessionBookings.status, 'confirmed'),
+        gte(schema.sessions.scheduledAt, windowStart),
+        lte(schema.sessions.scheduledAt, next24h)
+      )
+    )
+    .limit(1)
+
+  const teachSkillIds = skills.filter((s) => s.direction === 'teach').map((s) => s.id)
+  const [incomingQueue] =
+    teachSkillIds.length > 0
+      ? await db
+          .select({ id: schema.sessionBookings.id })
+          .from(schema.sessionBookings)
+          .where(
+            and(
+              inArray(schema.sessionBookings.skillId, teachSkillIds),
+              eq(schema.sessionBookings.status, 'queued')
+            )
+          )
+          .limit(1)
+      : []
+
+  const hasActiveSessionAlert = Boolean(upcomingTutor || upcomingLearner || incomingQueue)
+
   return {
     user: {
       id: user.id,
@@ -46,6 +94,7 @@ export default defineEventHandler(async (event) => {
       major: user.major,
       creditBalance: user.creditBalance,
       escrowBalance: escrowAgg?.escrowTotal ?? 0,
+      hasActiveSessionAlert,
       penaltyCount: user.penaltyCount,
       teachingCooldownUntil: user.teachingCooldownUntil,
       role: user.role,

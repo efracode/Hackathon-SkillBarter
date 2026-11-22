@@ -1,5 +1,6 @@
 import { and, eq, inArray, isNull, lte, ne, sql } from 'drizzle-orm'
 import { useDb, schema } from '../database'
+import { computeCooldownDays, computeGroupPayout } from './creditRules'
 
 type DbInstance = ReturnType<typeof useDb>
 type TxInstance = Parameters<Parameters<DbInstance['transaction']>[0]>[0]
@@ -44,12 +45,6 @@ export async function mutateUserCredit(
   })
 
   return updated
-}
-
-export function computeCooldownDays(nextPenaltyCount: number): number {
-  if (nextPenaltyCount <= 1) return 1
-  if (nextPenaltyCount === 2) return 3
-  return 7
 }
 
 export async function getGroupSessionEarnedCredits(tx: TxInstance, sessionId: string): Promise<number> {
@@ -286,7 +281,7 @@ export async function runLazyChecks(db: DbInstance) {
       let payout = booking.creditsHeld
       if (sess.mode === 'group') {
         const earnedSoFar = await getGroupSessionEarnedCredits(tx, sess.id)
-        payout = Math.max(0, Math.min(booking.creditsHeld, 2 - earnedSoFar))
+        payout = computeGroupPayout(booking.creditsHeld, earnedSoFar)
       }
 
       await tx
