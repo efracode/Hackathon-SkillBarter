@@ -133,14 +133,14 @@ function getInitials(name: string) {
             </p>
 
             <div class="flex flex-wrap items-center gap-3 pt-1">
-              <a
+              <NuxtLink
                 v-if="!loggedIn"
-                href="/api/auth/google"
+                to="/login"
                 class="inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm min-h-[48px] transition-colors shadow-xs"
               >
-                <UIcon name="i-ph-google-logo-bold" class="w-5 h-5" aria-hidden="true" />
-                <span>Masuk dengan Google</span>
-              </a>
+                <span>Mulai &amp; Masuk</span>
+                <UIcon name="i-ph-arrow-right" class="w-4 h-4" aria-hidden="true" />
+              </NuxtLink>
               <NuxtLink
                 v-else
                 to="/dashboard"

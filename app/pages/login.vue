@@ -4,10 +4,21 @@ definePageMeta({
 })
 
 const route = useRoute()
+const { loggedIn, user } = useUserSession()
 const hasOAuthError = computed(() => route.query.error === 'oauth_failed')
 
 const previewDomain = ref<'uksw' | 'general'>('uksw')
 const activePillar = ref(0)
+const isRedirecting = ref(false)
+
+watch(
+  loggedIn,
+  (isAuth: boolean) => {
+    if (isAuth && import.meta.client) {
+      navigateTo(user.value?.onboardingCompleted ? '/dashboard' : '/onboarding')
+    }
+  }
+)
 
 const pillars = [
   {
@@ -136,13 +147,13 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 
             <!-- Interactive Domain Trust Simulator -->
             <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-4 space-y-3">
-              <div class="flex items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
                 <p class="text-xs font-semibold text-blue-950">Cek Status Domain Emailmu:</p>
                 <div class="inline-flex rounded-lg border border-blue-200 bg-white p-0.5 text-[11px] font-semibold">
                   <button
                     type="button"
                     :class="[
-                      'px-2.5 py-1 rounded-md transition-colors',
+                      'px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
                       previewDomain === 'uksw' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-blue-700'
                     ]"
                     @click="previewDomain = 'uksw'"
@@ -152,7 +163,7 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
                   <button
                     type="button"
                     :class="[
-                      'px-2.5 py-1 rounded-md transition-colors',
+                      'px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
                       previewDomain === 'general' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-blue-700'
                     ]"
                     @click="previewDomain = 'general'"
@@ -197,10 +208,12 @@ const currentPillar = computed(() => pillars[activePillar.value] || pillars[0]!)
 
             <a
               href="/api/auth/google"
-              class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-[background-color,transform] duration-150 active:scale-[0.99] min-h-[48px]"
+              :aria-busy="isRedirecting"
+              class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-[background-color,transform] duration-150 active:scale-[0.99] min-h-[48px] shadow-xs"
+              @click="isRedirecting = true"
             >
               <UIcon name="i-ph-google-logo-bold" class="w-5 h-5" aria-hidden="true" />
-              <span>Masuk dengan Google</span>
+              <span>{{ isRedirecting ? 'Mengalihkan ke Google…' : 'Masuk dengan Google' }}</span>
             </a>
 
             <p class="text-xs text-slate-600 text-center">

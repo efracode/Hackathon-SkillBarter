@@ -1,8 +1,8 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const publicPaths = ['/', '/login']
   const { loggedIn, user, fetch: fetchSession } = useUserSession()
 
-  if (!loggedIn.value && !publicPaths.includes(to.path)) {
+  // Always hydrate session when unknown so /login and / never show stale guest state
+  if (!loggedIn.value) {
     await fetchSession()
   }
 
