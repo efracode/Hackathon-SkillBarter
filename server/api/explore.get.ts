@@ -19,63 +19,52 @@ export default defineEventHandler(async (event) => {
   const db = useDb()
   await runLazyChecks(db)
 
-  const teachSkills = await db
-    .select({
-      skill: schema.userSkills,
-      tutor: {
-        id: schema.users.id,
-        name: schema.users.name,
-        avatarUrl: schema.users.avatarUrl,
-        campus: schema.users.campus,
-        major: schema.users.major,
-        penaltyCount: schema.users.penaltyCount,
-        teachingCooldownUntil: schema.users.teachingCooldownUntil
-      }
-    })
-    .from(schema.userSkills)
-    .innerJoin(schema.users, eq(schema.userSkills.userId, schema.users.id))
-    .where(eq(schema.userSkills.direction, 'teach'))
-    .orderBy(desc(schema.userSkills.createdAt))
-
   const now = new Date()
-  const upcomingSessions = await db
-    .select()
-    .from(schema.sessions)
-    .where(
-      and(
-        eq(schema.sessions.status, 'confirmed'),
-        gte(schema.sessions.scheduledAt, now)
-      )
-    )
-    .orderBy(schema.sessions.scheduledAt)
-
-  const activeBookings = await db
-    .select({
-      sessionId: schema.sessionBookings.sessionId,
-      learnerId: schema.sessionBookings.learnerId
-    })
-    .from(schema.sessionBookings)
-    .where(inArray(schema.sessionBookings.status, ['confirmed', 'checked_in']))
-
-  const completedSessions = await db
-    .select({
-      tutorId: schema.sessions.tutorId
-    })
-    .from(schema.sessions)
-    .where(eq(schema.sessions.status, 'completed'))
-
-  const allReviews = await db
-    .select({
-      id: schema.reviews.id,
-      tutorId: schema.reviews.tutorId,
-      rating: schema.reviews.rating,
-      comment: schema.reviews.comment,
-      createdAt: schema.reviews.createdAt,
-      reviewerName: schema.users.name
-    })
-    .from(schema.reviews)
-    .innerJoin(schema.users, eq(schema.reviews.reviewerId, schema.users.id))
-    .orderBy(desc(schema.reviews.createdAt))
+  const [teachSkills, upcomingSessions, activeBookings, completedSessions, allReviews] =
+    await Promise.all([
+      db
+        .select({
+          skill: schema.userSkills,
+          tutor: {
+            id: schema.users.id,
+            name: schema.users.name,
+            avatarUrl: schema.users.avatarUrl,
+            campus: schema.users.campus,
+            major: schema.users.major,
+            penaltyCount: schema.users.penaltyCount,
+            teachingCooldownUntil: schema.users.teachingCooldownUntil
+          }
+        })
+        .from(schema.userSkills)
+        .innerJoin(schema.users, eq(schema.userSkills.userId, schema.users.id))
+        .where(eq(schema.userSkills.direction, 'teach'))
+        .orderBy(desc(schema.userSkills.createdAt)),
+      db
+        .select()
+        .from(schema.sessions)
+        .where(and(eq(schema.sessions.status, 'confirmed'), gte(schema.sessions.scheduledAt, now)))
+        .orderBy(schema.sessions.scheduledAt),
+      db
+        .select({
+          sessionId: schema.sessionBookings.sessionId,
+          learnerId: schema.sessionBookings.learnerId
+        })
+        .from(schema.sessionBookings)
+        .where(inArray(schema.sessionBookings.status, ['confirmed', 'checked_in'])),
+      db.select({ tutorId: schema.sessions.tutorId }).from(schema.sessions).where(eq(schema.sessions.status, 'completed')),
+      db
+        .select({
+          id: schema.reviews.id,
+          tutorId: schema.reviews.tutorId,
+          rating: schema.reviews.rating,
+          comment: schema.reviews.comment,
+          createdAt: schema.reviews.createdAt,
+          reviewerName: schema.users.name
+        })
+        .from(schema.reviews)
+        .innerJoin(schema.users, eq(schema.reviews.reviewerId, schema.users.id))
+        .orderBy(desc(schema.reviews.createdAt))
+    ])
 
   const bookingCountBySession = new Map<string, number>()
   for (const b of activeBookings) {

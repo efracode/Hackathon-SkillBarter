@@ -11,7 +11,7 @@ interface WalletPayload {
   }>
 }
 
-const { data, status, error, refresh } = await useFetch<WalletPayload>('/api/wallet')
+const { data, status, error, refresh } = useLazyFetch<WalletPayload>('/api/wallet')
 
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('id-ID', {

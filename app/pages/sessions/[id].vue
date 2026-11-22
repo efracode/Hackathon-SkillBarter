@@ -55,10 +55,10 @@ const route = useRoute()
 const sessionId = String(route.params.id)
 const { user: authUser } = useUserSession()
 
-const { data, status, error, refresh } = await useFetch<WorkspacePayload>(
+const { data, status, error, refresh } = useLazyFetch<WorkspacePayload>(
   `/api/sessions/${sessionId}`
 )
-const { data: chatData, refresh: refreshChat } = await useFetch<ChatPayload>(
+const { data: chatData, refresh: refreshChat } = useLazyFetch<ChatPayload>(
   `/api/sessions/${sessionId}/messages`
 )
 

@@ -60,19 +60,60 @@ export async function getGroupSessionEarnedCredits(tx: TxInstance, sessionId: st
   return Math.min(2, rows.length)
 }
 
-export async function runLazyChecks(db: DbInstance) {
-  const now = new Date()
+let lastLazyCheckAt = 0
+const LAZY_CHECK_TTL_MS = 30_000
 
-  // 1. Auto-expire Hold Queue bookings older than 48h
-  const expiredQueues = await db
-    .select({ id: schema.sessionBookings.id })
-    .from(schema.sessionBookings)
-    .where(
-      and(
-        eq(schema.sessionBookings.status, 'queued'),
-        lte(schema.sessionBookings.holdExpiresAt, now)
-      )
-    )
+export async function runLazyChecks(db: DbInstance, force = false) {
+  const now = new Date()
+  if (!force && now.getTime() - lastLazyCheckAt < LAZY_CHECK_TTL_MS) {
+    return
+  }
+  lastLazyCheckAt = now.getTime()
+
+  const twoHoursAhead = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+  const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000)
+
+  const [expiredQueues, candidateGroupSessions, missedCheckinSessions, readyForPayout] =
+    await Promise.all([
+      db
+        .select({ id: schema.sessionBookings.id })
+        .from(schema.sessionBookings)
+        .where(
+          and(
+            eq(schema.sessionBookings.status, 'queued'),
+            lte(schema.sessionBookings.holdExpiresAt, now)
+          )
+        ),
+      db
+        .select()
+        .from(schema.sessions)
+        .where(
+          and(
+            eq(schema.sessions.mode, 'group'),
+            eq(schema.sessions.status, 'confirmed'),
+            lte(schema.sessions.scheduledAt, twoHoursAhead)
+          )
+        ),
+      db
+        .select({ id: schema.sessions.id })
+        .from(schema.sessions)
+        .where(
+          and(
+            eq(schema.sessions.status, 'confirmed'),
+            isNull(schema.sessions.checkinCode),
+            lte(schema.sessions.scheduledAt, fifteenMinsAgo)
+          )
+        ),
+      db
+        .select({ id: schema.sessionBookings.id })
+        .from(schema.sessionBookings)
+        .where(
+          and(
+            eq(schema.sessionBookings.status, 'checked_in'),
+            lte(schema.sessionBookings.disputeEndsAt, now)
+          )
+        )
+    ])
 
   for (const q of expiredQueues) {
     await db.transaction(async (tx) => {
@@ -100,18 +141,6 @@ export async function runLazyChecks(db: DbInstance) {
   }
 
   // 2. Auto-cancel group sessions with < 2 confirmed learners at T - 2 hours
-  const twoHoursAhead = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-  const candidateGroupSessions = await db
-    .select()
-    .from(schema.sessions)
-    .where(
-      and(
-        eq(schema.sessions.mode, 'group'),
-        eq(schema.sessions.status, 'confirmed'),
-        lte(schema.sessions.scheduledAt, twoHoursAhead)
-      )
-    )
-
   for (const sess of candidateGroupSessions) {
     await db.transaction(async (tx) => {
       const [lockedSession] = await tx
@@ -158,18 +187,6 @@ export async function runLazyChecks(db: DbInstance) {
   }
 
   // 3. Auto-penalize tutor no-show if > 15m past scheduledAt and checkin_code was never created
-  const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000)
-  const missedCheckinSessions = await db
-    .select({ id: schema.sessions.id })
-    .from(schema.sessions)
-    .where(
-      and(
-        eq(schema.sessions.status, 'confirmed'),
-        isNull(schema.sessions.checkinCode),
-        lte(schema.sessions.scheduledAt, fifteenMinsAgo)
-      )
-    )
-
   for (const s of missedCheckinSessions) {
     await db.transaction(async (tx) => {
       const [lockedSession] = await tx
@@ -236,16 +253,6 @@ export async function runLazyChecks(db: DbInstance) {
   }
 
   // 4. Auto-release escrow after 24h dispute window for checked_in bookings with no open reports
-  const readyForPayout = await db
-    .select({ id: schema.sessionBookings.id })
-    .from(schema.sessionBookings)
-    .where(
-      and(
-        eq(schema.sessionBookings.status, 'checked_in'),
-        lte(schema.sessionBookings.disputeEndsAt, now)
-      )
-    )
-
   for (const r of readyForPayout) {
     await db.transaction(async (tx) => {
       const [booking] = await tx

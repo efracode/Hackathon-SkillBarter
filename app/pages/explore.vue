@@ -59,12 +59,12 @@ const queryParams = computed(() => ({
   availableOnly: availableOnly.value ? 'true' : undefined
 }))
 
-const { data, status, error, refresh } = await useFetch<{ items: ExploreItem[] }>('/api/explore', {
+const { data, status, error, refresh } = useLazyFetch<{ items: ExploreItem[] }>('/api/explore', {
   query: queryParams,
   watch: [queryParams]
 })
 
-const { data: meData, refresh: refreshMe } = await useFetch('/api/me', { key: 'me-profile' })
+const { data: meData, refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
 const myUserId = computed(() => meData.value?.user?.id || '')
 const creditBalance = computed(() => meData.value?.user?.creditBalance ?? 0)
 

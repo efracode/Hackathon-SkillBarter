@@ -46,7 +46,7 @@ export default defineOAuthGoogleEventHandler({
       }
     })
 
-    return sendRedirect(event, existing.onboardingCompletedAt ? '/explore' : '/onboarding')
+    return sendRedirect(event, existing.onboardingCompletedAt ? '/dashboard' : '/onboarding')
   },
   onError(event, error) {
     console.error('Google OAuth error:', error)

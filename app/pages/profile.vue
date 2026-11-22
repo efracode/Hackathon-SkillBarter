@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { data: meData, refresh: refreshMe } = await useFetch('/api/me', { key: 'me-profile' })
+const { data: meData, refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
 const { clear: clearSession } = useUserSession()
 
 const user = computed(() => meData.value?.user)

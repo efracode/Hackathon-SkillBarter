@@ -56,8 +56,8 @@ interface SessionsPayload {
   }>
 }
 
-const { data, status, error, refresh } = await useFetch<SessionsPayload>('/api/sessions')
-const { refresh: refreshMe } = await useFetch('/api/me', { key: 'me-profile' })
+const { data, status, error, refresh } = useLazyFetch<SessionsPayload>('/api/sessions')
+const { refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
 
 const activeTab = ref<'active' | 'queue' | 'history'>('active')
 const actionError = ref('')

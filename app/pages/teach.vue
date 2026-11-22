@@ -27,7 +27,7 @@ interface TeachResponse {
   }>
 }
 
-const { data, status, error, refresh } = await useFetch<TeachResponse>('/api/teach/skills')
+const { data, status, error, refresh } = useLazyFetch<TeachResponse>('/api/teach/skills')
 
 const categories = ['Teknologi & Coding', 'Desain & UI/UX', 'Bahasa & Presentasi', 'Akademik & Riset', 'Karier & CV']
 

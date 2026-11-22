@@ -45,6 +45,6 @@ export default defineEventHandler(async (event) => {
       .where(eq(schema.sessionBookings.status, 'queued'))
   }
 
-  await runLazyChecks(db)
+  await runLazyChecks(db, true)
   return { ok: true }
 })

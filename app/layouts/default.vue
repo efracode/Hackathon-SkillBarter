@@ -2,19 +2,10 @@
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
 
-const { data: meData, refresh: refreshMe } = await useFetch('/api/me', {
+const { data: meData } = useLazyFetch('/api/me', {
   key: 'me-profile',
   immediate: loggedIn.value
 })
-
-watch(
-  () => route.fullPath,
-  () => {
-    if (loggedIn.value) {
-      refreshMe()
-    }
-  }
-)
 
 const creditBalance = computed(() => meData.value?.user?.creditBalance ?? 0)
 const escrowBalance = computed(() => meData.value?.user?.escrowBalance ?? 0)
@@ -23,6 +14,7 @@ const isAdmin = computed(() => (meData.value?.user?.role || user.value?.role) ==
 
 const desktopNav = computed(() => {
   const items = [
+    { label: 'Dashboard', to: '/dashboard', icon: 'i-ph-house' },
     { label: 'Jelajah', to: '/explore', icon: 'i-ph-compass' },
     { label: 'Sesi Saya', to: '/sessions', icon: 'i-ph-calendar-check' },
     { label: 'Mengajar', to: '/teach', icon: 'i-ph-chalkboard-teacher' }
@@ -34,8 +26,9 @@ const desktopNav = computed(() => {
 })
 
 const mobileNav = [
+  { label: 'Beranda', to: '/dashboard', icon: 'i-ph-house' },
   { label: 'Jelajah', to: '/explore', icon: 'i-ph-compass' },
-  { label: 'Sesi Saya', to: '/sessions', icon: 'i-ph-calendar-check' },
+  { label: 'Sesi', to: '/sessions', icon: 'i-ph-calendar-check' },
   { label: 'Mengajar', to: '/teach', icon: 'i-ph-chalkboard-teacher' },
   { label: 'Profil', to: '/profile', icon: 'i-ph-user' }
 ]
@@ -46,13 +39,13 @@ const isActive = (path: string) =>
 
 <template>
   <div class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-    <!-- Top Navigation Bar (Desktop & Mobile) -->
+    <!-- Top Navigation Bar -->
     <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
       <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <NuxtLink
-          to="/explore"
+          to="/dashboard"
           class="inline-flex items-center min-h-[44px]"
-          aria-label="Beranda SkillBarter"
+          aria-label="Dashboard SkillBarter"
         >
           <SkillBarterLogo size="md" />
         </NuxtLink>
@@ -66,7 +59,7 @@ const isActive = (path: string) =>
             :class="[
               'inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-150 min-h-[44px]',
               isActive(item.to)
-                ? 'bg-indigo-50 text-indigo-700'
+                ? 'bg-indigo-50 text-indigo-700 font-semibold'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             ]"
           >
@@ -114,19 +107,19 @@ const isActive = (path: string) =>
       <slot />
     </main>
 
-    <!-- Mobile Fixed Bottom Navigation (4 Tabs) -->
+    <!-- Mobile Fixed Bottom Navigation (5 Tabs) -->
     <nav
       aria-label="Navigasi Mobile"
       class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-slate-200"
     >
-      <div class="grid grid-cols-4">
+      <div class="grid grid-cols-5">
         <NuxtLink
           v-for="item in mobileNav"
           :key="item.to"
           :to="item.to"
           :class="[
-            'flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-xs font-medium transition-colors duration-150',
-            isActive(item.to) ? 'text-indigo-600' : 'text-slate-600 hover:text-slate-900'
+            'flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[11px] font-medium transition-colors duration-150',
+            isActive(item.to) ? 'text-indigo-600 font-semibold' : 'text-slate-600 hover:text-slate-900'
           ]"
         >
           <span class="relative">

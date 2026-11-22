@@ -34,7 +34,7 @@ interface AdminOverviewPayload {
   }>
 }
 
-const { data, status, error, refresh } = await useFetch<AdminOverviewPayload>('/api/admin/overview')
+const { data, status, error, refresh } = useLazyFetch<AdminOverviewPayload>('/api/admin/overview')
 const activeTab = ref<'metrics' | 'disputes'>('metrics')
 const actionMessage = ref('')
 const simulating = ref(false)

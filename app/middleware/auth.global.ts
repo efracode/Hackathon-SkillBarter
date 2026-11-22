@@ -1,14 +1,18 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const publicPaths = ['/login']
+  const publicPaths = ['/', '/login']
   const { loggedIn, user, fetch: fetchSession } = useUserSession()
 
-  if (!loggedIn.value) {
+  if (!loggedIn.value && !publicPaths.includes(to.path)) {
     await fetchSession()
   }
 
-  if (publicPaths.includes(to.path)) {
+  if (to.path === '/') {
+    return
+  }
+
+  if (to.path === '/login') {
     if (loggedIn.value) {
-      return navigateTo(user.value?.onboardingCompleted ? '/explore' : '/onboarding')
+      return navigateTo(user.value?.onboardingCompleted ? '/dashboard' : '/onboarding')
     }
     return
   }
@@ -22,10 +26,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (user.value?.onboardingCompleted && to.path === '/onboarding') {
-    return navigateTo('/explore')
+    return navigateTo('/dashboard')
   }
 
   if (to.path.startsWith('/admin') && user.value?.role !== 'admin') {
-    return navigateTo('/explore')
+    return navigateTo('/dashboard')
   }
 })
