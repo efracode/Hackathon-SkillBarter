@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { BookingSkillItem } from '~/components/SkillBookingPanel.vue'
+
 interface DashboardPayload {
   user: {
     name: string
@@ -36,6 +38,7 @@ interface DashboardPayload {
   recommendations: Array<{
     skill: { id: string; category: string; title: string; description: string | null }
     tutorName: string
+    tutorAvatarUrl?: string | null
     tutorMajor: string | null
     tutorCampus: string | null
     tutorVerifiedUksw: boolean
@@ -58,26 +61,23 @@ interface DashboardPayload {
 }
 
 const { data, status, error, refresh } = useLazyFetch<DashboardPayload>('/api/dashboard')
+const { data: meData, refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
+const { data: exploreCache, refresh: refreshExplore } = useLazyFetch<{ items: BookingSkillItem[] }>('/api/explore', {
+  key: 'dashboard-explore-lookup'
+})
 
 const dashboardMode = ref<'learn' | 'teach'>('learn')
 const recFilter = ref<'all' | 'match' | 'slot'>('all')
-const expandedRecId = ref<string | null>(null)
 
-const totalCreditPool = computed(() => {
-  const avail = data.value?.user?.creditBalance ?? 0
-  const escrow = data.value?.user?.escrowBalance ?? 0
-  return Math.max(1, avail + escrow)
-})
+const drawerOpen = ref(false)
+const activeDrawerItem = ref<BookingSkillItem | null>(null)
+const drawerLoading = ref(false)
 
-const availablePercent = computed(() => {
-  const avail = data.value?.user?.creditBalance ?? 0
-  return Math.round((avail / totalCreditPool.value) * 100)
-})
-
-const escrowPercent = computed(() => {
-  const escrow = data.value?.user?.escrowBalance ?? 0
-  return Math.round((escrow / totalCreditPool.value) * 100)
-})
+const myUserId = computed(() => meData.value?.user?.id || '')
+const creditBalance = computed(() => data.value?.user?.creditBalance ?? meData.value?.user?.creditBalance ?? 0)
+const upcomingTotal = computed(
+  () => (data.value?.upcomingLearner?.length ?? 0) + (data.value?.upcomingTutor?.length ?? 0)
+)
 
 const mentorProgressPercent = computed(() => {
   const count = data.value?.mentorProgress?.completedCount ?? 0
@@ -91,8 +91,28 @@ const filteredRecommendations = computed(() => {
   return list
 })
 
-function toggleExpandRec(id: string) {
-  expandedRecId.value = expandedRecId.value === id ? null : id
+async function openQuickBooking(skillId: string) {
+  drawerOpen.value = true
+  const existing = exploreCache.value?.items?.find((it) => it.skill.id === skillId) || null
+  if (existing) {
+    activeDrawerItem.value = existing
+    return
+  }
+
+  drawerLoading.value = true
+  try {
+    await refreshExplore()
+    activeDrawerItem.value = exploreCache.value?.items?.find((it) => it.skill.id === skillId) || null
+  } finally {
+    drawerLoading.value = false
+  }
+}
+
+async function handleQuickBooked() {
+  await Promise.all([refresh(), refreshMe(), refreshExplore()])
+  setTimeout(() => {
+    drawerOpen.value = false
+  }, 850)
 }
 
 function formatDateTime(iso: string) {
@@ -110,14 +130,15 @@ function formatDateTime(iso: string) {
   <div class="space-y-6">
     <!-- Loading Skeleton -->
     <div v-if="status === 'pending'" class="space-y-5" aria-busy="true">
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse space-y-3">
-        <div class="h-6 w-56 bg-slate-200 rounded" />
-        <div class="h-4 w-80 bg-slate-100 rounded" />
+      <div class="h-16 bg-white border border-slate-200 rounded-2xl animate-pulse" />
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div v-for="n in 4" :key="n" class="h-24 bg-white border border-slate-200 rounded-2xl animate-pulse" />
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div v-for="n in 3" :key="n" class="h-28 bg-white border border-slate-200 rounded-2xl animate-pulse" />
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="lg:col-span-7 h-72 bg-white border border-slate-200 rounded-2xl animate-pulse" />
+        <div class="lg:col-span-5 h-72 bg-white border border-slate-200 rounded-2xl animate-pulse" />
       </div>
-      <p class="text-xs text-slate-600">Memuat dashboard…</p>
+      <p class="sr-only">Memuat dashboard SkillBarter…</p>
     </div>
 
     <!-- Error State -->
@@ -135,33 +156,32 @@ function formatDateTime(iso: string) {
     </UAlert>
 
     <template v-else-if="data">
-      <!-- Editorial Greeting + Mode Switcher -->
-      <section class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200">
-        <div class="space-y-1.5">
+      <!-- Top Command Header + Mode Switcher -->
+      <section class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-200">
+        <div class="space-y-1">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono text-xs font-semibold uppercase tracking-wider text-blue-700">
-              Pusat Aktivitas SkillBarter
+            <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
+              Pusat Aktivitas
             </span>
             <VerifiedUkswBadge v-if="data.user.isVerifiedUksw" />
           </div>
-          <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+          <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
             Halo, <span class="font-serif italic font-normal text-blue-600">{{ data.user.name.split(' ')[0] }}</span>
           </h1>
           <p class="text-sm text-slate-600">
-            Kelola saldo belajarmu, pantau agenda sesi, atau beralih ke mode mengajar kapan saja.
+            Pantau kredit, booking mentor langsung dari sini, atau beralih ke mode mengajar.
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-          <!-- Mode Toggle -->
-          <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-xs" role="tablist" aria-label="Mode Dashboard">
+          <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1" role="tablist" aria-label="Mode Dashboard">
             <button
               type="button"
               role="tab"
               :aria-selected="dashboardMode === 'learn'"
               :class="[
                 'px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[38px]',
-                dashboardMode === 'learn' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+                dashboardMode === 'learn' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:text-blue-700'
               ]"
               @click="dashboardMode = 'learn'"
             >
@@ -173,7 +193,7 @@ function formatDateTime(iso: string) {
               :aria-selected="dashboardMode === 'teach'"
               :class="[
                 'px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[38px]',
-                dashboardMode === 'teach' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+                dashboardMode === 'teach' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:text-blue-700'
               ]"
               @click="dashboardMode = 'teach'"
             >
@@ -183,90 +203,71 @@ function formatDateTime(iso: string) {
 
           <NuxtLink
             to="/explore"
-            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] transition-colors shadow-xs"
+            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold min-h-[42px] transition-colors"
           >
             <UIcon name="i-ph-compass" class="w-4 h-4" aria-hidden="true" />
-            <span>Jelajahi Mentor</span>
+            <span>Jelajah Semua</span>
           </NuxtLink>
         </div>
       </section>
 
-      <!-- Visual Credit Vault + Mentor Progress Strip -->
-      <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">
-                Rasio Dompet Kredit
-              </p>
-              <div class="mt-1 flex items-baseline gap-4 tabular-nums">
-                <p class="text-2xl sm:text-3xl font-bold font-mono text-blue-600">
-                  {{ data.user.creditBalance }} <span class="text-xs font-sans font-semibold text-slate-600">Tersedia</span>
-                </p>
-                <p class="text-lg font-bold font-mono text-slate-700">
-                  {{ data.user.escrowBalance }} <span class="text-xs font-sans font-semibold text-slate-500">Di Escrow</span>
-                </p>
-              </div>
-            </div>
-
-            <NuxtLink
-              to="/wallet"
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-xs font-semibold text-blue-700 min-h-[38px] transition-colors"
-            >
-              <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-600" aria-hidden="true" />
-              <span>Buka Ledger</span>
-            </NuxtLink>
+      <!-- Row 1: 4 Technical Precision KPI Stroke Cards with Animated Count-Up -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <NuxtLink
+          to="/wallet"
+          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span class="font-medium">Saldo Tersedia</span>
+            <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-600" aria-hidden="true" />
           </div>
-
-          <!-- Animated Ratio Bar -->
-          <div class="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex border border-slate-200">
-            <div
-              class="bg-blue-600 transition-[width] duration-500 ease-out"
-              :style="{ width: `${availablePercent}%` }"
-            />
-            <div
-              class="bg-blue-200 transition-[width] duration-500 ease-out"
-              :style="{ width: `${escrowPercent}%` }"
-            />
-          </div>
-          <p class="text-xs text-slate-600">
-            Saldo tersedia bisa dipakai booking kapan saja. Kredit di escrow kembali 100% jika batal &ge; 12 jam.
+          <p class="font-mono text-2xl sm:text-3xl font-bold text-blue-600">
+            <AnimatedNumber :value="data.user.creditBalance" />
+            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Kredit</span>
           </p>
-        </div>
+        </NuxtLink>
 
-        <div class="lg:col-span-5 bg-white text-slate-900 rounded-2xl p-5 sm:p-6 flex flex-col justify-between gap-4 border-2 border-blue-600">
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
-                Reputasi Peer Mentor
-              </p>
-              <h2 class="text-lg font-bold text-slate-900 mt-0.5">
-                {{ data.mentorProgress.isVerifiedMentor ? 'Verified Peer Mentor Aktif' : 'Menuju Verified Peer Mentor' }}
-              </h2>
-            </div>
-            <UIcon name="i-ph-seal-check-duotone" class="w-6 h-6 text-blue-600 shrink-0" aria-hidden="true" />
+        <NuxtLink
+          to="/wallet"
+          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span class="font-medium">Terkunci di Escrow</span>
+            <UIcon name="i-ph-lock-simple-duotone" class="w-4 h-4 text-blue-600" aria-hidden="true" />
           </div>
+          <p class="font-mono text-2xl sm:text-3xl font-bold text-slate-900">
+            <AnimatedNumber :value="data.user.escrowBalance" />
+            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Kredit</span>
+          </p>
+        </NuxtLink>
 
-          <div class="space-y-2">
-            <div class="flex justify-between text-xs text-slate-600 tabular-nums">
-              <span>Progres Sesi Mengajar ({{ Math.min(3, data.mentorProgress.completedCount) }}/3)</span>
-              <span>Rating: {{ data.mentorProgress.reviewCount > 0 ? `${data.mentorProgress.avgRating}/5` : 'Belum ada' }}</span>
-            </div>
-            <div class="h-2.5 w-full rounded-full bg-blue-100 overflow-hidden">
-              <div
-                class="h-full bg-blue-600 transition-[width] duration-500 ease-out"
-                :style="{ width: `${mentorProgressPercent}%` }"
-              />
-            </div>
+        <NuxtLink
+          to="/sessions"
+          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span class="font-medium">Agenda Mendatang</span>
+            <UIcon name="i-ph-calendar-check" class="w-4 h-4 text-blue-600" aria-hidden="true" />
           </div>
+          <p class="font-mono text-2xl sm:text-3xl font-bold text-slate-900">
+            <AnimatedNumber :value="upcomingTotal" />
+            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Sesi</span>
+          </p>
+        </NuxtLink>
 
-          <div class="flex items-center justify-between text-xs text-slate-600 pt-1">
-            <span>Penalti aktif: <strong class="text-slate-900 font-mono">{{ data.user.penaltyCount }}</strong></span>
-            <NuxtLink to="/profile" class="text-blue-700 hover:underline font-semibold">
-              Lihat Detail Reputasi
-            </NuxtLink>
+        <NuxtLink
+          to="/profile"
+          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span class="font-medium">Progres Peer Mentor</span>
+            <UIcon name="i-ph-seal-check-duotone" class="w-4 h-4 text-blue-600" aria-hidden="true" />
           </div>
-        </div>
+          <p class="font-mono text-2xl sm:text-3xl font-bold text-slate-900">
+            <AnimatedNumber :value="Math.min(3, data.mentorProgress.completedCount)" /><span class="text-base text-slate-400">/3</span>
+            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Sesi</span>
+          </p>
+        </NuxtLink>
       </section>
 
       <!-- Action Banner for Incoming Hold Queue -->
@@ -291,20 +292,20 @@ function formatDateTime(iso: string) {
       <!-- Animated Mode Content -->
       <Transition name="panel-slide" mode="out-in">
         <!-- MODE BELAJAR -->
-        <div v-if="dashboardMode === 'learn'" key="mode-learn" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <!-- Left (7 cols): Interactive Filterable Recommendations -->
-          <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-            <header class="px-5 py-4 bg-blue-50/60 border-b border-blue-100 flex flex-wrap items-center justify-between gap-3">
+        <div v-if="dashboardMode === 'learn'" key="mode-learn" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <!-- Left (7 cols): Interactive Mentor Recommendations with Direct Quick-Booking Drawer -->
+          <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <header class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 class="text-base font-bold text-slate-900">Rekomendasi Mentor Untukmu</h2>
-                <p class="text-xs text-slate-600">Filter cepat berdasarkan minat belajar atau slot tersedia.</p>
+                <h2 class="text-sm sm:text-base font-bold text-slate-900">Rekomendasi Mentor Untukmu</h2>
+                <p class="text-xs text-slate-500">Klik mentor untuk melihat jadwal, bio, dan langsung booking.</p>
               </div>
               <div class="flex items-center gap-1.5">
                 <button
                   type="button"
                   :class="[
                     'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'all' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50'
+                    recFilter === 'all' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600'
                   ]"
                   @click="recFilter = 'all'"
                 >
@@ -314,7 +315,7 @@ function formatDateTime(iso: string) {
                   type="button"
                   :class="[
                     'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'match' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50'
+                    recFilter === 'match' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600'
                   ]"
                   @click="recFilter = 'match'"
                 >
@@ -324,7 +325,7 @@ function formatDateTime(iso: string) {
                   type="button"
                   :class="[
                     'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'slot' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-blue-50'
+                    recFilter === 'slot' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600'
                   ]"
                   @click="recFilter = 'slot'"
                 >
@@ -334,7 +335,7 @@ function formatDateTime(iso: string) {
             </header>
 
             <div v-if="filteredRecommendations.length === 0" class="p-8 text-center space-y-2">
-              <p class="text-sm font-medium text-slate-900">Tidak ada rekomendasi pada filter ini</p>
+              <p class="text-sm font-semibold text-slate-900">Tidak ada rekomendasi pada filter ini</p>
               <button
                 type="button"
                 class="text-xs font-semibold text-blue-700 hover:underline"
@@ -348,65 +349,63 @@ function formatDateTime(iso: string) {
               <li
                 v-for="rec in filteredRecommendations"
                 :key="rec.skill.id"
-                class="p-5 hover:bg-blue-50/30 transition-colors"
+                class="p-4 sm:p-5 hover:bg-blue-50/30 transition-colors border-l-4 border-l-transparent hover:border-l-blue-600"
               >
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div class="min-w-0 space-y-1.5">
-                    <div class="flex flex-wrap items-center gap-2">
-                      <p class="text-sm sm:text-base font-bold text-slate-900">{{ rec.skill.title }}</p>
-                      <span
-                        v-if="rec.matchesInterest"
-                        class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200"
-                      >
-                        Cocok Minatmu
-                      </span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-1.5 text-xs text-slate-600">
-                      <span class="font-semibold text-slate-800">{{ rec.tutorName }}</span>
-                      <VerifiedUkswBadge v-if="rec.tutorVerifiedUksw" />
-                      <span class="text-slate-500">
-                        {{ [rec.skill.category, rec.tutorMajor].filter(Boolean).join(' · ') }}
-                      </span>
+                  <div class="flex items-start gap-3 min-w-0">
+                    <UAvatar :src="rec.tutorAvatarUrl || undefined" :alt="rec.tutorName" size="sm" class="mt-0.5 shrink-0" />
+                    <div class="min-w-0 space-y-1">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-sm sm:text-base font-bold text-slate-900 leading-snug">{{ rec.skill.title }}</p>
+                        <span
+                          v-if="rec.matchesInterest"
+                          class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200"
+                        >
+                          Cocok Minatmu
+                        </span>
+                      </div>
+                      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                        <span class="font-semibold text-slate-800">{{ rec.tutorName }}</span>
+                        <VerifiedUkswBadge v-if="rec.tutorVerifiedUksw" />
+                      </div>
+                      <p class="text-xs text-slate-500 tabular-nums">
+                        {{
+                          [
+                            rec.skill.category,
+                            rec.tutorMajor,
+                            rec.nextSlot ? `${formatDateTime(rec.nextSlot.scheduledAt)} (${rec.nextSlot.durationMinutes}m)` : 'Via Hold Queue 48j'
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')
+                        }}
+                      </p>
                     </div>
                   </div>
 
-                  <div class="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/70 text-xs font-semibold text-slate-700 hover:text-blue-700 min-h-[40px]"
-                      @click="toggleExpandRec(rec.skill.id)"
-                    >
-                      {{ expandedRecId === rec.skill.id ? 'Tutup' : 'Detail' }}
-                    </button>
-                    <NuxtLink
-                      to="/explore"
-                      class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold min-h-[40px] inline-flex items-center"
-                    >
-                      {{ rec.nextSlot ? 'Booking' : 'Hold Queue' }}
-                    </NuxtLink>
-                  </div>
-                </div>
-
-                <Transition name="panel-slide">
-                  <div
-                    v-if="expandedRecId === rec.skill.id"
-                    class="mt-3 pt-3 border-t border-blue-100 text-xs text-slate-600 space-y-1"
+                  <button
+                    type="button"
+                    :class="[
+                      'shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold min-h-[40px] transition-colors inline-flex items-center justify-center gap-1.5',
+                      rec.nextSlot
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'border border-blue-600 bg-white hover:bg-blue-50 text-blue-700'
+                    ]"
+                    @click="openQuickBooking(rec.skill.id)"
                   >
-                    <p>{{ rec.skill.description || 'Micro-session tanya-jawab langsung sesuai kebutuhan belajarmu.' }}</p>
-                    <p v-if="rec.nextSlot" class="font-semibold text-blue-700 tabular-nums">
-                      Jadwal terdekat: {{ formatDateTime(rec.nextSlot.scheduledAt) }} ({{ rec.nextSlot.durationMinutes }}m · {{ rec.nextSlot.format === 'online' ? 'Online' : 'Kampus' }})
-                    </p>
-                  </div>
-                </Transition>
+                    <span>{{ rec.nextSlot ? 'Booking Cepat' : 'Hold Queue' }}</span>
+                    <UIcon name="i-ph-arrow-right" class="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </div>
               </li>
             </TransitionGroup>
           </section>
 
-          <!-- Right (5 cols): Upcoming Agenda + Recent Ledger -->
+          <!-- Right (5 cols): Agenda + Verified Mentor Anchor + Ledger -->
           <div class="lg:col-span-5 space-y-5">
-            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3.5 shadow-xs">
+            <!-- Upcoming Agenda -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3.5">
               <div class="flex items-center justify-between">
-                <h2 class="text-base font-bold text-slate-900">Agenda Sesi Terdekat</h2>
+                <h2 class="text-sm sm:text-base font-bold text-slate-900">Agenda Sesi Terdekat</h2>
                 <NuxtLink to="/sessions" class="text-xs font-semibold text-blue-700 hover:underline">
                   Kelola Sesi
                 </NuxtLink>
@@ -418,7 +417,7 @@ function formatDateTime(iso: string) {
               >
                 <p class="text-xs font-semibold text-slate-900">Jadwalmu masih kosong</p>
                 <p class="text-xs text-slate-600">
-                  Pesan sesi 30 menit pertama dari menu Jelajah memakai saldo kreditmu.
+                  Klik <strong class="text-slate-900">Booking Cepat</strong> pada rekomendasi mentor di samping untuk memesan sesi pertamamu.
                 </p>
               </div>
 
@@ -444,7 +443,7 @@ function formatDateTime(iso: string) {
                 <li
                   v-for="t in data.upcomingTutor"
                   :key="t.sessionId"
-                  class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center justify-between gap-3"
+                  class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex items-center justify-between gap-3"
                 >
                   <div class="min-w-0">
                     <p class="text-xs font-semibold text-blue-700 tabular-nums">
@@ -462,7 +461,43 @@ function formatDateTime(iso: string) {
               </ul>
             </section>
 
-            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+            <!-- Verified Peer Mentor Progress Anchor (Primary Stroke) -->
+            <section class="bg-white border-2 border-blue-600 rounded-2xl p-5 space-y-3.5">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
+                    Reputasi Peer Mentor
+                  </p>
+                  <h2 class="text-base font-bold text-slate-900 mt-0.5">
+                    {{ data.mentorProgress.isVerifiedMentor ? 'Verified Peer Mentor Aktif' : 'Menuju Verified Peer Mentor' }}
+                  </h2>
+                </div>
+                <UIcon name="i-ph-seal-check-duotone" class="w-5 h-5 text-blue-600 shrink-0" aria-hidden="true" />
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex justify-between text-xs text-slate-600 tabular-nums">
+                  <span>Sesi Mengajar ({{ Math.min(3, data.mentorProgress.completedCount) }}/3)</span>
+                  <span>Rating: {{ data.mentorProgress.reviewCount > 0 ? `${data.mentorProgress.avgRating}/5` : 'Belum ada' }}</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-blue-100 overflow-hidden">
+                  <div
+                    class="h-full bg-blue-600 transition-[width] duration-500 ease-out"
+                    :style="{ width: `${mentorProgressPercent}%` }"
+                  />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-200">
+                <span>Penalti aktif: <strong class="text-slate-900 font-mono">{{ data.user.penaltyCount }}</strong></span>
+                <NuxtLink to="/profile" class="text-blue-700 hover:underline font-semibold">
+                  Detail Reputasi
+                </NuxtLink>
+              </div>
+            </section>
+
+            <!-- Recent Ledger -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
               <div class="flex items-center justify-between">
                 <h2 class="text-sm font-bold text-slate-900">Aktivitas Ledger Terbaru</h2>
                 <NuxtLink to="/wallet" class="text-xs font-semibold text-blue-700 hover:underline">
@@ -476,7 +511,7 @@ function formatDateTime(iso: string) {
                 <li
                   v-for="row in data.recentLedger"
                   :key="row.id"
-                  class="py-2.5 flex items-center justify-between gap-2 text-xs"
+                  class="py-2 flex items-center justify-between gap-2 text-xs"
                 >
                   <span class="text-slate-700 truncate">{{ row.reason }}</span>
                   <span
@@ -494,8 +529,8 @@ function formatDateTime(iso: string) {
         </div>
 
         <!-- MODE MENGAJAR -->
-        <div v-else key="mode-teach" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+        <div v-else key="mode-teach" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <section class="lg:col-span-7 bg-white border-2 border-blue-600 rounded-2xl p-6 space-y-4">
             <div class="flex items-center gap-2">
               <UIcon name="i-ph-chalkboard-teacher" class="w-5 h-5 text-blue-600" aria-hidden="true" />
               <h2 class="text-base font-bold text-slate-900">Siap Berbagi Micro-Session 30 Menit?</h2>
@@ -512,14 +547,14 @@ function formatDateTime(iso: string) {
               </NuxtLink>
               <NuxtLink
                 to="/sessions?tab=queue"
-                class="px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-blue-800 text-sm font-semibold min-h-[44px] inline-flex items-center"
+                class="px-4 py-2.5 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-sm font-semibold min-h-[44px] inline-flex items-center"
               >
                 Cek Hold Queue Masuk ({{ data.incomingQueueCount }})
               </NuxtLink>
             </div>
           </section>
 
-          <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-3 shadow-xs">
+          <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
             <h2 class="text-base font-bold text-slate-900">Jadwal Mengajarmu</h2>
             <p v-if="data.upcomingTutor.length === 0" class="text-xs text-slate-600">
               Belum ada slot mengajar aktif. Publikasikan jadwal pertamamu dari menu Mengajar.
@@ -528,7 +563,7 @@ function formatDateTime(iso: string) {
               <li
                 v-for="t in data.upcomingTutor"
                 :key="t.sessionId"
-                class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 flex items-center justify-between gap-3"
+                class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex items-center justify-between gap-3"
               >
                 <div class="min-w-0">
                   <p class="text-xs font-semibold text-blue-700 tabular-nums">
@@ -548,6 +583,34 @@ function formatDateTime(iso: string) {
         </div>
       </Transition>
     </template>
+
+    <!-- Direct Quick-Booking Slideover Drawer -->
+    <USlideover v-model:open="drawerOpen" :title="activeDrawerItem?.skill.title || 'Detail & Booking Cepat'">
+      <template #body>
+        <div v-if="drawerLoading" class="space-y-3 animate-pulse" aria-busy="true">
+          <div class="h-6 w-3/4 bg-slate-200 rounded" />
+          <div class="h-20 w-full bg-slate-100 rounded-xl" />
+          <div class="h-28 w-full bg-slate-100 rounded-xl" />
+          <p class="text-xs text-slate-500">Memuat jadwal dan ulasan mentor…</p>
+        </div>
+        <SkillBookingPanel
+          v-else-if="activeDrawerItem"
+          :item="activeDrawerItem"
+          :my-user-id="myUserId"
+          :credit-balance="creditBalance"
+          @booked="handleQuickBooked"
+        />
+        <div v-else class="p-6 text-center space-y-3">
+          <p class="text-sm text-slate-600">Penawaran ini sudah tidak tersedia atau sedang dalam cooldown.</p>
+          <NuxtLink
+            to="/explore"
+            class="inline-flex px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
+          >
+            Buka Direktori Jelajah
+          </NuxtLink>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
 

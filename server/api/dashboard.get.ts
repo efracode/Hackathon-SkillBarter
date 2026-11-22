@@ -93,6 +93,7 @@ export default defineEventHandler(async (event) => {
         skill: schema.userSkills,
         tutorName: schema.users.name,
         tutorEmail: schema.users.email,
+        tutorAvatarUrl: schema.users.avatarUrl,
         tutorMajor: schema.users.major,
         tutorCampus: schema.users.campus
       })
@@ -152,6 +153,7 @@ export default defineEventHandler(async (event) => {
     .map((item) => ({
       skill: item.skill,
       tutorName: item.tutorName,
+      tutorAvatarUrl: item.tutorAvatarUrl,
       tutorMajor: item.tutorMajor,
       tutorCampus: item.tutorCampus,
       tutorVerifiedUksw: isUkswEmail(item.tutorEmail),
