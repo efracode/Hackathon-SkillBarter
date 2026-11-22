@@ -8,11 +8,13 @@ interface SimStep {
   detail: string
   badge: string
   badgeTone: 'indigo' | 'amber' | 'teal' | 'rose'
-  learnerBalance: number
-  escrowBalance: number
+  learnerBalance: string
+  escrowBalance: string
   tutorDelta: string
-  tokenPosition: 'learner' | 'escrow' | 'tutor' | 'refunded'
-  flowPath: 'to-escrow' | 'hold' | 'to-tutor' | 'to-learner'
+  tokenCoord: { x: number; y: number }
+  ringPercent: number
+  coreIcon: 'lock' | 'clock' | 'qr' | 'check' | 'alert'
+  activeArc: 'left' | 'right' | 'refund' | 'none'
   tokenLabel: string
 }
 
@@ -20,27 +22,27 @@ const scenarios: Record<
   ScenarioKey,
   {
     label: string
-    subLabel: string
     steps: SimStep[]
   }
 > = {
   '1on1': {
     label: '1-on-1 (1:1)',
-    subLabel: 'Pertukaran adil 1 kredit',
     steps: [
       {
         code: '01',
         shortLabel: 'Booking',
-        title: '1 Kredit dikunci aman di Brankas Escrow',
+        title: '1 Kredit dikunci di Brankas Escrow',
         detail:
-          'Pembelajar memilih slot micro-session 30 menit. 1 kredit langsung dipindahkan ke escrow agar pengajar yakin pemesan hadir.',
+          'Pembelajar memesan micro-session 30 menit. 1 kredit langsung berpindah ke escrow agar pengajar yakin pemesan serius.',
         badge: 'Escrow Terkunci',
         badgeTone: 'amber',
-        learnerBalance: 1,
-        escrowBalance: 1,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'to-escrow',
+        learnerBalance: '1 Kredit',
+        escrowBalance: '1 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 25,
+        coreIcon: 'lock',
+        activeArc: 'left',
         tokenLabel: '1K'
       },
       {
@@ -48,15 +50,17 @@ const scenarios: Record<
         shortLabel: 'Sesi 30m',
         title: 'Micro-session berlangsung sesuai template',
         detail:
-          'Sesi tanya-jawab atau review tugas 30 menit berjalan lewat Meet atau tatap muka kampus tanpa perlu materi berat.',
+          'Sesi tanya-jawab atau review tugas 30 menit berjalan lewat Meet atau tatap muka kampus tanpa materi kuliah berat.',
         badge: 'Sesi Berlangsung',
         badgeTone: 'indigo',
-        learnerBalance: 1,
-        escrowBalance: 1,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'hold',
-        tokenLabel: '1K'
+        learnerBalance: '1 Kredit',
+        escrowBalance: '1 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 50,
+        coreIcon: 'clock',
+        activeArc: 'none',
+        tokenLabel: '30m'
       },
       {
         code: '03',
@@ -66,11 +70,13 @@ const scenarios: Record<
           'Pengajar memunculkan kode QR di workspace. Pembelajar memindai untuk membuka form ulasan terverifikasi.',
         badge: 'Hadir Terverifikasi',
         badgeTone: 'teal',
-        learnerBalance: 1,
-        escrowBalance: 1,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'hold',
+        learnerBalance: '1 Kredit',
+        escrowBalance: '1 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 75,
+        coreIcon: 'qr',
+        activeArc: 'none',
         tokenLabel: 'QR'
       },
       {
@@ -81,62 +87,69 @@ const scenarios: Record<
           'Setelah jeda sengketa 24 jam tanpa laporan masalah, 1 kredit dilepas dari escrow ke saldo pengajar.',
         badge: 'Cair +1 Kredit',
         badgeTone: 'teal',
-        learnerBalance: 1,
-        escrowBalance: 0,
-        tutorDelta: '+1',
-        tokenPosition: 'tutor',
-        flowPath: 'to-tutor',
+        learnerBalance: '1 Kredit',
+        escrowBalance: '0 Terkunci',
+        tutorDelta: '+1 Kredit',
+        tokenCoord: { x: 390, y: 80 },
+        ringPercent: 100,
+        coreIcon: 'check',
+        activeArc: 'right',
         tokenLabel: '+1K'
       }
     ]
   },
   group: {
     label: 'Grup (Cap 2)',
-    subLabel: 'Anti-inflasi sesi grup',
     steps: [
       {
         code: '01',
         shortLabel: 'Kuorum',
-        title: '3 Pembelajar masuk dengan masing-masing 1 Kredit',
+        title: '3 Pembelajar mengunci masing-masing 1 Kredit',
         detail:
-          'Sesi grup 60 menit butuh kuorum minimal 2 peserta pada T-2 jam. 3 kredit dari peserta dikunci di escrow.',
+          'Sesi grup 60 menit butuh kuorum minimal 2 peserta pada T-2 jam. 3 kredit dikunci di brankas escrow.',
         badge: '3 Peserta (Kuorum OK)',
         badgeTone: 'amber',
-        learnerBalance: 1,
-        escrowBalance: 3,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'to-escrow',
+        learnerBalance: '1 / Orang',
+        escrowBalance: '3 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 25,
+        coreIcon: 'lock',
+        activeArc: 'left',
         tokenLabel: '3K'
       },
       {
         code: '02',
         shortLabel: 'Sesi 60m',
-        title: 'Diskusi kelompok berjalan paralel',
+        title: 'Diskusi kelompok berjalan dalam satu workspace',
         detail:
-          'Ruang chat grup dan tautan Meet terikat ke sesi. Semua peserta berkoordinasi dalam satu workspace.',
+          'Ruang chat grup dan tautan Meet terikat otomatis ke sesi. Semua peserta berkoordinasi di satu tempat.',
         badge: 'Grup Berlangsung',
         badgeTone: 'indigo',
-        learnerBalance: 1,
-        escrowBalance: 3,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'hold',
-        tokenLabel: '3K'
+        learnerBalance: '1 / Orang',
+        escrowBalance: '3 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 50,
+        coreIcon: 'clock',
+        activeArc: 'none',
+        tokenLabel: '60m'
       },
       {
         code: '03',
         shortLabel: 'Check-in',
-        title: 'Check-in dilacak per peserta secara independen',
+        title: 'Check-in & sengketa dilacak per peserta',
         detail:
-          'Setiap peserta memindai kode QR yang sama, namun ulasan dan potensi sengketa tercatat per booking masing-masing.',
-        badge: 'Check-in Per Booking',
+          'Setiap peserta memindai QR yang sama, namun ulasan dan laporan sengketa tercatat per booking.',
+        badge: 'Per Booking',
         badgeTone: 'teal',
-        learnerBalance: 1,
-        escrowBalance: 3,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'hold',
+        learnerBalance: '1 / Orang',
+        escrowBalance: '3 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 75,
+        coreIcon: 'qr',
+        activeArc: 'none',
         tokenLabel: 'QR'
       },
       {
@@ -144,35 +157,38 @@ const scenarios: Record<
         shortLabel: 'Cap +2K',
         title: 'Pengajar menerima flat maksimal 2 Kredit',
         detail:
-          'Walaupun 3 peserta bergabung, pendapatan pengajar dibatasi maksimal 2 kredit agar tidak terjadi farming kredit.',
-        badge: 'Cair Maks +2 Kredit',
+          'Walaupun 3 peserta bergabung, pendapatan pengajar dibatasi maksimal 2 kredit agar bebas inflasi.',
+        badge: 'Cair Maks +2K',
         badgeTone: 'teal',
-        learnerBalance: 1,
-        escrowBalance: 0,
-        tutorDelta: '+2',
-        tokenPosition: 'tutor',
-        flowPath: 'to-tutor',
+        learnerBalance: '1 / Orang',
+        escrowBalance: '0 Terkunci',
+        tutorDelta: '+2 Kredit',
+        tokenCoord: { x: 390, y: 80 },
+        ringPercent: 100,
+        coreIcon: 'check',
+        activeArc: 'right',
         tokenLabel: '+2K'
       }
     ]
   },
   refund: {
     label: 'Refund 100%',
-    subLabel: 'Proteksi batal & no-show',
     steps: [
       {
         code: '01',
         shortLabel: 'Booking',
-        title: '1 Kredit terkunci aman selama menunggu sesi',
+        title: '1 Kredit aman selama menunggu sesi',
         detail:
-          'Pembelajar membooking slot atau masuk Hold Queue 48 jam. Saldo pembelajar terlindungi di escrow.',
+          'Pembelajar membooking slot atau masuk Hold Queue 48 jam. Kredit tidak pernah hangus sepihak.',
         badge: 'Escrow Terkunci',
         badgeTone: 'amber',
-        learnerBalance: 1,
-        escrowBalance: 1,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'to-escrow',
+        learnerBalance: '1 Kredit',
+        escrowBalance: '1 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 25,
+        coreIcon: 'lock',
+        activeArc: 'left',
         tokenLabel: '1K'
       },
       {
@@ -180,14 +196,16 @@ const scenarios: Record<
         shortLabel: 'T+15m',
         title: 'Pengajar tidak hadir & kode tidak dibuat',
         detail:
-          'Melewati 15 menit dari jadwal tanpa kode check-in, sistem mendeteksi Tutor No-Show secara otomatis.',
+          'Melewati 15 menit dari jadwal tanpa kode check-in, lazy-check mendeteksi Tutor No-Show otomatis.',
         badge: 'No-Show Terdeteksi',
         badgeTone: 'rose',
-        learnerBalance: 1,
-        escrowBalance: 1,
-        tutorDelta: '+0',
-        tokenPosition: 'escrow',
-        flowPath: 'hold',
+        learnerBalance: '1 Kredit',
+        escrowBalance: '1 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 50,
+        coreIcon: 'alert',
+        activeArc: 'none',
         tokenLabel: '!'
       },
       {
@@ -198,26 +216,30 @@ const scenarios: Record<
           'Alih-alih saldo minus yang bisa dieksploitasi, pengajar dikenai jeda mengajar 1, 3, hingga 7 hari.',
         badge: 'Cooldown Aktif',
         badgeTone: 'rose',
-        learnerBalance: 1,
-        escrowBalance: 1,
-        tutorDelta: '0 (Jeda)',
-        tokenPosition: 'escrow',
-        flowPath: 'hold',
+        learnerBalance: '1 Kredit',
+        escrowBalance: '1 Terkunci',
+        tutorDelta: 'Jeda 1-7h',
+        tokenCoord: { x: 230, y: 36 },
+        ringPercent: 75,
+        coreIcon: 'alert',
+        activeArc: 'none',
         tokenLabel: 'Jeda'
       },
       {
         code: '04',
         shortLabel: 'Refund',
-        title: '1 Kredit kembali 100% ke saldo Pembelajar',
+        title: '1 Kredit kembali 100% ke Pembelajar',
         detail:
-          'Escrow dibatalkan dan 1 kredit langsung dikembalikan penuh ke dompet pembelajar beserta catatan di ledger.',
+          'Escrow dilepas balik ke dompet pembelajar beserta catatan transparan di ledger transaksi.',
         badge: 'Refund +1 Kredit',
         badgeTone: 'teal',
-        learnerBalance: 2,
-        escrowBalance: 0,
-        tutorDelta: '+0',
-        tokenPosition: 'refunded',
-        flowPath: 'to-learner',
+        learnerBalance: '2 Kredit',
+        escrowBalance: '0 Terkunci',
+        tutorDelta: '+0 Kredit',
+        tokenCoord: { x: 70, y: 80 },
+        ringPercent: 100,
+        coreIcon: 'check',
+        activeArc: 'refund',
         tokenLabel: '+1K'
       }
     ]
@@ -230,17 +252,26 @@ const isPlaying = ref(false)
 let timerId: ReturnType<typeof setInterval> | null = null
 
 const currentScenario = computed(() => scenarios[activeScenario.value as ScenarioKey])
-const currentStep = computed(() => currentScenario.value.steps[activeStep.value] || currentScenario.value.steps[0]!)
+const currentStep = computed(
+  () => currentScenario.value.steps[activeStep.value] || currentScenario.value.steps[0]!
+)
 
-const tokenTranslateX = computed(() => {
-  switch (currentStep.value.tokenPosition) {
-    case 'learner':
-    case 'refunded':
-      return 58
-    case 'escrow':
-      return 210
-    case 'tutor':
-      return 362
+const RING_RADIUS = 50
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
+const ringDashOffset = computed(
+  () => RING_CIRCUMFERENCE * (1 - currentStep.value.ringPercent / 100)
+)
+
+const ringStrokeColor = computed(() => {
+  switch (currentStep.value.badgeTone) {
+    case 'amber':
+      return '#D97706'
+    case 'teal':
+      return '#0F766E'
+    case 'rose':
+      return '#E11D48'
+    default:
+      return '#4F46E5'
   }
 })
 
@@ -313,8 +344,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-[#F7F5F0] border border-stone-300 rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs">
-    <!-- Top Header & Scenario Switcher -->
+  <div class="bg-[#F7F5F0] border border-stone-300 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xs">
+    <!-- Top Header & Controls -->
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-600">
@@ -345,7 +376,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Scenario Pills -->
+    <!-- Scenario Switcher -->
     <div class="flex flex-wrap gap-2" role="group" aria-label="Pilih skenario ekonomi kredit">
       <button
         v-for="(sc, key) in scenarios"
@@ -364,179 +395,198 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Animated SVG Credit Flow Diagram -->
-    <div class="bg-white border border-stone-200 rounded-xl p-4 overflow-hidden">
+    <!-- Sculptural Exchange Ring SVG + Clean HTML Telemetry Strip -->
+    <div class="bg-white border border-stone-200 rounded-xl p-4 space-y-3 overflow-hidden">
       <svg
-        viewBox="0 0 420 128"
+        viewBox="0 0 460 198"
         class="w-full h-auto block"
         role="img"
-        aria-label="Diagram alur perpindahan token kredit antara Pembelajar, Escrow, dan Pengajar"
+        aria-label="Orbital diagram alur escrow kredit antara Pembelajar, Brankas Escrow, dan Pengajar"
       >
-        <!-- Connecting Rails -->
-        <line
-          x1="84"
-          y1="54"
-          x2="180"
-          y2="54"
-          stroke="#CBD5E1"
+        <!-- Curved Guide Arcs -->
+        <path
+          d="M 96 112 Q 140 52 178 88"
+          fill="none"
+          stroke="#E2E8F0"
           stroke-width="2.5"
           stroke-dasharray="5 5"
         />
-        <line
-          x1="240"
-          y1="54"
-          x2="336"
-          y2="54"
-          stroke="#CBD5E1"
+        <path
+          d="M 282 88 Q 320 52 364 112"
+          fill="none"
+          stroke="#E2E8F0"
           stroke-width="2.5"
           stroke-dasharray="5 5"
+        />
+        <path
+          d="M 184 136 Q 140 178 92 142"
+          fill="none"
+          stroke="#E2E8F0"
+          stroke-width="2"
+          stroke-dasharray="4 5"
         />
 
-        <!-- Active Highlighted Path -->
-        <line
-          v-if="currentStep.flowPath === 'to-escrow' || currentStep.flowPath === 'to-learner'"
-          x1="84"
-          y1="54"
-          x2="180"
-          y2="54"
-          :stroke="currentStep.flowPath === 'to-learner' ? '#0F766E' : '#B45309'"
+        <!-- Active Animated Curved Flow Arc -->
+        <path
+          v-if="currentStep.activeArc === 'left'"
+          d="M 96 112 Q 140 52 178 88"
+          fill="none"
+          stroke="#D97706"
           stroke-width="3"
           stroke-dasharray="6 6"
-          :class="currentStep.flowPath === 'to-learner' ? 'flow-rail-reverse' : 'flow-rail-forward'"
+          class="flow-rail-forward"
         />
-        <line
-          v-if="currentStep.flowPath === 'to-tutor'"
-          x1="240"
-          y1="54"
-          x2="336"
-          y2="54"
+        <path
+          v-if="currentStep.activeArc === 'right'"
+          d="M 282 88 Q 320 52 364 112"
+          fill="none"
+          stroke="#0F766E"
+          stroke-width="3"
+          stroke-dasharray="6 6"
+          class="flow-rail-forward"
+        />
+        <path
+          v-if="currentStep.activeArc === 'refund'"
+          d="M 184 136 Q 140 178 92 142"
+          fill="none"
           stroke="#0F766E"
           stroke-width="3"
           stroke-dasharray="6 6"
           class="flow-rail-forward"
         />
 
-        <!-- Node 1: Pembelajar -->
-        <g transform="translate(58, 54)">
-          <rect
-            x="-38"
-            y="-28"
-            width="76"
-            height="56"
-            rx="12"
-            :fill="currentStep.tokenPosition === 'refunded' ? '#F0FDFA' : '#F8FAFC'"
-            :stroke="currentStep.tokenPosition === 'refunded' ? '#0F766E' : '#CBD5E1'"
-            stroke-width="1.5"
+        <!-- Left Node: Pembelajar Emblem -->
+        <g transform="translate(70, 124)">
+          <circle
+            cx="0"
+            cy="0"
+            r="28"
+            :fill="currentStep.activeArc === 'refund' ? '#F0FDFA' : '#F8FAFC'"
+            :stroke="currentStep.activeArc === 'refund' ? '#0F766E' : '#CBD5E1'"
+            stroke-width="2"
           />
-          <text
-            x="0"
-            y="-4"
-            text-anchor="middle"
-            class="fill-slate-600 text-[10px] font-semibold"
-          >
-            Pembelajar
-          </text>
-          <text
-            x="0"
-            y="16"
-            text-anchor="middle"
-            class="fill-slate-900 text-[14px] font-bold font-mono"
-          >
-            {{ currentStep.learnerBalance }} Kredit
-          </text>
+          <circle cx="0" cy="-6" r="7" fill="none" stroke="#334155" stroke-width="2" />
+          <path d="M -12 13 C -12 6 12 6 12 13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" />
         </g>
 
-        <!-- Node 2: Escrow Vault -->
-        <g transform="translate(210, 54)">
-          <rect
-            x="-42"
-            y="-32"
-            width="84"
-            height="64"
-            rx="14"
-            :fill="currentStep.escrowBalance > 0 ? '#FFFBEB' : '#F8FAFC'"
-            :stroke="currentStep.escrowBalance > 0 ? '#B45309' : '#CBD5E1'"
-            stroke-width="1.75"
+        <!-- Center Node: Sculptural Escrow Progress Vault -->
+        <g transform="translate(230, 108)">
+          <!-- Outer Progress Track -->
+          <circle cx="0" cy="0" r="50" fill="none" stroke="#E7E5E4" stroke-width="6" />
+          <!-- Animated Progress Ring -->
+          <circle
+            cx="0"
+            cy="0"
+            r="50"
+            fill="none"
+            :stroke="ringStrokeColor"
+            stroke-width="6"
+            stroke-linecap="round"
+            :stroke-dasharray="RING_CIRCUMFERENCE"
+            :stroke-dashoffset="ringDashOffset"
+            transform="rotate(-90)"
+            style="transition: stroke-dashoffset 480ms cubic-bezier(0.22, 1, 0.36, 1), stroke 250ms ease"
           />
-          <text
-            x="0"
-            y="-7"
-            text-anchor="middle"
-            :class="currentStep.escrowBalance > 0 ? 'fill-amber-700' : 'fill-slate-500'"
-            class="text-[10px] font-semibold"
-          >
-            Brankas Escrow
-          </text>
-          <text
-            x="0"
-            y="16"
-            text-anchor="middle"
-            :class="currentStep.escrowBalance > 0 ? 'fill-amber-800' : 'fill-slate-400'"
-            class="text-[15px] font-bold font-mono"
-          >
-            {{ currentStep.escrowBalance }} Terkunci
-          </text>
+          <!-- Dark Ink Inner Vault Core -->
+          <circle
+            cx="0"
+            cy="0"
+            r="39"
+            :fill="currentStep.coreIcon === 'check' ? '#0F766E' : currentStep.coreIcon === 'alert' ? '#9F1239' : '#0F172A'"
+            style="transition: fill 250ms ease"
+          />
+
+          <!-- Crisp Vector Icon Inside Vault -->
+          <g v-if="currentStep.coreIcon === 'lock'">
+            <rect x="-11" y="-2" width="22" height="16" rx="4" fill="none" stroke="#FBBF24" stroke-width="2.4" />
+            <path d="M -6 -2 V -7 A 6 6 0 0 1 6 -7 V -2" fill="none" stroke="#FBBF24" stroke-width="2.4" />
+            <circle cx="0" cy="6" r="2" fill="#FBBF24" />
+          </g>
+          <g v-else-if="currentStep.coreIcon === 'clock'">
+            <circle cx="0" cy="0" r="14" fill="none" stroke="#A5B4FC" stroke-width="2.4" />
+            <path d="M 0 -7 V 1 L 6 4" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" />
+          </g>
+          <g v-else-if="currentStep.coreIcon === 'qr'">
+            <rect x="-12" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#5EEAD4" stroke-width="2.2" />
+            <rect x="3" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#5EEAD4" stroke-width="2.2" />
+            <rect x="-12" y="3" width="9" height="9" rx="1.5" fill="none" stroke="#5EEAD4" stroke-width="2.2" />
+            <rect x="4" y="4" width="7" height="7" rx="1" fill="#5EEAD4" />
+          </g>
+          <g v-else-if="currentStep.coreIcon === 'alert'">
+            <path d="M 0 -13 L 13 10 H -13 Z" fill="none" stroke="#FECDD3" stroke-width="2.4" stroke-linejoin="round" />
+            <line x1="0" y1="-5" x2="0" y2="2" stroke="#FECDD3" stroke-width="2.4" stroke-linecap="round" />
+            <circle cx="0" cy="6" r="1.5" fill="#FECDD3" />
+          </g>
+          <g v-else>
+            <circle cx="0" cy="0" r="15" fill="none" stroke="#CCFBF1" stroke-width="2.2" />
+            <path d="M -7 0 L -2 5 L 8 -5" fill="none" stroke="#CCFBF1" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+          </g>
         </g>
 
-        <!-- Node 3: Pengajar -->
-        <g transform="translate(362, 54)">
-          <rect
-            x="-38"
-            y="-28"
-            width="76"
-            height="56"
-            rx="12"
-            :fill="currentStep.tokenPosition === 'tutor' ? '#F0FDFA' : '#F8FAFC'"
-            :stroke="currentStep.tokenPosition === 'tutor' ? '#0F766E' : '#CBD5E1'"
-            stroke-width="1.5"
+        <!-- Right Node: Pengajar Emblem -->
+        <g transform="translate(390, 124)">
+          <circle
+            cx="0"
+            cy="0"
+            r="28"
+            :fill="currentStep.activeArc === 'right' ? '#F0FDFA' : '#F8FAFC'"
+            :stroke="currentStep.activeArc === 'right' ? '#0F766E' : '#CBD5E1'"
+            stroke-width="2"
           />
-          <text
-            x="0"
-            y="-4"
-            text-anchor="middle"
-            class="fill-slate-600 text-[10px] font-semibold"
-          >
-            Pengajar
-          </text>
-          <text
-            x="0"
-            y="16"
-            text-anchor="middle"
-            :class="currentStep.tokenPosition === 'tutor' ? 'fill-teal-700' : 'fill-slate-700'"
-            class="text-[14px] font-bold font-mono"
-          >
-            {{ currentStep.tutorDelta }}
-          </text>
+          <rect x="-12" y="-10" width="24" height="16" rx="3" fill="none" stroke="#334155" stroke-width="2" />
+          <path d="M -5 12 L 0 6 L 5 12" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </g>
 
-        <!-- Moving Animated Credit Token -->
+        <!-- Moving Credit Coin -->
         <g
           :style="{
-            transform: `translate(${tokenTranslateX}px, 108px)`,
-            transition: 'transform 480ms cubic-bezier(0.22, 1, 0.36, 1)'
+            transform: `translate(${currentStep.tokenCoord.x}px, ${currentStep.tokenCoord.y}px)`,
+            transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)'
           }"
         >
           <rect
-            x="-22"
+            x="-23"
             y="-13"
-            width="44"
-            height="24"
-            rx="12"
-            :fill="currentStep.badgeTone === 'rose' ? '#E11D48' : currentStep.tokenPosition === 'tutor' || currentStep.tokenPosition === 'refunded' ? '#0F766E' : '#4F46E5'"
+            width="46"
+            height="26"
+            rx="13"
+            :fill="currentStep.badgeTone === 'rose' ? '#E11D48' : currentStep.badgeTone === 'teal' ? '#0F766E' : '#4F46E5'"
           />
           <text
             x="0"
-            y="3"
+            y="4"
             text-anchor="middle"
-            class="fill-white text-[10px] font-bold font-mono"
+            class="fill-white text-[11px] font-bold font-mono"
           >
             {{ currentStep.tokenLabel }}
           </text>
         </g>
       </svg>
+
+      <!-- Clean HTML Telemetry Readout (Never Clips) -->
+      <div class="grid grid-cols-3 gap-2.5 pt-2 border-t border-stone-200 tabular-nums">
+        <div class="p-2.5 rounded-lg bg-[#F7F5F0] border border-stone-200 text-center">
+          <p class="text-[11px] font-medium text-slate-600">Pembelajar</p>
+          <p class="text-sm sm:text-base font-bold font-mono text-slate-900 mt-0.5">
+            {{ currentStep.learnerBalance }}
+          </p>
+        </div>
+        <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-center">
+          <p class="text-[11px] font-medium text-amber-800">Brankas Escrow</p>
+          <p class="text-sm sm:text-base font-bold font-mono text-amber-800 mt-0.5">
+            {{ currentStep.escrowBalance }}
+          </p>
+        </div>
+        <div class="p-2.5 rounded-lg bg-teal-50 border border-teal-200 text-center">
+          <p class="text-[11px] font-medium text-teal-800">Pengajar</p>
+          <p class="text-sm sm:text-base font-bold font-mono text-teal-800 mt-0.5">
+            {{ currentStep.tutorDelta }}
+          </p>
+        </div>
+      </div>
     </div>
 
-    <!-- Step Selector Pills (Zero Truncation) -->
+    <!-- Step Selector Pills -->
     <div
       class="grid grid-cols-2 sm:grid-cols-4 gap-2"
       role="tablist"
@@ -561,7 +611,7 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Active Step Explanation with Smooth Transition -->
+    <!-- Active Step Explanation -->
     <Transition name="panel-slide" mode="out-in">
       <div
         :key="`${activeScenario}-${activeStep}`"
@@ -581,25 +631,14 @@ onUnmounted(() => {
   animation: rail-dash 0.9s linear infinite;
 }
 
-.flow-rail-reverse {
-  animation: rail-dash-reverse 0.9s linear infinite;
-}
-
 @keyframes rail-dash {
   to {
     stroke-dashoffset: -24;
   }
 }
 
-@keyframes rail-dash-reverse {
-  to {
-    stroke-dashoffset: 24;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .flow-rail-forward,
-  .flow-rail-reverse {
+  .flow-rail-forward {
     animation: none;
   }
 }
