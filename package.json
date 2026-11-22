@@ -1,0 +1,32 @@
+{
+  "name": "skillbarter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxi typecheck",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@iconify-json/ph": "^1.2.2",
+    "@nuxt/ui": "^3.0.2",
+    "drizzle-orm": "^0.41.0",
+    "nuxt": "^3.16.2",
+    "nuxt-auth-utils": "^0.5.19",
+    "postgres": "^3.4.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "drizzle-kit": "^0.30.6",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vue-tsc": "^3.3.14"
+  }
+}
