@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { data: meData } = await useFetch('/api/me', { key: 'me-profile' })
+const { data: meData, refresh: refreshMe } = await useFetch('/api/me', { key: 'me-profile' })
 const { clear: clearSession } = useUserSession()
 
 const user = computed(() => meData.value?.user)
@@ -9,6 +9,42 @@ const teachSkills = computed(() =>
 const learnSkills = computed(() =>
   (meData.value?.skills || []).filter((s: { direction: string }) => s.direction === 'learn')
 )
+
+const campusInput = ref('')
+const majorInput = ref('')
+const saving = ref(false)
+const saveMessage = ref('')
+
+watch(
+  user,
+  (u: { campus?: string | null; major?: string | null } | undefined) => {
+    if (u) {
+      campusInput.value = u.campus || ''
+      majorInput.value = u.major || ''
+    }
+  },
+  { immediate: true }
+)
+
+const inCooldown = computed(() => {
+  if (!user.value?.teachingCooldownUntil) return false
+  return new Date(user.value.teachingCooldownUntil).getTime() > Date.now()
+})
+
+async function saveProfile() {
+  saving.value = true
+  saveMessage.value = ''
+  try {
+    await $fetch('/api/profile', {
+      method: 'PATCH',
+      body: { campus: campusInput.value, major: majorInput.value }
+    })
+    await refreshMe()
+    saveMessage.value = 'Identitas kampus dan jurusan berhasil diperbarui.'
+  } finally {
+    saving.value = false
+  }
+}
 
 async function handleLogout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
@@ -21,20 +57,63 @@ async function handleLogout() {
   <div class="space-y-6 max-w-2xl">
     <div>
       <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Profil Saya</h1>
-      <p class="text-sm text-slate-600">Identitas kampus, daftar skill, dan pintasan akun.</p>
+      <p class="text-sm text-slate-600">Identitas kampus, daftar skill, status akun, dan pintasan navigasi.</p>
     </div>
 
-    <section v-if="user" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+    <UAlert
+      v-if="inCooldown && user?.teachingCooldownUntil"
+      color="error"
+      variant="subtle"
+      icon="i-ph-warning-circle"
+      title="Status Cooldown Mengajar Aktif"
+      :description="`Berakhir pada ${new Date(user.teachingCooldownUntil).toLocaleString('id-ID')}`"
+    />
+
+    <section v-if="user" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-5">
       <div class="flex items-center gap-4">
         <UAvatar :src="user.avatarUrl || undefined" :alt="user.name" size="lg" />
         <div>
           <h2 class="text-lg font-semibold text-slate-900">{{ user.name }}</h2>
           <p class="text-sm text-slate-600">{{ user.email }}</p>
-          <p v-if="user.campus || user.major" class="text-xs text-slate-500 mt-0.5">
-            {{ [user.major, user.campus].filter(Boolean).join(' · ') }}
-          </p>
         </div>
       </div>
+
+      <form class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200" @submit.prevent="saveProfile">
+        <div>
+          <label for="profile-campus" class="block text-xs font-medium text-slate-700 mb-1">
+            Kampus (Opsional)
+          </label>
+          <input
+            id="profile-campus"
+            v-model="campusInput"
+            type="text"
+            placeholder="Nama kampus"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm min-h-[44px]"
+          />
+        </div>
+        <div>
+          <label for="profile-major" class="block text-xs font-medium text-slate-700 mb-1">
+            Jurusan (Opsional)
+          </label>
+          <input
+            id="profile-major"
+            v-model="majorInput"
+            type="text"
+            placeholder="Nama jurusan"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm min-h-[44px]"
+          />
+        </div>
+        <div class="sm:col-span-2 flex items-center justify-between gap-3">
+          <span v-if="saveMessage" class="text-xs font-medium text-teal-700">{{ saveMessage }}</span>
+          <button
+            type="submit"
+            :disabled="saving"
+            class="ml-auto px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold min-h-[40px]"
+          >
+            {{ saving ? 'Menyimpan...' : 'Simpan Profil' }}
+          </button>
+        </div>
+      </form>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-200">
         <div>
