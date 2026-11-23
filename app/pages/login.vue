@@ -5,7 +5,7 @@ definePageMeta({
 
 const route = useRoute()
 const { loggedIn, user } = useUserSession()
-const hasOAuthError = computed(() => route.query.error === 'oauth_failed')
+const hasOAuthError = computed(() => Boolean(route.query.error))
 
 const previewDomain = ref<'uksw' | 'general'>('uksw')
 const isRedirecting = ref(false)
@@ -18,13 +18,76 @@ watch(loggedIn, (isAuth: boolean) => {
 </script>
 
 <template>
-  <main class="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-white text-slate-900">
-    <!-- Left Architectural Blueprint Column (50%) -->
-    <section class="lg:col-span-6 bg-blueprint-grid border-b lg:border-b-0 lg:border-r border-slate-200 p-6 sm:p-10 lg:p-12 flex flex-col justify-between gap-8">
-      <div class="flex items-center justify-between gap-4">
+  <main class="min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 bg-[#FAF8F4] text-[#14181F]">
+    <!-- Right Focused Single OAuth Gate (Shown first on Mobile 390 so primary CTA is above the fold) -->
+    <section class="min-w-0 lg:col-span-5 lg:order-2 bg-white border-b lg:border-b-0 border-[#E5E0D5] p-5 sm:p-10 lg:p-14 flex flex-col justify-center">
+      <!-- Mobile Compact Top Bar -->
+      <div class="flex lg:hidden items-center justify-between gap-4 pb-6">
         <NuxtLink
           to="/"
-          class="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 hover:text-blue-900 min-h-[40px]"
+          class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#1D4ED8] min-h-[44px]"
+        >
+          <UIcon name="i-ph-arrow-left" class="w-4 h-4" aria-hidden="true" />
+          <span>Pratinjau</span>
+        </NuxtLink>
+        <SkillBarterLogo size="sm" />
+      </div>
+
+      <div class="w-full max-w-[380px] mx-auto space-y-6 my-auto">
+        <div class="space-y-2 pb-5 border-b border-[#E5E0D5]">
+          <p class="text-xs font-semibold text-[#526071]">
+            Autentikasi Google OAuth
+          </p>
+          <h1 class="text-2xl sm:text-[28px] font-bold text-[#14181F] tracking-tight">
+            Masuk ke SkillBarter
+          </h1>
+          <p class="text-[13px] sm:text-sm text-[#475569] leading-relaxed">
+            Satu tombol masuk tanpa password. Nama tampilan dan foto profil bisa kamu ubah bebas saat pengaturan awal.
+          </p>
+        </div>
+
+        <UiAlert
+          v-if="hasOAuthError"
+          tone="danger"
+          title="Autentikasi Google gagal"
+          description="Sesi OAuth dibatalkan atau terputus. Klik tombol masuk di bawah untuk mencoba lagi."
+        />
+
+        <UiButton
+          href="/api/auth/google"
+          variant="primary"
+          size="lg"
+          block
+          :loading="isRedirecting"
+          :icon="isRedirecting ? undefined : 'i-ph-sign-in'"
+          @click="isRedirecting = true"
+        >
+          {{ isRedirecting ? 'Mengalihkan ke Google…' : 'Masuk dengan Google' }}
+        </UiButton>
+
+        <ul class="divide-y divide-[#E5E0D5] border-y border-[#E5E0D5] text-xs text-[#475569]">
+          <li class="py-3 flex items-center justify-between gap-2">
+            <span>Modal awal pengguna baru</span>
+            <span class="font-mono font-bold text-[#1D4ED8] tabular-nums">+2 Kredit</span>
+          </li>
+          <li class="py-3 flex items-center justify-between gap-2">
+            <span>Identitas kustom (nama &amp; foto)</span>
+            <span class="font-semibold text-[#14181F]">Dapat diubah</span>
+          </li>
+          <li class="py-3 flex items-center justify-between gap-2">
+            <span>Ulasan mentor</span>
+            <span class="font-semibold text-[#047857]">100% Check-in QR</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Left Architectural Editorial Column (Notebook Grid only on Login left col & Hero) -->
+    <section class="min-w-0 lg:col-span-7 lg:order-1 bg-editorial-grid lg:border-r border-[#E5E0D5] p-5 sm:p-10 lg:p-14 flex flex-col justify-between gap-10">
+      <div class="hidden lg:flex items-center justify-between gap-4">
+        <NuxtLink
+          to="/"
+          class="inline-flex items-center gap-2 text-xs font-semibold text-[#475569] hover:text-[#1D4ED8] min-h-[44px]"
         >
           <UIcon name="i-ph-arrow-left" class="w-4 h-4" aria-hidden="true" />
           <span>Kembali ke Pratinjau</span>
@@ -32,33 +95,33 @@ watch(loggedIn, (isAuth: boolean) => {
         <SkillBarterLogo size="sm" />
       </div>
 
-      <div class="max-w-lg space-y-6 my-auto">
+      <div class="max-w-xl space-y-7 my-auto">
         <div class="space-y-3">
-          <span class="font-mono text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-blue-200 bg-white text-blue-700 inline-block">
-            Ekonomi Waktu Kampus · 1:1 Adil
-          </span>
-          <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-[1.1]">
+          <p class="text-xs font-semibold text-[#1D4ED8]">
+            Pertukaran skill kampus, satu pintu masuk
+          </p>
+          <h2 class="text-3xl sm:text-[42px] font-bold text-[#14181F] tracking-tight leading-[1.1]">
             Tukar waktumu jadi
-            <span class="font-serif italic font-normal text-blue-600">kredit belajar,</span>
+            <span class="font-serif italic font-normal text-[#1D4ED8]">kredit belajar,</span>
             bukan biaya uang.
-          </h1>
-          <p class="text-sm text-slate-600 leading-relaxed">
-            Satu kali masuk Google untuk membuka dompet kredit awal, memilih mentor terverifikasi QR, atau menawarkan micro-session 30 menit.
+          </h2>
+          <p class="text-sm sm:text-[15px] text-[#475569] leading-relaxed">
+            Masuk sekali untuk memperoleh +2 kredit modal awal, memesan sesi singkat 30 menit, atau menawarkan keahlianmu ke rekan mahasiswa.
           </p>
         </div>
 
-        <!-- Interactive Live Account Status Preview Card -->
-        <div class="bg-white border-2 border-blue-600 rounded-2xl p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
-            <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
-              Simulasi Status Akun
+        <!-- Domain Verification Simulator -->
+        <div class="bg-white border border-[#E5E0D5] rounded-[8px] p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E0D5]">
+            <span class="text-xs font-semibold text-[#475569]">
+              Cek verifikasi email kampus
             </span>
-            <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
+            <div class="inline-flex flex-wrap rounded-[6px] border border-[#E5E0D5] bg-[#FAF8F4] p-0.5 text-xs font-semibold max-w-full">
               <button
                 type="button"
                 :class="[
-                  'px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
-                  previewDomain === 'uksw' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-blue-700'
+                  'px-2.5 sm:px-3 py-1.5 rounded-[4px] transition-colors whitespace-nowrap min-h-[36px]',
+                  previewDomain === 'uksw' ? 'bg-[#14181F] text-white' : 'text-[#475569] hover:text-[#14181F]'
                 ]"
                 @click="previewDomain = 'uksw'"
               >
@@ -67,8 +130,8 @@ watch(loggedIn, (isAuth: boolean) => {
               <button
                 type="button"
                 :class="[
-                  'px-2.5 py-1 rounded-md transition-colors whitespace-nowrap',
-                  previewDomain === 'general' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-blue-700'
+                  'px-2.5 sm:px-3 py-1.5 rounded-[4px] transition-colors whitespace-nowrap min-h-[36px]',
+                  previewDomain === 'general' ? 'bg-[#14181F] text-white' : 'text-[#475569] hover:text-[#14181F]'
                 ]"
                 @click="previewDomain = 'general'"
               >
@@ -81,19 +144,19 @@ watch(loggedIn, (isAuth: boolean) => {
             <div v-if="previewDomain === 'uksw'" key="card-uksw" class="space-y-3">
               <div class="flex items-center justify-between gap-2">
                 <div>
-                  <p class="text-sm font-bold text-slate-900">Mahasiswa UKSW</p>
-                  <p class="font-mono text-xs text-slate-500">nama@student.uksw.edu</p>
+                  <p class="text-sm font-bold text-[#14181F]">Mahasiswa UKSW</p>
+                  <p class="font-mono text-xs text-[#526071]">nama@student.uksw.edu / @uksw.edu</p>
                 </div>
                 <VerifiedUkswBadge />
               </div>
-              <div class="grid grid-cols-2 gap-2 text-xs tabular-nums">
-                <div class="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200">
-                  <p class="text-slate-600">Modal Awal</p>
-                  <p class="font-mono font-bold text-blue-700 mt-0.5">+2 Kredit</p>
+              <div class="grid grid-cols-2 gap-3 pt-3 border-t border-[#E5E0D5] text-xs tabular-nums">
+                <div>
+                  <p class="text-[#526071]">Modal Awal</p>
+                  <p class="font-mono font-bold text-[#1D4ED8] mt-0.5">+2 Kredit</p>
                 </div>
-                <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
-                  <p class="text-slate-600">Status Kampus</p>
-                  <p class="font-semibold text-slate-900 mt-0.5">Auto-Verified UKSW</p>
+                <div>
+                  <p class="text-[#526071]">Status Identitas</p>
+                  <p class="font-semibold text-[#14181F] mt-0.5">Otomatis Verified UKSW</p>
                 </div>
               </div>
             </div>
@@ -101,21 +164,19 @@ watch(loggedIn, (isAuth: boolean) => {
             <div v-else key="card-general" class="space-y-3">
               <div class="flex items-center justify-between gap-2">
                 <div>
-                  <p class="text-sm font-bold text-slate-900">Mahasiswa Umum</p>
-                  <p class="font-mono text-xs text-slate-500">nama@gmail.com</p>
+                  <p class="text-sm font-bold text-[#14181F]">Mahasiswa Umum</p>
+                  <p class="font-mono text-xs text-[#526071]">nama@gmail.com</p>
                 </div>
-                <span class="text-[11px] font-semibold text-slate-600 px-2 py-0.5 rounded-md border border-slate-300 bg-slate-50">
-                  Akun Standar
-                </span>
+                <UiBadge tone="neutral">Akun Standar</UiBadge>
               </div>
-              <div class="grid grid-cols-2 gap-2 text-xs tabular-nums">
-                <div class="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200">
-                  <p class="text-slate-600">Modal Awal</p>
-                  <p class="font-mono font-bold text-blue-700 mt-0.5">+2 Kredit</p>
+              <div class="grid grid-cols-2 gap-3 pt-3 border-t border-[#E5E0D5] text-xs tabular-nums">
+                <div>
+                  <p class="text-[#526071]">Modal Awal</p>
+                  <p class="font-mono font-bold text-[#1D4ED8] mt-0.5">+2 Kredit</p>
                 </div>
-                <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
-                  <p class="text-slate-600">Akses Direktori</p>
-                  <p class="font-semibold text-slate-900 mt-0.5">Penuh (Belajar &amp; Ajar)</p>
+                <div>
+                  <p class="text-[#526071]">Akses Fitur</p>
+                  <p class="font-semibold text-[#14181F] mt-0.5">Penuh (Belajar &amp; Mengajar)</p>
                 </div>
               </div>
             </div>
@@ -123,64 +184,9 @@ watch(loggedIn, (isAuth: boolean) => {
         </div>
       </div>
 
-      <p class="text-xs text-slate-500">
-        SkillBarter · Case 1: Smarter Campus and Learning · Tim pecut agen
+      <p class="text-xs text-[#526071] leading-relaxed">
+        Domain <code class="font-mono text-[#14181F]">@student.uksw.edu</code> dan <code class="font-mono text-[#14181F]">@uksw.edu</code> memperoleh lencana Verified UKSW otomatis. Akun Gmail umum tetap bisa bergabung.
       </p>
-    </section>
-
-    <!-- Right Focused Single-Auth Column (50%) -->
-    <section class="lg:col-span-6 p-6 sm:p-10 lg:p-12 flex items-center justify-center bg-white">
-      <div class="w-full max-w-md space-y-6">
-        <div class="space-y-2">
-          <p class="font-mono text-xs font-semibold uppercase tracking-wider text-blue-700">
-            Pintu Masuk Tunggal
-          </p>
-          <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Masuk ke SkillBarter
-          </h2>
-          <p class="text-sm text-slate-600">
-            Autentikasi instan lewat Google tanpa kode OTP berulang.
-          </p>
-        </div>
-
-        <div aria-live="polite">
-          <UAlert
-            v-if="hasOAuthError"
-            color="error"
-            variant="subtle"
-            icon="i-ph-warning-circle"
-            title="Gagal masuk dengan Google"
-            description="Terjadi kendala saat autentikasi. Silakan coba klik tombol di bawah kembali."
-          />
-        </div>
-
-        <!-- Single OAuth Entry Button Across Entire App -->
-        <a
-          href="/api/auth/google"
-          :aria-busy="isRedirecting"
-          class="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-[background-color,transform] duration-150 active:scale-[0.99] min-h-[50px]"
-          @click="isRedirecting = true"
-        >
-          <UIcon name="i-ph-google-logo-bold" class="w-5 h-5" aria-hidden="true" />
-          <span>{{ isRedirecting ? 'Mengalihkan ke Google…' : 'Masuk dengan Google' }}</span>
-        </a>
-
-        <!-- 3 Crisp Single-Line Guarantees -->
-        <ul class="border-t border-slate-200 pt-5 space-y-3 text-xs sm:text-sm text-slate-600">
-          <li class="flex items-start gap-2.5">
-            <UIcon name="i-ph-check-circle" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Nama tampilan, foto profil, dan bio dapat diatur sendiri saat onboarding.</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <UIcon name="i-ph-check-circle" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Pengguna baru langsung masuk ke Dashboard dengan modal <strong class="font-mono text-blue-700">+2 kredit</strong>.</span>
-          </li>
-          <li class="flex items-start gap-2.5">
-            <UIcon name="i-ph-check-circle" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Email <strong class="text-slate-900">@student.uksw.edu</strong> atau <strong class="text-slate-900">@uksw.edu</strong> otomatis memperoleh badge Verified UKSW.</span>
-          </li>
-        </ul>
-      </div>
     </section>
   </main>
 </template>

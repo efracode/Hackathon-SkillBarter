@@ -32,3 +32,19 @@ export function isGroupQuorumFailed(
   if (mode !== 'group') return false
   return nowMs >= scheduledAtMs - TWO_HOURS_MS && confirmedCount < 2
 }
+
+export function isLearnerNoShow(params: {
+  bookingStatus: string
+  sessionStatus: string
+  hasCheckinCode: boolean
+  scheduledAtMs: number
+  nowMs: number
+}): boolean {
+  if (params.bookingStatus !== 'confirmed' || params.sessionStatus !== 'confirmed') return false
+  if (!params.hasCheckinCode) return false
+  return params.nowMs > params.scheduledAtMs + CHECKIN_LATE_MS
+}
+
+export function shouldMarkSessionCompleted(activeBookingsCount: number): boolean {
+  return activeBookingsCount === 0
+}

@@ -81,6 +81,18 @@ export default defineEventHandler(async (event) => {
       )
       .limit(1)
     myReport = rep || null
+  } else if (isTutor) {
+    const [rep] = await db
+      .select()
+      .from(schema.reports)
+      .where(
+        and(
+          eq(schema.reports.sessionId, sessionId),
+          eq(schema.reports.reporterId, currentUserId)
+        )
+      )
+      .limit(1)
+    myReport = rep || null
   }
 
   return {

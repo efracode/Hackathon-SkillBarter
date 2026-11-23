@@ -12,13 +12,13 @@ withDefaults(
 <template>
   <span
     :class="[
-      'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border',
+      'inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-[4px] border leading-tight',
       tone === 'dark'
-        ? 'bg-blue-700 text-white border-blue-400'
-        : 'bg-blue-50 text-blue-700 border-blue-200'
+        ? 'bg-[#1D4ED8] text-white border-blue-500'
+        : 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
     ]"
   >
-    <UIcon name="i-ph-shield-check" class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+    <UIcon name="i-ph-check-circle" class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
     <span>Verified UKSW</span>
   </span>
 </template>

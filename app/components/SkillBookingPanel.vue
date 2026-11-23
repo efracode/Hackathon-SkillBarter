@@ -70,6 +70,7 @@ watch(
 )
 
 const isOwnSkill = computed(() => props.item.tutor.id === props.myUserId)
+const hasInsufficientCredits = computed(() => props.creditBalance < 1)
 
 function formatDateTime(iso: string) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -98,13 +99,13 @@ async function confirmBooking() {
     })
     bookingSuccess.value =
       props.item.slots.length > 0
-        ? 'Booking berhasil! 1 kredit terkunci di escrow.'
-        : 'Masuk Hold Queue 48 jam! 1 kredit terkunci di escrow.'
+        ? 'Pemesanan berhasil! 1 Kredit ditahan aman hingga sesi selesai.'
+        : 'Masuk Daftar Tunggu 48 jam! 1 Kredit ditahan aman dan kembali 100% jika tidak dijadwalkan.'
     emit('booked')
   } catch (err: unknown) {
     const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
     bookingError.value =
-      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal memproses booking.'
+      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal memproses pemesanan.'
   } finally {
     bookingLoading.value = false
   }
@@ -113,195 +114,168 @@ async function confirmBooking() {
 
 <template>
   <div class="space-y-5">
-    <!-- Top Header & Category -->
-    <div class="space-y-2 pb-4 border-b border-slate-200">
+    <!-- Top Header & Status Badge -->
+    <div class="space-y-2 pb-4 border-b border-[#E5E0D5]">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
-          {{ item.skill.category }}
-        </span>
-        <span
-          :class="[
-            'text-[11px] font-semibold px-2 py-0.5 rounded-md border',
-            item.slots.length > 0
-              ? 'bg-blue-50 text-blue-700 border-blue-200'
-              : 'bg-white text-slate-600 border-slate-300'
-          ]"
+        <UiBadge
+          :tone="item.slots.length > 0 ? 'success' : 'warning'"
+          :icon="item.slots.length > 0 ? 'i-ph-calendar-check' : 'i-ph-clock'"
         >
-          {{ item.slots.length > 0 ? `${item.slots.length} Slot Tersedia` : 'Hold Queue 48 Jam' }}
-        </span>
+          {{ item.slots.length > 0 ? `${item.slots.length} Slot Tersedia | 1 Kredit` : 'Daftar Tunggu 48 Jam | 1 Kredit' }}
+        </UiBadge>
+        <span class="text-xs font-semibold text-[#1D4ED8]">{{ item.skill.category }}</span>
       </div>
-      <h2 class="text-lg font-bold text-slate-900 leading-snug">
+
+      <h2 class="text-xl font-bold text-[#14181F] leading-snug">
         {{ item.skill.title }}
       </h2>
-      <p v-if="item.skill.description" class="text-sm text-slate-600 leading-relaxed">
+      <p v-if="item.skill.description" class="text-[13px] text-[#475569] leading-relaxed">
         {{ item.skill.description }}
       </p>
     </div>
 
-    <!-- Mentor Identity Card -->
-    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+    <!-- Mentor Identity -->
+    <div class="p-3.5 rounded-[6px] bg-[#FAF8F4] border border-[#E5E0D5] space-y-2">
       <div class="flex items-start gap-3">
         <UAvatar :src="item.tutor.avatarUrl || undefined" :alt="item.tutor.name" size="md" />
         <div class="min-w-0 flex-1 space-y-1">
           <div class="flex flex-wrap items-center gap-1.5">
-            <p class="text-sm font-bold text-slate-900 truncate">{{ item.tutor.name }}</p>
+            <p class="text-sm font-bold text-[#14181F] truncate">{{ item.tutor.name }}</p>
             <VerifiedUkswBadge v-if="item.tutor.isVerifiedUksw" />
           </div>
-          <p v-if="item.tutor.major || item.tutor.campus" class="text-xs text-slate-500">
-            {{ [item.tutor.major, item.tutor.campus].filter(Boolean).join(' · ') }}
+          <p v-if="item.tutor.major || item.tutor.campus" class="text-xs text-[#526071]">
+            {{ [item.tutor.major, item.tutor.campus].filter(Boolean).join(' | ') }}
           </p>
-          <div class="flex flex-wrap items-center gap-2 pt-0.5 text-xs">
-            <span
-              v-if="item.tutor.isVerifiedMentor"
-              class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-white border border-blue-600 px-2 py-0.5 rounded-md"
-            >
-              <UIcon name="i-ph-seal-check-duotone" class="w-3.5 h-3.5" aria-hidden="true" />
+          <div class="flex flex-wrap items-center gap-2 text-xs text-[#475569] tabular-nums">
+            <span v-if="item.tutor.isVerifiedMentor" class="font-semibold text-[#1D4ED8]">
               Verified Peer Mentor
             </span>
-            <span class="font-mono text-slate-600 tabular-nums">
-              {{ item.tutor.completedCount }} sesi ·
-              {{ item.tutor.reviewCount > 0 ? `Rating ${item.tutor.avgRating}/5` : 'Belum ada ulasan' }}
+            <span>{{ item.tutor.completedCount }} sesi selesai</span>
+            <span v-if="item.tutor.reviewCount > 0" class="font-mono font-semibold text-[#14181F]">
+              | {{ item.tutor.avgRating.toFixed(1) }}/5 ({{ item.tutor.reviewCount }})
             </span>
           </div>
         </div>
       </div>
-      <p v-if="item.tutor.bio" class="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-200">
+      <p v-if="item.tutor.bio" class="text-xs text-[#475569] leading-relaxed pt-2 border-t border-[#E5E0D5]">
         {{ item.tutor.bio }}
       </p>
     </div>
 
-    <!-- Slot Picker OR Hold Queue Note -->
-    <div v-if="item.slots.length > 0" class="space-y-2.5">
-      <p class="text-xs font-mono font-semibold uppercase tracking-wider text-slate-500">
-        Pilih Jadwal Tersedia
-      </p>
-      <div class="space-y-2">
-        <label
-          v-for="slot in item.slots"
-          :key="slot.id"
-          :for="`panel-slot-${slot.id}`"
-          :class="[
-            'flex items-start gap-3 p-3 rounded-xl border transition-colors duration-150',
-            selectedSlotId === slot.id
-              ? 'border-blue-600 bg-blue-50/50'
-              : 'border-slate-200 bg-white hover:border-blue-300'
-          ]"
-        >
-          <input
-            :id="`panel-slot-${slot.id}`"
-            v-model="selectedSlotId"
-            type="radio"
-            :value="slot.id"
-            class="mt-1 accent-blue-600"
+    <!-- Slot Selection or Hold Queue 48h -->
+    <div class="space-y-3">
+      <template v-if="item.slots.length > 0">
+        <p class="text-xs font-semibold text-[#526071]">
+          Pilih Jadwal Tersedia
+        </p>
+        <div class="space-y-2">
+          <label
+            v-for="slot in item.slots"
+            :key="slot.id"
+            :class="[
+              'flex items-start gap-3 p-3.5 rounded-[6px] border transition-colors cursor-pointer',
+              selectedSlotId === slot.id
+                ? 'border-[#1D4ED8] bg-[#EFF6FF]/40'
+                : 'border-[#E5E0D5] bg-white hover:border-[#94A3B8]'
+            ]"
+          >
+            <input
+              v-model="selectedSlotId"
+              type="radio"
+              :value="slot.id"
+              class="mt-1 accent-[#1D4ED8]"
+            />
+            <div class="min-w-0 flex-1 space-y-1 text-xs">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="font-bold text-[#14181F] tabular-nums">
+                  {{ formatDateTime(slot.scheduledAt) }} | {{ slot.durationMinutes }}m | {{ slot.mode === 'group' ? 'Grup' : '1-on-1' }}
+                </span>
+                <span class="font-mono text-xs font-bold text-[#047857] tabular-nums">
+                  Sisa {{ slot.remainingSpots }}/{{ slot.maxLearners }}
+                </span>
+              </div>
+              <p class="text-[#526071]">
+                {{ slot.format === 'online' ? 'Online (tautan tersedia di Ruang Sesi)' : 'Tatap Muka Kampus' }}
+              </p>
+            </div>
+          </label>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="p-4 rounded-[8px] bg-[#FFFBEB] border border-[#FDE68A] space-y-2.5">
+          <p class="text-[13px] font-bold text-[#92400E]">Slot penuh? Masuk Daftar Tunggu 48 jam</p>
+          <p class="text-xs text-[#475569] leading-relaxed">
+            Tulis waktu pilihanmu. 1 kredit ditahan sementara dan kembali 100% otomatis jika tidak dijadwalkan dalam 48 jam.
+          </p>
+          <label for="hold-time-note" class="sr-only">Catatan waktu belajar yang diinginkan</label>
+          <textarea
+            id="hold-time-note"
+            v-model="preferredTimeNote"
+            rows="2"
+            placeholder="Mis. Tersedia Selasa atau Kamis pukul 19:00 WIB via Meet."
+            class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-xs text-[#14181F]"
           />
-          <div class="text-xs sm:text-sm min-w-0">
-            <p class="font-semibold text-slate-900 tabular-nums">{{ formatDateTime(slot.scheduledAt) }}</p>
-            <p class="text-xs text-slate-600 mt-0.5">
-              {{ slot.durationMinutes }} menit ·
-              {{ slot.mode === 'group' ? `Grup (sisa ${slot.remainingSpots} kursi)` : '1-on-1' }}
-              · {{ slot.format === 'online' ? 'Online Meet' : `Kampus: ${slot.locationOrLink}` }}
-            </p>
-          </div>
-        </label>
-      </div>
+        </div>
+      </template>
     </div>
 
-    <div v-else class="space-y-2.5">
-      <div class="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 text-xs text-slate-700 space-y-1">
-        <p class="font-semibold text-blue-700">Slot pengajar sedang penuh (Hold Queue 48 Jam)</p>
-        <p>Masuk antrean mengunci 1 kredit di escrow. Jika tidak direspons 48 jam, kredit otomatis kembali 100%.</p>
-      </div>
-      <div>
-        <label :for="`panel-pref-${item.skill.id}`" class="block text-xs font-semibold text-slate-800 mb-1">
-          Usulan Waktu Pilihan (Opsional)
-        </label>
-        <textarea
-          :id="`panel-pref-${item.skill.id}`"
-          v-model="preferredTimeNote"
-          rows="2"
-          placeholder="Contoh: Bisa Selasa atau Kamis sore jam 16.00 WIB via Google Meet."
-          class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-900 bg-white"
-        />
-      </div>
-    </div>
+    <UiAlert v-if="bookingError" tone="danger" :title="bookingError" />
+    <UiAlert v-if="bookingSuccess" tone="success" :title="bookingSuccess" />
 
-    <!-- Escrow Summary Strip -->
-    <div class="rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs tabular-nums">
-      <span class="text-slate-600">Biaya Escrow · Batal &ge; 12j refund 100%</span>
-      <span class="font-mono font-bold text-slate-900">
-        1 Kredit <span class="text-slate-500 font-normal">(Sisa {{ Math.max(0, creditBalance - 1) }})</span>
-      </span>
-    </div>
+    <!-- Action Bar -->
+    <div class="pt-2 border-t border-[#E5E0D5] space-y-3">
+      <UiAlert
+        v-if="!isOwnSkill && hasInsufficientCredits"
+        tone="danger"
+        title="Kredit Saya 0 (Tidak Cukup)"
+        description="Ajar 1 sesi 30 menit di Ajarkan Skill untuk mendapat +1 kredit belajar."
+      >
+        <template #action>
+          <UiButton to="/teach" variant="danger-soft" size="sm">
+            Ajarkan Skill
+          </UiButton>
+        </template>
+      </UiAlert>
 
-    <!-- Live Feedback -->
-    <div aria-live="polite" class="space-y-2">
-      <UAlert
-        v-if="bookingError"
-        color="error"
-        variant="subtle"
-        icon="i-ph-warning-circle"
-        :title="bookingError"
-      />
-      <UAlert
-        v-if="bookingSuccess"
-        color="primary"
-        variant="subtle"
-        icon="i-ph-check-circle"
-        :title="bookingSuccess"
-      />
-    </div>
+      <UiButton
+        variant="primary"
+        size="lg"
+        block
+        :loading="bookingLoading"
+        :disabled="isOwnSkill || hasInsufficientCredits || (item.slots.length > 0 && !selectedSlotId)"
+        @click="confirmBooking"
+      >
+        {{
+          isOwnSkill
+            ? 'Ini Penawaranmu Sendiri'
+            : hasInsufficientCredits
+              ? 'Kredit Saya Tidak Cukup'
+              : bookingLoading
+                ? 'Memproses Pemesanan…'
+                : item.slots.length > 0
+                  ? 'Pesan Sesi Ini (1 Kredit)'
+                  : 'Ajukan Daftar Tunggu (1 Kredit)'
+        }}
+      </UiButton>
 
-    <!-- Primary Action -->
-    <button
-      v-if="isOwnSkill"
-      type="button"
-      disabled
-      class="w-full py-3 px-4 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 text-sm font-semibold min-h-[46px]"
-    >
-      Ini Penawaran Skill Milikmu
-    </button>
-    <button
-      v-else
-      type="button"
-      :disabled="bookingLoading || creditBalance < 1"
-      class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[46px] transition-colors"
-      @click="confirmBooking"
-    >
-      {{
-        creditBalance < 1
-          ? 'Saldo Kredit Tidak Cukup (0 Kredit)'
-          : bookingLoading
-            ? 'Memproses Escrow…'
-            : item.slots.length > 0
-              ? 'Kunci 1 Kredit di Escrow & Booking'
-              : 'Kunci 1 Kredit & Masuk Hold Queue'
-      }}
-    </button>
-
-    <!-- Attendance-Gated Verified Reviews -->
-    <div class="pt-4 border-t border-slate-200 space-y-3">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-mono font-semibold uppercase tracking-wider text-slate-500">
-          Ulasan Terverifikasi ({{ item.reviews.length }})
-        </h3>
-        <span class="text-[11px] font-semibold text-blue-700">Attendance-Gated</span>
-      </div>
-      <p v-if="item.reviews.length === 0" class="text-xs text-slate-500">
-        Belum ada ulasan terverifikasi untuk pengajar ini.
+      <p class="text-xs text-[#526071] text-center leading-relaxed">
+        1 kredit ditahan aman dalam pemesanan. Batal &gt;= 12 jam kembali 100%.
       </p>
-      <ul v-else class="space-y-2">
-        <li
-          v-for="rev in item.reviews"
-          :key="rev.id"
-          class="p-3 rounded-xl bg-blue-50/40 border border-blue-200/80 space-y-1"
-        >
-          <div class="flex items-center justify-between gap-2 text-xs">
-            <span class="font-semibold text-slate-900">{{ rev.reviewerName }}</span>
-            <span class="font-mono font-semibold text-blue-700 tabular-nums">
-              {{ rev.rating }}/5 · Verified
-            </span>
+    </div>
+
+    <!-- Verified Reviews -->
+    <div v-if="item.reviews.length > 0" class="pt-3 border-t border-[#E5E0D5] space-y-2.5">
+      <p class="text-xs font-semibold text-[#526071]">
+        Ulasan Terverifikasi Check-in QR ({{ item.reviews.length }})
+      </p>
+      <ul class="divide-y divide-[#E5E0D5]">
+        <li v-for="rev in item.reviews.slice(0, 3)" :key="rev.id" class="py-2.5 space-y-1">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-semibold text-[#14181F]">{{ rev.reviewerName }}</span>
+            <span class="font-mono font-bold text-[#047857] tabular-nums">{{ rev.rating }}/5</span>
           </div>
-          <p class="text-xs text-slate-700 leading-relaxed">{{ rev.comment }}</p>
+          <p class="text-xs text-[#475569] leading-relaxed">"{{ rev.comment }}"</p>
         </li>
       </ul>
     </div>

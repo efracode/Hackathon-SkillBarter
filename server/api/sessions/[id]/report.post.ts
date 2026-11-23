@@ -51,8 +51,41 @@ export default defineEventHandler(async (event) => {
       .for('update')
       .limit(1)
 
-    if (!booking && sess.tutorId !== reporterId) {
+    const isTutor = sess.tutorId === reporterId
+    if (!booking && !isTutor) {
       throw createError({ statusCode: 403, statusMessage: 'Kamu bukan peserta sesi ini' })
+    }
+
+    if (booking && !['confirmed', 'checked_in'].includes(booking.status)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Laporan tidak dapat dikirim pada status booking saat ini'
+      })
+    }
+
+    const duplicateWhere = booking
+      ? and(
+          eq(schema.reports.bookingId, booking.id),
+          eq(schema.reports.reporterId, reporterId),
+          eq(schema.reports.status, 'open')
+        )
+      : and(
+          eq(schema.reports.sessionId, sessionId),
+          eq(schema.reports.reporterId, reporterId),
+          eq(schema.reports.status, 'open')
+        )
+
+    const [existingOpen] = await tx
+      .select({ id: schema.reports.id })
+      .from(schema.reports)
+      .where(duplicateWhere)
+      .limit(1)
+
+    if (existingOpen) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Laporan sengketa untuk sesi ini masih menunggu tinjauan admin'
+      })
     }
 
     if (booking && ['confirmed', 'checked_in'].includes(booking.status)) {

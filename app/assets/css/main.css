@@ -7,16 +7,50 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+:root {
+  --bg-canvas: #faf8f4;
+  --bg-surface: #ffffff;
+  --bg-inset: #f3efe6;
+  --ink-primary: #14181f;
+  --ink-secondary: #475569;
+  --ink-tertiary: #526071;
+  --border-hairline: #e5e0d5;
+  --border-control: #94a3b8;
+  --accent-cobalt: #1d4ed8;
+  --accent-cobalt-hover: #1e40af;
+  --accent-cobalt-soft: #eff6ff;
+  --accent-cobalt-border: #bfdbfe;
+  --status-success: #047857;
+  --status-success-soft: #ecfdf5;
+  --status-success-border: #a7f3d0;
+  --status-warning: #92400e;
+  --status-warning-soft: #fffbeb;
+  --status-warning-border: #fde68a;
+  --status-danger: #be123c;
+  --status-danger-soft: #fff1f2;
+  --status-danger-border: #fecdd3;
+  --radius-badge: 4px;
+  --radius-control: 6px;
+  --radius-panel: 8px;
+  --shadow-popover: 0 10px 25px -5px rgba(20, 24, 31, 0.12), 0 4px 10px -3px rgba(20, 24, 31, 0.06);
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    background-color: var(--bg-canvas);
+    color: var(--ink-primary);
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: var(--bg-canvas);
+    color: var(--ink-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   h1,
@@ -25,7 +59,6 @@
     scroll-margin-top: 5rem;
   }
 
-  /* Ensure interactive controls communicate clickability and avoid double-tap zoom delay */
   a[href],
   button:not(:disabled),
   summary,
@@ -54,7 +87,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--accent-cobalt);
     outline-offset: 2px;
   }
 }
@@ -63,43 +96,30 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Active navigation indicator anchored to aria-current="page" */
-.nav-link[aria-current="page"] {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  font-weight: 600;
-  box-shadow: inset 0 -2px 0 0 #2563eb;
+.shadow-popover {
+  box-shadow: var(--shadow-popover);
 }
 
-.sidebar-nav-link[aria-current="page"] {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+/* Editorial navigation active rules */
+.nav-link[aria-current="page"] {
+  color: #14181f;
   font-weight: 600;
-  box-shadow: inset 3px 0 0 0 #2563eb;
+  box-shadow: inset 0 -2px 0 0 #1d4ed8;
 }
 
 .mobile-nav-link[aria-current="page"] {
   color: #1d4ed8;
   font-weight: 600;
-  box-shadow: inset 0 2px 0 0 #2563eb;
+  box-shadow: inset 0 2px 0 0 #1d4ed8;
 }
 
-/* Subtle CSS-only Technical Precision blueprint grid for public Hero & Login */
-.bg-blueprint-grid {
-  background-color: #f8fafc;
+/* Subtle notebook ruled paper grid — strictly for Landing Hero and Login left column */
+.bg-editorial-grid {
+  background-color: #faf8f4;
   background-image:
-    linear-gradient(to right, rgba(203, 213, 225, 0.42) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(203, 213, 225, 0.42) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
-
-/* Crisp GPU-only stroke hover feedback */
-.stroke-interactive {
-  transition: border-color 140ms ease, transform 140ms cubic-bezier(0.22, 1, 0.36, 1), background-color 140ms ease;
-}
-
-.stroke-interactive:hover {
-  border-color: #2563eb;
+    linear-gradient(to right, rgba(229, 224, 213, 0.72) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(229, 224, 213, 0.72) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* Responsive stacked ledger table for narrow containers */
@@ -121,7 +141,7 @@
   z-index: 1;
 }
 
-@container (width < 600px) {
+@container (width < 640px) {
   .ledger-table,
   .ledger-table thead,
   .ledger-table tbody,
@@ -137,7 +157,7 @@
 
   .ledger-table tbody tr {
     padding: 0.875rem 1rem;
-    border-bottom: 1px solid #e7e5e4;
+    border-bottom: 1px solid #e5e0d5;
   }
 
   .ledger-table tbody th,
@@ -155,7 +175,7 @@
     content: attr(data-label);
     font-size: 0.75rem;
     font-weight: 600;
-    color: #64748b;
+    color: #526071;
   }
 }
 
@@ -170,11 +190,10 @@
   }
 }
 
-/* Functional compositor-only page, panel, and verified reveal transitions (MOTION 2) */
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .page-fade-enter-from {
@@ -189,8 +208,8 @@
 
 .panel-slide-enter-active,
 .panel-slide-leave-active {
-  transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 170ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 170ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .panel-slide-enter-from {
@@ -204,7 +223,7 @@
 }
 
 .verified-reveal {
-  animation: verified-pop 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: verified-pop 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes verified-pop {
@@ -217,17 +236,3 @@
     transform: scale(1);
   }
 }
-
-@keyframes credit-flash-once {
-  0% {
-    background-color: #dbeafe;
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-.credit-flash {
-  animation: credit-flash-once 900ms ease-out 1;
-}
-

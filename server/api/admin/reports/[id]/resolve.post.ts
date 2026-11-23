@@ -3,7 +3,8 @@ import { z } from 'zod'
 import { useDb, schema } from '../../../../database'
 import {
   getGroupSessionEarnedCredits,
-  mutateUserCredit
+  mutateUserCredit,
+  syncSessionCompletionIfDone
 } from '../../../../utils/creditEngine'
 import { computeCooldownDays } from '../../../../utils/creditRules'
 
@@ -94,6 +95,8 @@ export default defineEventHandler(async (event) => {
         .update(schema.reports)
         .set({ status: 'refunded', adminNote: adminNote?.trim() || null })
         .where(eq(schema.reports.id, rep.id))
+
+      await syncSessionCompletionIfDone(tx, sess.id)
       return
     }
 
@@ -124,6 +127,8 @@ export default defineEventHandler(async (event) => {
         .update(schema.reports)
         .set({ status: 'released', adminNote: adminNote?.trim() || null })
         .where(eq(schema.reports.id, rep.id))
+
+      await syncSessionCompletionIfDone(tx, sess.id)
       return
     }
 
@@ -163,6 +168,8 @@ export default defineEventHandler(async (event) => {
       .update(schema.reports)
       .set({ status: 'penalized', adminNote: adminNote?.trim() || null })
       .where(eq(schema.reports.id, rep.id))
+
+    await syncSessionCompletionIfDone(tx, sess.id)
   })
 
   return { ok: true }

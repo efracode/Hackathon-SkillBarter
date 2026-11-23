@@ -7,7 +7,7 @@ interface SimStep {
   title: string
   detail: string
   badge: string
-  badgeTone: 'indigo' | 'amber' | 'teal' | 'rose'
+  badgeTone: 'cobalt' | 'amber' | 'emerald' | 'rose'
   learnerBalance: string
   escrowBalance: string
   tutorDelta: string
@@ -52,7 +52,7 @@ const scenarios: Record<
         detail:
           'Sesi tanya-jawab atau review tugas 30 menit berjalan lewat Meet atau tatap muka kampus tanpa materi kuliah berat.',
         badge: 'Sesi Berlangsung',
-        badgeTone: 'indigo',
+        badgeTone: 'cobalt',
         learnerBalance: '1 Kredit',
         escrowBalance: '1 Terkunci',
         tutorDelta: '+0 Kredit',
@@ -69,7 +69,7 @@ const scenarios: Record<
         detail:
           'Pengajar memunculkan kode QR di workspace. Pembelajar memindai untuk membuka form ulasan terverifikasi.',
         badge: 'Hadir Terverifikasi',
-        badgeTone: 'teal',
+        badgeTone: 'emerald',
         learnerBalance: '1 Kredit',
         escrowBalance: '1 Terkunci',
         tutorDelta: '+0 Kredit',
@@ -86,7 +86,7 @@ const scenarios: Record<
         detail:
           'Setelah jeda sengketa 24 jam tanpa laporan masalah, 1 kredit dilepas dari escrow ke saldo pengajar.',
         badge: 'Cair +1 Kredit',
-        badgeTone: 'teal',
+        badgeTone: 'emerald',
         learnerBalance: '1 Kredit',
         escrowBalance: '0 Terkunci',
         tutorDelta: '+1 Kredit',
@@ -125,7 +125,7 @@ const scenarios: Record<
         detail:
           'Ruang chat grup dan tautan Meet terikat otomatis ke sesi. Semua peserta berkoordinasi di satu tempat.',
         badge: 'Grup Berlangsung',
-        badgeTone: 'indigo',
+        badgeTone: 'cobalt',
         learnerBalance: '1 / Orang',
         escrowBalance: '3 Terkunci',
         tutorDelta: '+0 Kredit',
@@ -142,7 +142,7 @@ const scenarios: Record<
         detail:
           'Setiap peserta memindai QR yang sama, namun ulasan dan laporan sengketa tercatat per booking.',
         badge: 'Per Booking',
-        badgeTone: 'teal',
+        badgeTone: 'emerald',
         learnerBalance: '1 / Orang',
         escrowBalance: '3 Terkunci',
         tutorDelta: '+0 Kredit',
@@ -154,12 +154,12 @@ const scenarios: Record<
       },
       {
         code: '04',
-        shortLabel: 'Cap +2K',
-        title: 'Pengajar menerima flat maksimal 2 Kredit',
+        shortLabel: 'Cap 2 Kredit',
+        title: 'Pengajar menerima maksimal flat 2 Kredit',
         detail:
-          'Walaupun 3 peserta bergabung, pendapatan pengajar dibatasi maksimal 2 kredit agar bebas inflasi.',
-        badge: 'Cair Maks +2K',
-        badgeTone: 'teal',
+          'Meski diikuti 3–5 peserta, pendapatan pengajar dibatasi maksimal 2 kredit untuk mencegah inflasi kredit.',
+        badge: 'Cair +2 Kredit (Cap)',
+        badgeTone: 'emerald',
         learnerBalance: '1 / Orang',
         escrowBalance: '0 Terkunci',
         tutorDelta: '+2 Kredit',
@@ -177,457 +177,286 @@ const scenarios: Record<
       {
         code: '01',
         shortLabel: 'Booking',
-        title: '1 Kredit aman selama menunggu sesi',
+        title: '1 Kredit dikunci saat sesi dijadwalkan',
         detail:
-          'Pembelajar membooking slot atau masuk Hold Queue 48 jam. Kredit tidak pernah hangus sepihak.',
+          'Pembelajar memesan slot atau masuk Hold Queue 48 jam. Kredit ditahan aman di escrow.',
         badge: 'Escrow Terkunci',
         badgeTone: 'amber',
         learnerBalance: '1 Kredit',
         escrowBalance: '1 Terkunci',
         tutorDelta: '+0 Kredit',
         tokenCoord: { x: 230, y: 36 },
-        ringPercent: 25,
+        ringPercent: 33,
         coreIcon: 'lock',
         activeArc: 'left',
         tokenLabel: '1K'
       },
       {
         code: '02',
-        shortLabel: 'T+15m',
-        title: 'Pengajar tidak hadir & kode tidak dibuat',
+        shortLabel: 'Kendala',
+        title: 'Batal >= 12 jam atau Pengajar No-Show',
         detail:
-          'Melewati 15 menit dari jadwal tanpa kode check-in, lazy-check mendeteksi Tutor No-Show otomatis.',
-        badge: 'No-Show Terdeteksi',
+          'Jika pembelajar batal >= 12 jam sebelum sesi atau pengajar tidak membuka check-in hingga T+15m.',
+        badge: 'Proteksi Aktif',
         badgeTone: 'rose',
         learnerBalance: '1 Kredit',
         escrowBalance: '1 Terkunci',
-        tutorDelta: '+0 Kredit',
+        tutorDelta: 'Cooldown',
         tokenCoord: { x: 230, y: 36 },
-        ringPercent: 50,
+        ringPercent: 66,
         coreIcon: 'alert',
         activeArc: 'none',
-        tokenLabel: '!'
+        tokenLabel: 'T+15m'
       },
       {
         code: '03',
-        shortLabel: 'Cooldown',
-        title: 'Penalti Cooldown 1-7 Hari untuk Pengajar',
+        shortLabel: 'Refund Penuh',
+        title: '1 Kredit kembali utuh & Cooldown 1-3-7 hari',
         detail:
-          'Alih-alih saldo minus yang bisa dieksploitasi, pengajar dikenai jeda mengajar 1, 3, hingga 7 hari.',
-        badge: 'Cooldown Aktif',
-        badgeTone: 'rose',
-        learnerBalance: '1 Kredit',
-        escrowBalance: '1 Terkunci',
-        tutorDelta: 'Jeda 1-7h',
-        tokenCoord: { x: 230, y: 36 },
-        ringPercent: 75,
-        coreIcon: 'alert',
-        activeArc: 'none',
-        tokenLabel: 'Jeda'
-      },
-      {
-        code: '04',
-        shortLabel: 'Refund',
-        title: '1 Kredit kembali 100% ke Pembelajar',
-        detail:
-          'Escrow dilepas balik ke dompet pembelajar beserta catatan transparan di ledger transaksi.',
-        badge: 'Refund +1 Kredit',
-        badgeTone: 'teal',
+          'Kredit pembelajar dikembalikan 100% tanpa potongan. Pengajar No-Show mendapat cooldown bertingkat tanpa saldo minus.',
+        badge: 'Refund 100%',
+        badgeTone: 'emerald',
         learnerBalance: '2 Kredit',
         escrowBalance: '0 Terkunci',
-        tutorDelta: '+0 Kredit',
+        tutorDelta: 'Cooldown',
         tokenCoord: { x: 70, y: 80 },
         ringPercent: 100,
         coreIcon: 'check',
         activeArc: 'refund',
-        tokenLabel: '+1K'
+        tokenLabel: 'Refund'
       }
     ]
   }
 }
 
 const activeScenario = ref<ScenarioKey>('1on1')
-const activeStep = ref(0)
+const activeStepIdx = ref(0)
 const isPlaying = ref(false)
-let timerId: ReturnType<typeof setInterval> | null = null
+let playTimer: ReturnType<typeof setInterval> | null = null
 
-const currentScenario = computed(() => scenarios[activeScenario.value as ScenarioKey])
-const currentStep = computed(
-  () => currentScenario.value.steps[activeStep.value] || currentScenario.value.steps[0]!
+const currentScenario = computed<{ label: string; steps: SimStep[] }>(
+  () => scenarios[activeScenario.value as ScenarioKey]
 )
+const currentStep = computed<SimStep>(() => currentScenario.value.steps[activeStepIdx.value]!)
 
-const RING_RADIUS = 50
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
-const ringDashOffset = computed(
-  () => RING_CIRCUMFERENCE * (1 - currentStep.value.ringPercent / 100)
-)
-
-const ringStrokeColor = computed(() => {
-  if (currentStep.value.badgeTone === 'rose') return '#E11D48'
-  return '#2563EB'
-})
-
-const badgeClasses = computed(() => {
-  if (currentStep.value.badgeTone === 'rose') {
-    return 'bg-rose-50 text-rose-700 border-rose-200'
-  }
-  return 'bg-blue-50 text-blue-700 border-blue-200'
-})
-
-function stopPlayback() {
-  isPlaying.value = false
-  if (timerId) {
-    clearInterval(timerId)
-    timerId = null
-  }
+const badgeClassMap: Record<SimStep['badgeTone'], string> = {
+  cobalt: 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]',
+  amber: 'bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]',
+  emerald: 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]',
+  rose: 'bg-[#FFF1F2] text-[#BE123C] border-[#FECDD3]'
 }
 
-function startCycle(fromStart = false) {
-  stopPlayback()
-  if (fromStart) {
-    activeStep.value = 0
-  }
-  if (import.meta.client && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    activeStep.value = currentScenario.value.steps.length - 1
-    return
-  }
-  isPlaying.value = true
-  timerId = setInterval(() => {
-    if (activeStep.value < currentScenario.value.steps.length - 1) {
-      activeStep.value += 1
-    } else {
-      stopPlayback()
-    }
-  }, 2200)
-}
+const currentStepBadgeClass = computed(() => {
+  const tone = currentStep.value.badgeTone as SimStep['badgeTone']
+  return badgeClassMap[tone]
+})
+
+const ringDashOffset = computed(() => {
+  const circumference = 2 * Math.PI * 44
+  return circumference * (1 - currentStep.value.ringPercent / 100)
+})
 
 function selectScenario(key: ScenarioKey) {
+  stopAutoPlay()
   activeScenario.value = key
-  startCycle(true)
+  activeStepIdx.value = 0
 }
 
 function selectStep(idx: number) {
-  stopPlayback()
-  activeStep.value = idx
+  stopAutoPlay()
+  activeStepIdx.value = idx
+}
+
+function stopAutoPlay() {
+  isPlaying.value = false
+  if (playTimer) {
+    clearInterval(playTimer)
+    playTimer = null
+  }
 }
 
 function togglePlay() {
   if (isPlaying.value) {
-    stopPlayback()
-  } else {
-    const atEnd = activeStep.value >= currentScenario.value.steps.length - 1
-    startCycle(atEnd)
+    stopAutoPlay()
+    return
   }
+  isPlaying.value = true
+  playTimer = setInterval(() => {
+    const total = currentScenario.value.steps.length
+    activeStepIdx.value = (activeStepIdx.value + 1) % total
+  }, 2400)
 }
 
-onMounted(() => {
-  startCycle(true)
-})
-
 onUnmounted(() => {
-  stopPlayback()
+  stopAutoPlay()
 })
 </script>
 
 <template>
-  <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">
-    <!-- Top Header & Controls -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
+  <div class="bg-[#FAF8F4] border border-[#E5E0D5] rounded-[8px] p-5 sm:p-6 space-y-5">
+    <!-- Masthead -->
+    <div class="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-[#E5E0D5]">
       <div>
-        <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
-          Simulasi Langsung Ekonomi Kredit
+        <p class="text-xs font-semibold text-[#526071]">
+          Simulasi Ekonomi Kredit
         </p>
-        <h2 class="text-base sm:text-lg font-bold text-slate-900">
+        <h3 class="text-lg font-bold text-[#14181F] mt-0.5">
           Alur Escrow &amp; Verifikasi Sesi
-        </h2>
+        </h3>
       </div>
 
       <div class="flex items-center gap-2">
-        <span :class="['text-xs font-semibold px-2.5 py-1 rounded-md border', badgeClasses]">
+        <span :class="['text-xs font-semibold px-2.5 py-1 rounded-[4px] border', currentStepBadgeClass]">
           {{ currentStep.badge }}
         </span>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-white hover:border-blue-600 text-xs font-semibold text-blue-700 min-h-[36px] transition-colors"
-          :aria-label="isPlaying ? 'Jeda simulasi otomatis' : 'Putar ulang simulasi'"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border border-[#94A3B8] bg-white hover:border-[#14181F] text-xs font-semibold text-[#14181F] min-h-[38px] transition-colors"
           @click="togglePlay"
         >
-          <UIcon
-            :name="isPlaying ? 'i-ph-pause' : 'i-ph-play'"
-            class="w-3.5 h-3.5 text-blue-600"
-            aria-hidden="true"
-          />
+          <UIcon :name="isPlaying ? 'i-ph-pause' : 'i-ph-play'" class="w-3.5 h-3.5" aria-hidden="true" />
           <span>{{ isPlaying ? 'Jeda' : 'Putar' }}</span>
         </button>
       </div>
     </div>
 
     <!-- Scenario Switcher -->
-    <div class="flex flex-wrap gap-2" role="group" aria-label="Pilih skenario ekonomi kredit">
+    <div class="inline-flex flex-wrap gap-1 p-1 rounded-[6px] bg-[#F3EFE6] border border-[#E5E0D5]" role="tablist" aria-label="Pilih skenario ekonomi kredit">
       <button
-        v-for="(sc, key) in scenarios"
+        v-for="(item, key) in scenarios"
         :key="key"
         type="button"
-        :aria-pressed="activeScenario === key"
+        role="tab"
+        :aria-selected="activeScenario === key"
         :class="[
-          'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors min-h-[36px]',
+          'px-3 py-1.5 rounded-[4px] text-xs font-semibold transition-colors min-h-[34px]',
           activeScenario === key
-            ? 'bg-blue-600 border-blue-600 text-white'
-            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
+            ? 'bg-[#14181F] text-white'
+            : 'text-[#475569] hover:text-[#14181F]'
         ]"
-        @click="selectScenario(key)"
+        @click="selectScenario(key as ScenarioKey)"
       >
-        {{ sc.label }}
+        {{ item.label }}
       </button>
     </div>
 
-    <!-- Sculptural Exchange Ring SVG + Clean HTML Telemetry Strip -->
-    <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-3 overflow-hidden">
-      <svg
-        viewBox="0 0 460 198"
-        class="w-full h-auto block"
-        role="img"
-        aria-label="Orbital diagram alur escrow kredit antara Pembelajar, Brankas Escrow, dan Pengajar"
-      >
-        <!-- Curved Guide Arcs -->
+    <!-- Editorial Vector Diagram -->
+    <div class="bg-white border border-[#E5E0D5] rounded-[6px] p-4">
+      <svg viewBox="0 0 460 166" class="w-full h-auto" role="img" aria-label="Diagram alur kredit pembelajar ke escrow dan pengajar">
+        <!-- Connection paths -->
         <path
-          d="M 96 112 Q 140 52 178 88"
+          d="M 116 86 C 142 86, 156 86, 180 86"
           fill="none"
-          stroke="#E2E8F0"
-          stroke-width="2.5"
-          stroke-dasharray="5 5"
-        />
-        <path
-          d="M 282 88 Q 320 52 364 112"
-          fill="none"
-          stroke="#E2E8F0"
-          stroke-width="2.5"
-          stroke-dasharray="5 5"
-        />
-        <path
-          d="M 184 136 Q 140 178 92 142"
-          fill="none"
-          stroke="#E2E8F0"
+          :stroke="currentStep.activeArc === 'left' ? '#B45309' : currentStep.activeArc === 'refund' ? '#047857' : '#CBD5E1'"
           stroke-width="2"
-          stroke-dasharray="4 5"
+          stroke-dasharray="4 4"
+        />
+        <path
+          d="M 280 86 C 304 86, 318 86, 344 86"
+          fill="none"
+          :stroke="currentStep.activeArc === 'right' ? '#047857' : '#CBD5E1'"
+          stroke-width="2"
+          stroke-dasharray="4 4"
         />
 
-        <!-- Active Animated Curved Flow Arc -->
-        <path
-          v-if="currentStep.activeArc === 'left'"
-          d="M 96 112 Q 140 52 178 88"
-          fill="none"
-          stroke="#2563EB"
-          stroke-width="3"
-          stroke-dasharray="6 6"
-          class="flow-rail-forward"
-        />
-        <path
-          v-if="currentStep.activeArc === 'right'"
-          d="M 282 88 Q 320 52 364 112"
-          fill="none"
-          stroke="#2563EB"
-          stroke-width="3"
-          stroke-dasharray="6 6"
-          class="flow-rail-forward"
-        />
-        <path
-          v-if="currentStep.activeArc === 'refund'"
-          d="M 184 136 Q 140 178 92 142"
-          fill="none"
-          stroke="#2563EB"
-          stroke-width="3"
-          stroke-dasharray="6 6"
-          class="flow-rail-forward"
-        />
-
-        <!-- Left Node: Pembelajar Emblem -->
-        <g transform="translate(70, 124)">
-          <circle
-            cx="0"
-            cy="0"
-            r="28"
-            :fill="currentStep.activeArc === 'refund' ? '#EFF6FF' : '#FFFFFF'"
-            :stroke="currentStep.activeArc === 'refund' ? '#2563EB' : '#CBD5E1'"
-            stroke-width="2"
-          />
-          <circle cx="0" cy="-6" r="7" fill="none" stroke="#334155" stroke-width="2" />
-          <path d="M -12 13 C -12 6 12 6 12 13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" />
+        <!-- Learner Node -->
+        <g transform="translate(20, 52)">
+          <rect width="96" height="68" rx="6" fill="#FFFFFF" stroke="#D6D3CD" stroke-width="1.5" />
+          <text x="48" y="24" text-anchor="middle" fill="#64748B" font-size="10" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">
+            Pembelajar
+          </text>
+          <text x="48" y="46" text-anchor="middle" fill="#14181F" font-size="12" font-weight="700" font-family="JetBrains Mono, monospace">
+            {{ currentStep.learnerBalance }}
+          </text>
         </g>
 
-        <!-- Center Node: Sculptural Escrow Progress Vault -->
-        <g transform="translate(230, 108)">
-          <!-- Outer Progress Track -->
-          <circle cx="0" cy="0" r="50" fill="none" stroke="#E2E8F0" stroke-width="5" />
-          <!-- Animated Progress Ring -->
+        <!-- Center Escrow Vault Node -->
+        <g transform="translate(230, 86)">
+          <circle r="49" fill="#FFFFFF" stroke="#E5E0D5" stroke-width="1.5" />
           <circle
-            cx="0"
-            cy="0"
-            r="50"
+            r="44"
             fill="none"
-            :stroke="ringStrokeColor"
+            stroke="#F3EFE6"
+            stroke-width="5"
+          />
+          <circle
+            r="44"
+            fill="none"
+            :stroke="currentStep.badgeTone === 'rose' ? '#BE123C' : currentStep.badgeTone === 'emerald' ? '#047857' : currentStep.badgeTone === 'amber' ? '#B45309' : '#1D4ED8'"
             stroke-width="5"
             stroke-linecap="round"
-            :stroke-dasharray="RING_CIRCUMFERENCE"
+            :stroke-dasharray="2 * Math.PI * 44"
             :stroke-dashoffset="ringDashOffset"
             transform="rotate(-90)"
-            style="transition: stroke-dashoffset 480ms cubic-bezier(0.22, 1, 0.36, 1), stroke 250ms ease"
+            style="transition: stroke-dashoffset 280ms cubic-bezier(0.22, 1, 0.36, 1)"
           />
-          <!-- Primary Stroke Vault Core -->
-          <circle
-            cx="0"
-            cy="0"
-            r="39"
-            :fill="currentStep.coreIcon === 'alert' ? '#FFF1F2' : '#EFF6FF'"
-            :stroke="currentStep.coreIcon === 'alert' ? '#E11D48' : '#2563EB'"
-            stroke-width="2"
-            style="transition: fill 250ms ease, stroke 250ms ease"
-          />
-
-          <!-- Crisp Vector Icon Inside Vault -->
-          <g v-if="currentStep.coreIcon === 'lock'">
-            <rect x="-11" y="-2" width="22" height="16" rx="4" fill="none" stroke="#2563EB" stroke-width="2.4" />
-            <path d="M -6 -2 V -7 A 6 6 0 0 1 6 -7 V -2" fill="none" stroke="#2563EB" stroke-width="2.4" />
-            <circle cx="0" cy="6" r="2" fill="#2563EB" />
-          </g>
-          <g v-else-if="currentStep.coreIcon === 'clock'">
-            <circle cx="0" cy="0" r="14" fill="none" stroke="#2563EB" stroke-width="2.4" />
-            <path d="M 0 -7 V 1 L 6 4" fill="none" stroke="#2563EB" stroke-width="2.4" stroke-linecap="round" />
-          </g>
-          <g v-else-if="currentStep.coreIcon === 'qr'">
-            <rect x="-12" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#2563EB" stroke-width="2.2" />
-            <rect x="3" y="-12" width="9" height="9" rx="1.5" fill="none" stroke="#2563EB" stroke-width="2.2" />
-            <rect x="-12" y="3" width="9" height="9" rx="1.5" fill="none" stroke="#2563EB" stroke-width="2.2" />
-            <rect x="4" y="4" width="7" height="7" rx="1" fill="#2563EB" />
-          </g>
-          <g v-else-if="currentStep.coreIcon === 'alert'">
-            <path d="M 0 -13 L 13 10 H -13 Z" fill="none" stroke="#E11D48" stroke-width="2.4" stroke-linejoin="round" />
-            <line x1="0" y1="-5" x2="0" y2="2" stroke="#E11D48" stroke-width="2.4" stroke-linecap="round" />
-            <circle cx="0" cy="6" r="1.5" fill="#E11D48" />
-          </g>
-          <g v-else>
-            <circle cx="0" cy="0" r="15" fill="none" stroke="#2563EB" stroke-width="2.2" />
-            <path d="M -7 0 L -2 5 L 8 -5" fill="none" stroke="#2563EB" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-          </g>
+          <text y="-6" text-anchor="middle" fill="#64748B" font-size="9" font-weight="700" font-family="JetBrains Mono, monospace">
+            ESCROW
+          </text>
+          <text y="12" text-anchor="middle" fill="#14181F" font-size="10.5" font-weight="700" font-family="JetBrains Mono, monospace">
+            {{ currentStep.escrowBalance }}
+          </text>
         </g>
 
-        <!-- Right Node: Pengajar Emblem -->
-        <g transform="translate(390, 124)">
-          <circle
-            cx="0"
-            cy="0"
-            r="28"
-            :fill="currentStep.activeArc === 'right' ? '#EFF6FF' : '#FFFFFF'"
-            :stroke="currentStep.activeArc === 'right' ? '#2563EB' : '#CBD5E1'"
-            stroke-width="2"
-          />
-          <rect x="-12" y="-10" width="24" height="16" rx="3" fill="none" stroke="#334155" stroke-width="2" />
-          <path d="M -5 12 L 0 6 L 5 12" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </g>
-
-        <!-- Moving Credit Coin -->
-        <g
-          :style="{
-            transform: `translate(${currentStep.tokenCoord.x}px, ${currentStep.tokenCoord.y}px)`,
-            transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1)'
-          }"
-        >
-          <rect
-            x="-23"
-            y="-13"
-            width="46"
-            height="26"
-            rx="13"
-            :fill="currentStep.badgeTone === 'rose' ? '#E11D48' : '#2563EB'"
-          />
+        <!-- Tutor Node -->
+        <g transform="translate(344, 52)">
+          <rect width="96" height="68" rx="6" fill="#FFFFFF" stroke="#D6D3CD" stroke-width="1.5" />
+          <text x="48" y="24" text-anchor="middle" fill="#64748B" font-size="10" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">
+            Pengajar
+          </text>
           <text
-            x="0"
-            y="4"
+            x="48"
+            y="46"
             text-anchor="middle"
-            class="fill-white text-[11px] font-bold font-mono"
+            :fill="currentStep.tutorDelta.startsWith('+') && currentStep.tutorDelta !== '+0 Kredit' ? '#047857' : currentStep.tutorDelta === 'Cooldown' ? '#BE123C' : '#14181F'"
+            font-size="12"
+            font-weight="700"
+            font-family="JetBrains Mono, monospace"
           >
+            {{ currentStep.tutorDelta }}
+          </text>
+        </g>
+
+        <!-- Moving Token Pill -->
+        <g
+          :transform="`translate(${currentStep.tokenCoord.x}, ${currentStep.tokenCoord.y})`"
+          style="transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1)"
+        >
+          <rect x="-26" y="-12" width="52" height="24" rx="4" fill="#14181F" />
+          <text y="4" text-anchor="middle" fill="#FAF8F4" font-size="10" font-weight="700" font-family="JetBrains Mono, monospace">
             {{ currentStep.tokenLabel }}
           </text>
         </g>
       </svg>
-
-      <!-- Clean HTML Telemetry Readout (Never Clips) -->
-      <div class="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-200 tabular-nums">
-        <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-center">
-          <p class="text-[11px] font-medium text-slate-600">Pembelajar</p>
-          <p class="text-sm sm:text-base font-bold font-mono text-slate-900 mt-0.5">
-            {{ currentStep.learnerBalance }}
-          </p>
-        </div>
-        <div class="p-2.5 rounded-lg bg-white border border-blue-200 text-center">
-          <p class="text-[11px] font-medium text-blue-700">Brankas Escrow</p>
-          <p class="text-sm sm:text-base font-bold font-mono text-blue-700 mt-0.5">
-            {{ currentStep.escrowBalance }}
-          </p>
-        </div>
-        <div class="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200 text-center">
-          <p class="text-[11px] font-medium text-blue-700">Pengajar</p>
-          <p class="text-sm sm:text-base font-bold font-mono text-blue-700 mt-0.5">
-            {{ currentStep.tutorDelta }}
-          </p>
-        </div>
-      </div>
     </div>
 
-    <!-- Step Selector Pills -->
-    <div
-      class="grid grid-cols-2 sm:grid-cols-4 gap-2"
-      role="tablist"
-      aria-label="Tahapan Simulasi Kredit"
-    >
+    <!-- Step Buttons (Hairline Tabular) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <button
         v-for="(step, idx) in currentScenario.steps"
         :key="step.code"
         type="button"
-        role="tab"
-        :aria-selected="activeStep === idx"
         :class="[
-          'text-left px-3 py-2 rounded-xl border text-xs transition-colors min-h-[48px]',
-          activeStep === idx
-            ? 'bg-blue-600 border-blue-600 text-white font-semibold'
-            : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
+          'text-left p-2.5 rounded-[6px] border transition-colors min-h-[54px]',
+          activeStepIdx === idx
+            ? 'border-[#1D4ED8] bg-[#EFF6FF] text-[#14181F]'
+            : 'border-[#E5E0D5] bg-white text-[#475569] hover:border-[#94A3B8]'
         ]"
         @click="selectStep(idx)"
       >
-        <span class="font-mono text-[11px] block opacity-80">{{ step.code }}</span>
-        <span class="block leading-tight">{{ step.shortLabel }}</span>
+        <p class="font-mono text-[10px] font-bold" :class="activeStepIdx === idx ? 'text-[#1D4ED8]' : 'text-[#526071]'">
+          {{ step.code }}
+        </p>
+        <p class="text-xs font-semibold mt-0.5">{{ step.shortLabel }}</p>
       </button>
     </div>
 
-    <!-- Active Step Explanation -->
+    <!-- Current Step Narrative -->
     <Transition name="panel-slide" mode="out-in">
-      <div
-        :key="`${activeScenario}-${activeStep}`"
-        class="bg-white border border-slate-200 rounded-xl p-4 space-y-1"
-      >
-        <h3 class="text-sm font-bold text-slate-900">{{ currentStep.title }}</h3>
-        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-          {{ currentStep.detail }}
-        </p>
+      <div :key="`${activeScenario}-${activeStepIdx}`" class="pt-3 border-t border-[#E5E0D5] space-y-1">
+        <p class="text-sm font-bold text-[#14181F]">{{ currentStep.title }}</p>
+        <p class="text-xs sm:text-sm text-[#475569] leading-relaxed">{{ currentStep.detail }}</p>
       </div>
     </Transition>
   </div>
 </template>
-
-<style scoped>
-.flow-rail-forward {
-  animation: rail-dash 0.9s linear infinite;
-}
-
-@keyframes rail-dash {
-  to {
-    stroke-dashoffset: -24;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .flow-rail-forward {
-    animation: none;
-  }
-}
-</style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { compressAvatarFile } from '~/utils/avatarUpload'
+import { TEACH_CATEGORIES, getUserInitials } from '~/utils/designTokens'
 
 definePageMeta({
   layout: false
@@ -7,7 +8,7 @@ definePageMeta({
 
 const { user: sessionUser, fetch: fetchSession } = useUserSession()
 
-const categories = ['Teknologi & Coding', 'Desain & UI/UX', 'Bahasa & Presentasi', 'Akademik & Riset', 'Karier & CV']
+const categories = TEACH_CATEGORIES
 
 const quickLearnChips = [
   { category: 'Teknologi & Coding', title: 'Dasar TypeScript & API' },
@@ -23,8 +24,12 @@ const microTemplates = [
   { tag: 'Bedah Studi Kasus (30m)', title: 'Bedah Studi Kasus Singkat 30 Menit', category: 'Akademik & Riset' }
 ]
 
+const currentStep = ref<1 | 2 | 3>(1)
+
 const displayName = ref(sessionUser.value?.name || '')
 const avatarUrl = ref<string | null>(sessionUser.value?.avatarUrl || null)
+const hasEditedName = ref(false)
+const hasEditedAvatar = ref(false)
 const bio = ref('')
 const campus = ref(
   sessionUser.value?.isVerifiedUksw ? 'Universitas Kristen Satya Wacana (UKSW)' : ''
@@ -33,13 +38,30 @@ const major = ref('')
 const avatarError = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
+watch(
+  sessionUser,
+  (u: typeof sessionUser.value) => {
+    if (!u) return
+    if (!hasEditedName.value && !displayName.value.trim() && u.name) {
+      displayName.value = u.name
+    }
+    if (!hasEditedAvatar.value && !avatarUrl.value && u.avatarUrl) {
+      avatarUrl.value = u.avatarUrl
+    }
+    if (!campus.value && u.isVerifiedUksw) {
+      campus.value = 'Universitas Kristen Satya Wacana (UKSW)'
+    }
+  },
+  { immediate: true }
+)
+
 const learnInput = ref('')
-const learnCategory = ref('Teknologi & Coding')
+const learnCategory = ref<string>('Teknologi & Coding')
 const learnSkills = ref<Array<{ category: string; title: string }>>([
   { category: 'Desain & UI/UX', title: 'Review Portofolio UI/UX' }
 ])
 
-const teachCategory = ref('Teknologi & Coding')
+const teachCategory = ref<string>('Teknologi & Coding')
 const teachTitle = ref('Sesi Tanya-Jawab Dasar 30 Menit')
 const teachTemplateTag = ref<string | null>('Q&A Dasar (30m)')
 const teachDescription = ref('')
@@ -54,6 +76,7 @@ async function onAvatarChange(event: Event) {
   if (!file) return
   try {
     avatarUrl.value = await compressAvatarFile(file)
+    hasEditedAvatar.value = true
   } catch (err: unknown) {
     const e = err as { message?: string }
     avatarError.value = e.message || 'Gagal memproses foto profil.'
@@ -96,11 +119,58 @@ function removeLearnSkill(index: number) {
   learnSkills.value.splice(index, 1)
 }
 
+function validateStep(step: 1 | 2): boolean {
+  errorMessage.value = ''
+  if (step === 1) {
+    if (displayName.value.trim().length < 2) {
+      errorMessage.value = 'Isi nama tampilan kamu (minimal 2 karakter).'
+      return false
+    }
+    return true
+  }
+  if (learnInput.value.trim()) {
+    addLearnSkill()
+  }
+  if (learnSkills.value.length === 0) {
+    errorMessage.value = 'Pilih minimal 1 topik yang ingin kamu pelajari.'
+    return false
+  }
+  return true
+}
+
+function goToStep(targetStep: 1 | 2 | 3) {
+  if (targetStep <= currentStep.value) {
+    errorMessage.value = ''
+    currentStep.value = targetStep
+    return
+  }
+  if (targetStep >= 2 && !validateStep(1)) {
+    currentStep.value = 1
+    return
+  }
+  if (targetStep === 3 && !validateStep(2)) {
+    currentStep.value = 2
+    return
+  }
+  currentStep.value = targetStep
+}
+
+function goNextStep() {
+  if (currentStep.value === 1 && validateStep(1)) {
+    currentStep.value = 2
+    return
+  }
+  if (currentStep.value === 2 && validateStep(2)) {
+    currentStep.value = 3
+  }
+}
+
 async function submitOnboarding() {
   errorMessage.value = ''
 
   if (displayName.value.trim().length < 2) {
     errorMessage.value = 'Isi nama tampilan kamu (minimal 2 karakter).'
+    currentStep.value = 1
     return
   }
 
@@ -110,11 +180,13 @@ async function submitOnboarding() {
 
   if (learnSkills.value.length === 0) {
     errorMessage.value = 'Pilih minimal 1 topik yang ingin kamu pelajari.'
+    currentStep.value = 2
     return
   }
 
   if (teachTitle.value.trim().length < 3) {
     errorMessage.value = 'Pilih atau isi 1 topik ringan yang bisa kamu bantu (minimal 3 karakter).'
+    currentStep.value = 3
     return
   }
 
@@ -142,7 +214,7 @@ async function submitOnboarding() {
   } catch (err: unknown) {
     const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
     errorMessage.value =
-      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal menyimpan onboarding. Coba lagi.'
+      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal menyimpan pengaturan awal. Coba lagi.'
   } finally {
     submitting.value = false
   }
@@ -150,300 +222,373 @@ async function submitOnboarding() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 py-8 px-4">
-    <div class="max-w-4xl mx-auto space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <SkillBarterLogo size="md" />
-        <div class="flex items-center gap-2">
-          <VerifiedUkswBadge v-if="sessionUser?.isVerifiedUksw" />
-          <span class="text-xs sm:text-sm font-semibold text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
-            Onboarding 1 Langkah · +2 Kredit Belajar
-          </span>
-        </div>
-      </div>
-
-      <header>
-        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-          Atur Identitas &amp; Minat Belajarmu
-        </h1>
-        <p class="mt-1 text-sm sm:text-base text-slate-600">
-          Sesuaikan nama tampilan dan foto profilmu agar tidak memakai bawaan Google, lalu klaim 2 kredit awal ke Dashboard.
-        </p>
-      </header>
-
-      <div aria-live="polite">
-        <UAlert
-          v-if="errorMessage"
-          color="error"
-          variant="subtle"
-          icon="i-ph-warning-circle"
-          :title="errorMessage"
-        />
-      </div>
-
-      <form class="space-y-6" @submit.prevent="submitOnboarding">
-        <!-- Step 1: Custom Identity & Photo Upload -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-5">
-            <div class="flex items-center gap-4">
-              <UAvatar
-                :src="avatarUrl || undefined"
-                :alt="displayName || 'Foto Profil'"
-                size="xl"
-              />
-              <div class="space-y-2">
-                <p class="text-xs font-semibold text-slate-800">Foto Profil</p>
-                <div class="flex flex-wrap gap-2">
-                  <input
-                    ref="fileInputRef"
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    class="sr-only"
-                    aria-label="Pilih file foto profil"
-                    @change="onAvatarChange"
-                  />
-                  <button
-                    type="button"
-                    class="px-3.5 py-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-xs font-semibold text-blue-800 min-h-[38px]"
-                    @click="fileInputRef?.click()"
-                  >
-                    Upload Foto
-                  </button>
-                  <button
-                    v-if="avatarUrl"
-                    type="button"
-                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:text-rose-600 min-h-[38px]"
-                    @click="avatarUrl = null"
-                  >
-                    Hapus Foto
-                  </button>
-                </div>
-                <p v-if="avatarError" class="text-xs text-rose-600">{{ avatarError }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-200">
-            <div>
-              <label for="display-name" class="block text-sm font-medium text-slate-800 mb-1">
-                Nama Tampilan
-              </label>
-              <input
-                id="display-name"
-                v-model="displayName"
-                name="name"
-                type="text"
-                required
-                placeholder="Nama panggilan atau nama lengkap…"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label for="bio-input" class="block text-sm font-medium text-slate-800 mb-1">
-                Bio Singkat (Opsional)
-              </label>
-              <input
-                id="bio-input"
-                v-model="bio"
-                name="bio"
-                type="text"
-                placeholder="Contoh: Mahasiswa TI semester 5, suka UI/UX & backend…"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label for="campus" class="block text-sm font-medium text-slate-800 mb-1">
-                Kampus (Opsional)
-              </label>
-              <input
-                id="campus"
-                v-model="campus"
-                name="campus"
-                type="text"
-                placeholder="Nama universitas atau politeknik…"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label for="major" class="block text-sm font-medium text-slate-800 mb-1">
-                Jurusan (Opsional)
-              </label>
-              <input
-                id="major"
-                v-model="major"
-                name="major"
-                type="text"
-                placeholder="Contoh: Teknik Informatika / DKV…"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-          </div>
-        </section>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <!-- Learn Skills Card -->
-          <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div>
-              <h2 class="text-lg font-semibold text-slate-900">1. Apa yang ingin kamu pelajari?</h2>
-              <p class="mt-1 text-sm text-slate-600">
-                Dipakai untuk memprioritaskan rekomendasi mentor di dashboardmu.
-              </p>
-            </div>
-
-            <div>
-              <p class="text-xs font-medium text-slate-700 mb-2">Pilihan Cepat 1-Klik:</p>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="chip in quickLearnChips"
-                  :key="chip.title"
-                  type="button"
-                  :class="[
-                    'text-xs px-3 py-1.5 rounded-lg border transition-colors min-h-[36px]',
-                    learnSkills.some((s: { category: string; title: string }) => s.title === chip.title)
-                      ? 'bg-blue-600 border-blue-600 text-white font-semibold'
-                      : 'bg-blue-50/60 border-blue-100 text-slate-700 hover:bg-blue-100/70'
-                  ]"
-                  @click="toggleQuickLearn(chip)"
-                >
-                  {{ chip.title }}
-                </button>
-              </div>
-            </div>
-
-            <div class="space-y-2.5">
-              <label for="learn-category" class="block text-sm font-medium text-slate-800">
-                Atau tambah topik lain:
-              </label>
-              <select
-                id="learn-category"
-                v-model="learnCategory"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              >
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-              </select>
-
-              <div class="flex gap-2">
-                <input
-                  id="learn-title"
-                  v-model="learnInput"
-                  type="text"
-                  placeholder="Contoh: Dasar SQL / Public Speaking…"
-                  class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-                  @keydown.enter.prevent="addLearnSkill"
-                />
-                <button
-                  type="button"
-                  class="px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-sm font-semibold text-blue-800 min-h-[44px]"
-                  @click="addLearnSkill"
-                >
-                  Tambah
-                </button>
-              </div>
-            </div>
-
-            <div v-if="learnSkills.length > 0" class="flex flex-wrap gap-2">
-              <span
-                v-for="(item, idx) in learnSkills"
-                :key="`${item.category}-${item.title}`"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 text-xs font-medium"
-              >
-                <span>{{ item.title }}</span>
-                <button
-                  type="button"
-                  :aria-label="`Hapus ${item.title}`"
-                  class="hover:text-rose-600 p-0.5"
-                  @click="removeLearnSkill(idx)"
-                >
-                  <UIcon name="i-ph-x" class="w-3.5 h-3.5" aria-hidden="true" />
-                </button>
-              </span>
-            </div>
-          </section>
-
-          <!-- Draft Teach Skill Card -->
-          <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div>
-              <h2 class="text-lg font-semibold text-slate-900">2. Topik santai yang bisa kamu bantu</h2>
-              <p class="mt-1 text-sm text-slate-600">
-                Disimpan sebagai draf profil saja. Kamu baru menerima murid jika membuka slot jadwal di menu Mengajar.
-              </p>
-            </div>
-
-            <div>
-              <p class="text-xs font-medium text-slate-700 mb-2">Template Micro-Session 30 Menit:</p>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="tpl in microTemplates"
-                  :key="tpl.tag"
-                  type="button"
-                  :class="[
-                    'text-xs px-3 py-1.5 rounded-lg border transition-colors duration-150 min-h-[36px]',
-                    teachTemplateTag === tpl.tag
-                      ? 'bg-blue-600 border-blue-600 text-white font-semibold'
-                      : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:text-blue-700'
-                  ]"
-                  @click="applyTemplate(tpl)"
-                >
-                  {{ tpl.tag }}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label for="teach-category" class="block text-sm font-medium text-slate-800 mb-1.5">
-                Kategori
-              </label>
-              <select
-                id="teach-category"
-                v-model="teachCategory"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              >
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="teach-title" class="block text-sm font-medium text-slate-800 mb-1.5">
-                Judul Topik Draf
-              </label>
-              <input
-                id="teach-title"
-                v-model="teachTitle"
-                type="text"
-                required
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-
-            <div>
-              <label for="teach-desc" class="block text-sm font-medium text-slate-800 mb-1.5">
-                Catatan Singkat (Opsional)
-              </label>
-              <textarea
-                id="teach-desc"
-                v-model="teachDescription"
-                rows="2"
-                placeholder="Bisa diubah kapan saja dari menu Mengajar…"
-                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-              />
-            </div>
-          </section>
+  <main class="min-h-screen bg-[#FAF8F4] text-[#14181F]">
+    <!-- Clean Top Bar -->
+    <header class="bg-white border-b border-[#E5E0D5]">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <SkillBarterLogo size="sm" />
+          <span class="hidden sm:inline text-[#E5E0D5]" aria-hidden="true">|</span>
+          <span class="hidden sm:inline text-sm font-semibold text-[#14181F]">Pengaturan Awal</span>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+        <div class="flex items-center gap-2 text-xs font-mono shrink-0 tabular-nums">
+          <span class="font-bold text-[#1D4ED8]">+2 Kredit Awal</span>
+          <span class="text-[#E5E0D5]" aria-hidden="true">|</span>
+          <span class="text-[#526071]">Langkah {{ currentStep }} dari 3</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Left 7 Cols: 3-Step Progressive Flow -->
+      <section class="min-w-0 lg:col-span-7 space-y-6">
+        <div class="space-y-1.5">
+          <h1 class="text-2xl sm:text-[28px] font-bold tracking-tight text-[#14181F]">
+            Siapkan profilmu sebelum mulai bertukar skill
+          </h1>
+          <p class="text-sm text-[#475569]">
+            Kamu tidak wajib langsung mengajar. Draf micro-session 30 menit bisa diubah kapan saja.
+          </p>
+        </div>
+
+        <!-- Stepper Bar -->
+        <div class="grid grid-cols-3 border border-[#E5E0D5] bg-white rounded-[8px] divide-x divide-[#E5E0D5] overflow-hidden">
           <button
-            type="submit"
-            :disabled="submitting"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold text-sm transition-colors duration-150 min-h-[48px]"
+            v-for="step in [
+              { id: 1, code: '01', label: 'Identitas & Foto' },
+              { id: 2, code: '02', label: 'Minat Belajar' },
+              { id: 3, code: '03', label: 'Draf 30 Menit' }
+            ]"
+            :key="step.id"
+            type="button"
+            :class="[
+              'p-3 text-left transition-colors min-h-[54px]',
+              currentStep === step.id
+                ? 'bg-[#14181F] text-white'
+                : currentStep > step.id
+                  ? 'bg-[#ECFDF5] text-[#047857]'
+                  : 'bg-white text-[#475569] hover:bg-[#FAF8F4]'
+            ]"
+            @click="goToStep(step.id as 1 | 2 | 3)"
           >
-            <UIcon name="i-ph-check-circle" class="w-5 h-5" aria-hidden="true" />
-            <span>{{ submitting ? 'Menyiapkan Dashboard…' : 'Simpan & Masuk Dashboard (+2 Kredit)' }}</span>
+            <p class="font-mono text-[11px] font-bold">{{ step.code }}</p>
+            <p class="text-xs font-semibold truncate mt-0.5">{{ step.label }}</p>
           </button>
         </div>
-      </form>
+
+        <UiAlert
+          v-if="errorMessage"
+          tone="danger"
+          title="Periksa pengisian"
+          :description="errorMessage"
+        />
+
+        <!-- Step 1: Identity & Photo -->
+        <div v-if="currentStep === 1" class="bg-white border border-[#E5E0D5] rounded-[8px] p-5 sm:p-6 space-y-5">
+          <div class="flex flex-wrap items-center gap-4 pb-5 border-b border-[#E5E0D5]">
+            <img
+              v-if="avatarUrl"
+              :src="avatarUrl"
+              :alt="displayName || 'Foto Profil'"
+              class="w-14 h-14 rounded-[8px] object-cover border border-[#E5E0D5]"
+            />
+            <div
+              v-else
+              class="w-14 h-14 rounded-[8px] bg-[#14181F] text-white font-mono text-sm font-bold flex items-center justify-center"
+            >
+              {{ getUserInitials(displayName) }}
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  class="sr-only"
+                  @change="onAvatarChange"
+                />
+                <UiButton variant="secondary" size="sm" icon="i-ph-camera" @click="fileInputRef?.click()">
+                  {{ avatarUrl ? 'Ganti Foto Profil' : 'Upload Foto Profil' }}
+                </UiButton>
+                <UiButton
+                  v-if="avatarUrl"
+                  variant="danger-soft"
+                  size="sm"
+                  @click="hasEditedAvatar = true; avatarUrl = null"
+                >
+                  Hapus
+                </UiButton>
+              </div>
+              <p class="text-[11px] text-[#526071]">PNG, JPG, atau WebP maks 5 MB (otomatis crop 1:1).</p>
+              <p v-if="avatarError" class="text-xs font-medium text-[#BE123C]">{{ avatarError }}</p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <UiField id="onb-name" label="Nama Tampilan" required>
+              <input
+                id="onb-name"
+                v-model="displayName"
+                type="text"
+                maxlength="80"
+                placeholder="Masukkan nama panggilan atau nama lengkap kamu"
+                class="w-full px-3 py-2.5 rounded-[6px] border border-[#94A3B8] bg-white text-sm text-[#14181F] min-h-[44px]"
+                @input="hasEditedName = true"
+              />
+            </UiField>
+
+            <UiField id="onb-campus" label="Kampus (otomatis terisi jika @student.uksw.edu)">
+              <input
+                id="onb-campus"
+                v-model="campus"
+                type="text"
+                maxlength="120"
+                placeholder="Contoh: Universitas Kristen Satya Wacana (UKSW)"
+                class="w-full px-3 py-2.5 rounded-[6px] border border-[#94A3B8] bg-white text-sm text-[#14181F] min-h-[44px]"
+              />
+            </UiField>
+
+            <UiField id="onb-major" label="Jurusan / Program Studi">
+              <input
+                id="onb-major"
+                v-model="major"
+                type="text"
+                maxlength="120"
+                placeholder="Contoh: Teknik Informatika"
+                class="w-full px-3 py-2.5 rounded-[6px] border border-[#94A3B8] bg-white text-sm text-[#14181F] min-h-[44px]"
+              />
+            </UiField>
+
+            <UiField id="onb-bio" label="Bio Singkat (Opsional)">
+              <textarea
+                id="onb-bio"
+                v-model="bio"
+                rows="3"
+                maxlength="240"
+                placeholder="Ceritakan singkat minat belajar atau pengalamanmu..."
+                class="w-full px-3 py-2.5 rounded-[6px] border border-[#94A3B8] bg-white text-sm text-[#14181F]"
+              />
+            </UiField>
+          </div>
+
+          <div class="pt-3 border-t border-[#E5E0D5] flex justify-end">
+            <UiButton variant="primary" size="md" @click="goNextStep">
+              Lanjut: Minat Belajar
+            </UiButton>
+          </div>
+        </div>
+
+        <!-- Step 2: Learning Interests -->
+        <div v-else-if="currentStep === 2" class="bg-white border border-[#E5E0D5] rounded-[8px] p-5 sm:p-6 space-y-5">
+          <div class="space-y-2.5">
+            <p class="text-[13px] font-semibold text-[#14181F]">Pilih cepat topik yang ingin kamu pelajari</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="chip in quickLearnChips"
+                :key="chip.title"
+                type="button"
+                :class="[
+                  'px-3 py-2 rounded-[6px] border text-xs font-semibold transition-colors min-h-[40px]',
+                  learnSkills.some((s: { category: string; title: string }) => s.title === chip.title)
+                    ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                    : 'bg-[#FAF8F4] text-[#475569] border-[#E5E0D5] hover:border-[#94A3B8]'
+                ]"
+                @click="toggleQuickLearn(chip)"
+              >
+                {{ chip.title }}
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#E5E0D5] space-y-3">
+            <p class="text-[13px] font-semibold text-[#14181F]">Atau tambah topik belajar sendiri</p>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+              <select
+                v-model="learnCategory"
+                aria-label="Kategori minat belajar"
+                class="sm:col-span-5 px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+              >
+                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+              </select>
+              <input
+                v-model="learnInput"
+                type="text"
+                placeholder="Mis. Analisis Data SPSS"
+                class="sm:col-span-5 px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+                @keydown.enter.prevent="addLearnSkill"
+              />
+              <UiButton variant="secondary" size="md" class="sm:col-span-2" @click="addLearnSkill">
+                Tambah
+              </UiButton>
+            </div>
+          </div>
+
+          <div v-if="learnSkills.length > 0" class="space-y-2">
+            <p class="text-xs font-semibold text-[#526071]">
+              Minat Terpilih ({{ learnSkills.length }})
+            </p>
+            <ul class="divide-y divide-[#E5E0D5] border border-[#E5E0D5] rounded-[6px]">
+              <li
+                v-for="(skill, idx) in learnSkills"
+                :key="`${skill.category}-${skill.title}`"
+                class="px-3.5 py-2.5 flex items-center justify-between gap-3 text-sm"
+              >
+                <div class="min-w-0">
+                  <span class="font-semibold text-[#14181F]">{{ skill.title }}</span>
+                  <span class="text-xs text-[#526071] ml-2">{{ skill.category }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-[#BE123C] hover:underline shrink-0 min-h-[36px]"
+                  @click="removeLearnSkill(idx)"
+                >
+                  Hapus
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="pt-3 border-t border-[#E5E0D5] flex items-center justify-between">
+            <UiButton variant="secondary" size="md" @click="currentStep = 1">
+              Kembali
+            </UiButton>
+            <UiButton variant="primary" size="md" @click="goNextStep">
+              Lanjut: Draf Mengajar
+            </UiButton>
+          </div>
+        </div>
+
+        <!-- Step 3: 30m Micro-Session Draft -->
+        <div v-else class="bg-white border border-[#E5E0D5] rounded-[8px] p-5 sm:p-6 space-y-5">
+          <div class="space-y-2">
+            <p class="text-sm font-bold text-[#14181F]">Pilih draf sesi singkat 30 menit</p>
+            <p class="text-xs text-[#526071]">
+              Disimpan sebagai draf saja, kamu tidak wajib langsung membuka jadwal.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <button
+                v-for="tpl in microTemplates"
+                :key="tpl.tag"
+                type="button"
+                :class="[
+                  'p-3.5 rounded-[6px] border text-left transition-colors',
+                  teachTemplateTag === tpl.tag
+                    ? 'border-[#1D4ED8] bg-[#EFF6FF]/60'
+                    : 'border-[#E5E0D5] bg-[#FAF8F4] hover:border-[#94A3B8]'
+                ]"
+                @click="applyTemplate(tpl)"
+              >
+                <p class="text-xs font-bold text-[#1D4ED8]">{{ tpl.category }}</p>
+                <p class="text-[13px] font-semibold text-[#14181F] mt-0.5">{{ tpl.title }}</p>
+                <p class="font-mono text-[11px] text-[#526071] mt-1">{{ tpl.tag }}</p>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-3 border-t border-[#E5E0D5]">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <UiField id="onb-teach-cat" label="Kategori Topik">
+                <select
+                  id="onb-teach-cat"
+                  v-model="teachCategory"
+                  class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+                >
+                  <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                </select>
+              </UiField>
+              <UiField id="onb-teach-title" label="Judul Draf Topik">
+                <input
+                  id="onb-teach-title"
+                  v-model="teachTitle"
+                  type="text"
+                  maxlength="100"
+                  class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+                />
+              </UiField>
+            </div>
+
+            <UiField id="onb-teach-desc" label="Catatan Singkat (Opsional)">
+              <textarea
+                id="onb-teach-desc"
+                v-model="teachDescription"
+                rows="2"
+                placeholder="Mis. Cocok untuk tanya-jawab error tugas atau review wireframe."
+                class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm"
+              />
+            </UiField>
+          </div>
+
+          <div class="pt-3 border-t border-[#E5E0D5] flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
+            <UiButton variant="secondary" size="md" @click="currentStep = 2">
+              Kembali
+            </UiButton>
+            <UiButton
+              variant="primary"
+              size="md"
+              icon="i-ph-check-circle"
+              :loading="submitting"
+              @click="submitOnboarding"
+            >
+              {{ submitting ? 'Menyimpan…' : 'Selesai & Klaim +2 Kredit' }}
+            </UiButton>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right 5 Cols: Live Profile Card Preview -->
+      <aside class="min-w-0 lg:col-span-5 lg:sticky lg:top-8 bg-white border border-[#E5E0D5] rounded-[8px] p-5 sm:p-6 space-y-4">
+        <p class="text-sm font-bold text-[#14181F] pb-3 border-b border-[#E5E0D5]">
+          Pratinjau kartu profilmu
+        </p>
+
+        <div class="flex items-start gap-3.5">
+          <img
+            v-if="avatarUrl"
+            :src="avatarUrl"
+            :alt="displayName || 'Pengguna'"
+            class="w-12 h-12 rounded-[6px] object-cover border border-[#E5E0D5] shrink-0"
+          />
+          <div
+            v-else
+            class="w-12 h-12 rounded-[6px] bg-[#14181F] text-white font-mono text-xs font-bold flex items-center justify-center shrink-0"
+          >
+            {{ getUserInitials(displayName) }}
+          </div>
+
+          <div class="min-w-0 space-y-1">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <p class="text-base font-bold text-[#14181F] truncate">
+                {{ displayName.trim() || '[Nama Tampilan Kamu]' }}
+              </p>
+              <VerifiedUkswBadge v-if="sessionUser?.isVerifiedUksw" />
+            </div>
+            <p class="text-xs text-[#526071]">
+              {{ [major.trim(), campus.trim()].filter(Boolean).join(' | ') || '[Jurusan] | [Kampus]' }}
+            </p>
+          </div>
+        </div>
+
+        <p v-if="bio.trim()" class="text-xs text-[#475569] leading-relaxed bg-[#FAF8F4] p-3 rounded-[6px] border border-[#E5E0D5]">
+          {{ bio }}
+        </p>
+
+        <div class="space-y-2 pt-3 border-t border-[#E5E0D5] text-xs">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[#526071]">Minat Belajar</span>
+            <span class="font-mono font-semibold text-[#14181F]">{{ learnSkills.length }} topik</span>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[#526071]">Draf Mengajar 30m</span>
+            <span class="font-semibold text-[#14181F] truncate max-w-[200px]">{{ teachTitle || 'Belum diisi' }}</span>
+          </div>
+        </div>
+
+        <p class="text-xs font-medium text-[#1D4ED8] leading-relaxed pt-2 border-t border-[#E5E0D5]">
+          Menyelesaikan 3 langkah ini langsung menambahkan +2 Kredit ke saldo awalmu.
+        </p>
+      </aside>
     </div>
   </main>
 </template>

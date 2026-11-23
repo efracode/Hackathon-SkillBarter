@@ -1,6 +1,12 @@
-import { and, eq, inArray, isNull, lte, ne, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm'
 import { useDb, schema } from '../database'
-import { computeCooldownDays, computeGroupPayout } from './creditRules'
+import {
+  CHECKIN_LATE_MS,
+  computeCooldownDays,
+  computeGroupPayout,
+  isLearnerNoShow,
+  shouldMarkSessionCompleted
+} from './creditRules'
 
 type DbInstance = ReturnType<typeof useDb>
 type TxInstance = Parameters<Parameters<DbInstance['transaction']>[0]>[0]
@@ -60,6 +66,30 @@ export async function getGroupSessionEarnedCredits(tx: TxInstance, sessionId: st
   return Math.min(2, rows.length)
 }
 
+export async function syncSessionCompletionIfDone(tx: TxInstance, sessionId: string) {
+  const [remainingActive] = await tx
+    .select({ count: sql<number>`count(*)::int` })
+    .from(schema.sessionBookings)
+    .where(
+      and(
+        eq(schema.sessionBookings.sessionId, sessionId),
+        inArray(schema.sessionBookings.status, ['confirmed', 'checked_in', 'disputed'])
+      )
+    )
+
+  if (shouldMarkSessionCompleted(remainingActive?.count ?? 0)) {
+    await tx
+      .update(schema.sessions)
+      .set({ status: 'completed' })
+      .where(
+        and(
+          eq(schema.sessions.id, sessionId),
+          eq(schema.sessions.status, 'confirmed')
+        )
+      )
+  }
+}
+
 let lastLazyCheckAt = 0
 const LAZY_CHECK_TTL_MS = 30_000
 
@@ -73,47 +103,64 @@ export async function runLazyChecks(db: DbInstance, force = false) {
   const twoHoursAhead = new Date(now.getTime() + 2 * 60 * 60 * 1000)
   const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000)
 
-  const [expiredQueues, candidateGroupSessions, missedCheckinSessions, readyForPayout] =
-    await Promise.all([
-      db
-        .select({ id: schema.sessionBookings.id })
-        .from(schema.sessionBookings)
-        .where(
-          and(
-            eq(schema.sessionBookings.status, 'queued'),
-            lte(schema.sessionBookings.holdExpiresAt, now)
-          )
-        ),
-      db
-        .select()
-        .from(schema.sessions)
-        .where(
-          and(
-            eq(schema.sessions.mode, 'group'),
-            eq(schema.sessions.status, 'confirmed'),
-            lte(schema.sessions.scheduledAt, twoHoursAhead)
-          )
-        ),
-      db
-        .select({ id: schema.sessions.id })
-        .from(schema.sessions)
-        .where(
-          and(
-            eq(schema.sessions.status, 'confirmed'),
-            isNull(schema.sessions.checkinCode),
-            lte(schema.sessions.scheduledAt, fifteenMinsAgo)
-          )
-        ),
-      db
-        .select({ id: schema.sessionBookings.id })
-        .from(schema.sessionBookings)
-        .where(
-          and(
-            eq(schema.sessionBookings.status, 'checked_in'),
-            lte(schema.sessionBookings.disputeEndsAt, now)
-          )
+  const [
+    expiredQueues,
+    candidateGroupSessions,
+    missedCheckinSessions,
+    missedLearnerBookings,
+    readyForPayout
+  ] = await Promise.all([
+    db
+      .select({ id: schema.sessionBookings.id })
+      .from(schema.sessionBookings)
+      .where(
+        and(
+          eq(schema.sessionBookings.status, 'queued'),
+          lte(schema.sessionBookings.holdExpiresAt, now)
         )
-    ])
+      ),
+    db
+      .select()
+      .from(schema.sessions)
+      .where(
+        and(
+          eq(schema.sessions.mode, 'group'),
+          eq(schema.sessions.status, 'confirmed'),
+          lte(schema.sessions.scheduledAt, twoHoursAhead)
+        )
+      ),
+    db
+      .select({ id: schema.sessions.id })
+      .from(schema.sessions)
+      .where(
+        and(
+          eq(schema.sessions.status, 'confirmed'),
+          isNull(schema.sessions.checkinCode),
+          lte(schema.sessions.scheduledAt, fifteenMinsAgo)
+        )
+      ),
+    db
+      .select({ id: schema.sessionBookings.id })
+      .from(schema.sessionBookings)
+      .innerJoin(schema.sessions, eq(schema.sessionBookings.sessionId, schema.sessions.id))
+      .where(
+        and(
+          eq(schema.sessionBookings.status, 'confirmed'),
+          eq(schema.sessions.status, 'confirmed'),
+          isNotNull(schema.sessions.checkinCode),
+          lt(schema.sessions.scheduledAt, fifteenMinsAgo)
+        )
+      ),
+    db
+      .select({ id: schema.sessionBookings.id })
+      .from(schema.sessionBookings)
+      .where(
+        and(
+          eq(schema.sessionBookings.status, 'checked_in'),
+          lte(schema.sessionBookings.disputeEndsAt, now)
+        )
+      )
+  ])
 
   for (const q of expiredQueues) {
     await db.transaction(async (tx) => {
@@ -252,6 +299,73 @@ export async function runLazyChecks(db: DbInstance, force = false) {
     })
   }
 
+  // 3b. Auto-forfeit learner no-show when > T+15m, checkinCode was issued, and learner never checked in
+  for (const ml of missedLearnerBookings) {
+    await db.transaction(async (tx) => {
+      const [booking] = await tx
+        .select()
+        .from(schema.sessionBookings)
+        .where(eq(schema.sessionBookings.id, ml.id))
+        .for('update')
+        .limit(1)
+
+      if (!booking || booking.status !== 'confirmed' || !booking.sessionId) return
+
+      const [sess] = await tx
+        .select()
+        .from(schema.sessions)
+        .where(eq(schema.sessions.id, booking.sessionId))
+        .for('update')
+        .limit(1)
+
+      if (!sess) return
+
+      const eligible = isLearnerNoShow({
+        bookingStatus: booking.status,
+        sessionStatus: sess.status,
+        hasCheckinCode: Boolean(sess.checkinCode),
+        scheduledAtMs: sess.scheduledAt.getTime(),
+        nowMs: now.getTime()
+      })
+      if (!eligible) return
+
+      const [openReport] = await tx
+        .select({ id: schema.reports.id })
+        .from(schema.reports)
+        .where(
+          and(
+            eq(schema.reports.bookingId, booking.id),
+            eq(schema.reports.status, 'open')
+          )
+        )
+        .limit(1)
+
+      if (openReport) return
+
+      let payout = booking.creditsHeld
+      if (sess.mode === 'group') {
+        const earnedSoFar = await getGroupSessionEarnedCredits(tx, sess.id)
+        payout = computeGroupPayout(booking.creditsHeld, earnedSoFar)
+      }
+
+      await tx
+        .update(schema.sessionBookings)
+        .set({ status: 'forfeited_to_tutor' })
+        .where(eq(schema.sessionBookings.id, booking.id))
+
+      if (payout > 0) {
+        await mutateUserCredit(tx, {
+          userId: sess.tutorId,
+          bookingId: booking.id,
+          delta: payout,
+          reason: 'Kompensasi Learner No-Show (> T+15m)'
+        })
+      }
+
+      await syncSessionCompletionIfDone(tx, sess.id)
+    })
+  }
+
   // 4. Auto-release escrow after 24h dispute window for checked_in bookings with no open reports
   for (const r of readyForPayout) {
     await db.transaction(async (tx) => {
@@ -305,24 +419,7 @@ export async function runLazyChecks(db: DbInstance, force = false) {
         })
       }
 
-      const [remainingActive] = await tx
-        .select({ count: sql<number>`count(*)::int` })
-        .from(schema.sessionBookings)
-        .where(
-          and(
-            eq(schema.sessionBookings.sessionId, sess.id),
-            ne(schema.sessionBookings.status, 'completed'),
-            ne(schema.sessionBookings.status, 'cancelled_free'),
-            ne(schema.sessionBookings.status, 'forfeited_to_tutor')
-          )
-        )
-
-      if ((remainingActive?.count ?? 0) === 0) {
-        await tx
-          .update(schema.sessions)
-          .set({ status: 'completed' })
-          .where(eq(schema.sessions.id, sess.id))
-      }
+      await syncSessionCompletionIfDone(tx, sess.id)
     })
   }
 }

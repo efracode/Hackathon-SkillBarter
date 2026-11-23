@@ -60,7 +60,7 @@ interface DashboardPayload {
   }>
 }
 
-const { data, status, error, refresh } = useLazyFetch<DashboardPayload>('/api/dashboard')
+const { data, status, refresh } = useLazyFetch<DashboardPayload>('/api/dashboard')
 const { data: meData, refresh: refreshMe } = useLazyFetch('/api/me', { key: 'me-profile' })
 const { data: exploreCache, refresh: refreshExplore } = useLazyFetch<{ items: BookingSkillItem[] }>('/api/explore', {
   key: 'dashboard-explore-lookup'
@@ -75,6 +75,7 @@ const drawerLoading = ref(false)
 
 const myUserId = computed(() => meData.value?.user?.id || '')
 const creditBalance = computed(() => data.value?.user?.creditBalance ?? meData.value?.user?.creditBalance ?? 0)
+const escrowBalance = computed(() => data.value?.user?.escrowBalance ?? 0)
 const upcomingTotal = computed(
   () => (data.value?.upcomingLearner?.length ?? 0) + (data.value?.upcomingTutor?.length ?? 0)
 )
@@ -89,6 +90,73 @@ const filteredRecommendations = computed(() => {
   if (recFilter.value === 'match') return list.filter((r) => r.matchesInterest)
   if (recFilter.value === 'slot') return list.filter((r) => Boolean(r.nextSlot))
   return list
+})
+
+const nextScheduleSummary = computed(() => {
+  const nl = data.value?.upcomingLearner?.[0]
+  if (nl) return `${formatShortDate(nl.scheduledAt)} | ${nl.durationMinutes}m ${nl.format === 'online' ? 'Online' : 'Kampus'}`
+  const nt = data.value?.upcomingTutor?.[0]
+  if (nt) return `${formatShortDate(nt.scheduledAt)} | ${nt.durationMinutes}m ${nt.format === 'online' ? 'Online' : 'Kampus'}`
+  return 'Belum ada jadwal aktif'
+})
+
+const contextualPriority = computed(() => {
+  const d = data.value
+  if (!d) return null
+  if (d.user.cooldownUntil && new Date(d.user.cooldownUntil).getTime() > Date.now()) {
+    return {
+      tone: 'rose' as const,
+      label: 'Status Cooldown Mengajar',
+      title: `Publikasi jadwal ditahan hingga ${formatDateTime(d.user.cooldownUntil)}`,
+      ctaLabel: 'Lihat Status Mengajar',
+      to: '/teach'
+    }
+  }
+  if (d.incomingQueueCount > 0) {
+    return {
+      tone: 'amber' as const,
+      label: 'Daftar Tunggu 48 Jam',
+      title: `${d.incomingQueueCount} permintaan belajar menunggu jadwal dari kamu`,
+      ctaLabel: 'Tinjau Daftar Tunggu',
+      to: '/sessions?tab=queue'
+    }
+  }
+  const nextLearner = d.upcomingLearner[0]
+  if (nextLearner) {
+    return {
+      tone: 'cobalt' as const,
+      label: 'Jadwal Belajar Terdekat',
+      title: `${nextLearner.skillTitle} bersama ${nextLearner.tutorName} (${formatDateTime(nextLearner.scheduledAt)})`,
+      ctaLabel: 'Buka Ruang Sesi',
+      to: `/sessions/${nextLearner.sessionId}`
+    }
+  }
+  const nextTutor = d.upcomingTutor[0]
+  if (nextTutor) {
+    return {
+      tone: 'cobalt' as const,
+      label: 'Jadwal Mengajar Terdekat',
+      title: `${nextTutor.skillTitle} (${formatDateTime(nextTutor.scheduledAt)})`,
+      ctaLabel: 'Kelola & Check-in',
+      to: `/sessions/${nextTutor.sessionId}`
+    }
+  }
+  if (creditBalance.value < 1) {
+    return {
+      tone: 'amber' as const,
+      label: 'Kredit Saya 0',
+      title: 'Buka 1 jadwal mengajar 30 menit untuk memperoleh kredit pertamamu',
+      ctaLabel: 'Ajarkan Skill',
+      to: '/teach'
+    }
+  }
+  return {
+    tone: 'cobalt' as const,
+    label: 'Siap Belajar',
+    title: `Kamu punya ${creditBalance.value} Kredit siap dipakai memesan sesi belajar`,
+    ctaLabel: 'Cari Skill untuk Dipelajari',
+    to: '/explore'
+  }
 })
 
 async function openQuickBooking(skillId: string) {
@@ -124,64 +192,69 @@ function formatDateTime(iso: string) {
     minute: '2-digit'
   }).format(new Date(iso))
 }
+
+function formatShortDate(iso: string) {
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(iso))
+}
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Loading Skeleton -->
-    <div v-if="status === 'pending'" class="space-y-5" aria-busy="true">
-      <div class="h-16 bg-white border border-slate-200 rounded-2xl animate-pulse" />
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div v-for="n in 4" :key="n" class="h-24 bg-white border border-slate-200 rounded-2xl animate-pulse" />
+  <div class="space-y-7">
+    <div v-if="status === 'pending'" aria-busy="true" class="space-y-6">
+      <div class="h-16 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-7 h-80 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
+        <div class="lg:col-span-5 h-80 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-7 h-72 bg-white border border-slate-200 rounded-2xl animate-pulse" />
-        <div class="lg:col-span-5 h-72 bg-white border border-slate-200 rounded-2xl animate-pulse" />
-      </div>
-      <p class="sr-only">Memuat dashboard SkillBarter…</p>
     </div>
 
-    <!-- Error State -->
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="subtle"
-      icon="i-ph-warning-circle"
-      title="Gagal memuat dashboard"
-      description="Terjadi kendala saat mengambil ringkasan akun. Muat ulang untuk mencoba lagi."
+    <UiAlert
+      v-else-if="status === 'error'"
+      tone="danger"
+      title="Gagal memuat data aktivitas"
+      description="Periksa koneksi lalu muat ulang halaman."
     >
-      <template #actions>
-        <UButton color="error" variant="soft" size="sm" @click="() => refresh()">Coba Lagi</UButton>
+      <template #action>
+        <UiButton variant="danger-soft" size="sm" @click="refresh()">
+          Muat Ulang
+        </UiButton>
       </template>
-    </UAlert>
+    </UiAlert>
 
     <template v-else-if="data">
-      <!-- Top Command Header + Mode Switcher -->
-      <section class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-200">
+      <!-- Greeting & Mode Switcher Header -->
+      <section class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-5 border-b border-[#E5E0D5]">
         <div class="space-y-1">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
-              Pusat Aktivitas
-            </span>
+            <p class="text-[13px] font-medium text-[#526071]">Halo, {{ data.user.name }}</p>
             <VerifiedUkswBadge v-if="data.user.isVerifiedUksw" />
           </div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Halo, <span class="font-serif italic font-normal text-blue-600">{{ data.user.name.split(' ')[0] }}</span>
+          <h1 class="text-2xl sm:text-[28px] font-bold text-[#14181F] tracking-tight">
+            Apa yang bisa kamu lakukan sekarang?
           </h1>
-          <p class="text-sm text-slate-600">
-            Pantau kredit, booking mentor langsung dari sini, atau beralih ke mode mengajar.
+          <p class="text-sm text-[#475569]">
+            {{
+              dashboardMode === 'learn'
+                ? 'Pantau jadwal belajar, kredit yang tersedia, dan mentor aktif dari kampus.'
+                : 'Kelola Daftar Tunggu, progres Verified Peer Mentor, dan jadwal mengajar.'
+            }}
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5">
-          <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1" role="tablist" aria-label="Mode Dashboard">
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div class="inline-flex p-1 rounded-[6px] bg-[#F3EFE6] border border-[#E5E0D5]" role="tablist" aria-label="Mode Beranda">
             <button
               type="button"
               role="tab"
               :aria-selected="dashboardMode === 'learn'"
               :class="[
-                'px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[38px]',
-                dashboardMode === 'learn' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:text-blue-700'
+                'px-3.5 py-1.5 rounded-[4px] text-xs font-semibold transition-colors min-h-[36px]',
+                dashboardMode === 'learn' ? 'bg-[#14181F] text-white' : 'text-[#475569] hover:text-[#14181F]'
               ]"
               @click="dashboardMode = 'learn'"
             >
@@ -192,8 +265,8 @@ function formatDateTime(iso: string) {
               role="tab"
               :aria-selected="dashboardMode === 'teach'"
               :class="[
-                'px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[38px]',
-                dashboardMode === 'teach' ? 'bg-blue-600 text-white' : 'text-slate-700 hover:text-blue-700'
+                'px-3.5 py-1.5 rounded-[4px] text-xs font-semibold transition-colors min-h-[36px]',
+                dashboardMode === 'teach' ? 'bg-[#14181F] text-white' : 'text-[#475569] hover:text-[#14181F]'
               ]"
               @click="dashboardMode = 'teach'"
             >
@@ -201,397 +274,283 @@ function formatDateTime(iso: string) {
             </button>
           </div>
 
-          <NuxtLink
-            to="/explore"
-            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold min-h-[42px] transition-colors"
-          >
-            <UIcon name="i-ph-compass" class="w-4 h-4" aria-hidden="true" />
-            <span>Jelajah Semua</span>
-          </NuxtLink>
+          <span class="hidden sm:inline-flex">
+            <UiButton
+              :to="dashboardMode === 'learn' ? '/explore' : '/teach'"
+              variant="primary"
+              size="sm"
+              :icon="dashboardMode === 'learn' ? 'i-ph-compass' : 'i-ph-plus'"
+            >
+              {{ dashboardMode === 'learn' ? 'Jelajah Skill' : 'Ajarkan Skill' }}
+            </UiButton>
+          </span>
         </div>
       </section>
 
-      <!-- Row 1: 4 Technical Precision KPI Stroke Cards with Animated Count-Up -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <NuxtLink
-          to="/wallet"
-          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
-        >
-          <div class="flex items-center justify-between text-xs text-slate-500">
-            <span class="font-medium">Saldo Tersedia</span>
-            <UIcon name="i-ph-wallet" class="w-4 h-4 text-blue-600" aria-hidden="true" />
+      <!-- Single Next-Action Strip -->
+      <section v-if="contextualPriority">
+        <div class="bg-white border border-[#E5E0D5] rounded-[8px] p-4 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="space-y-0.5 min-w-0">
+            <p
+              :class="[
+                'text-xs font-semibold',
+                contextualPriority.tone === 'rose'
+                  ? 'text-[#BE123C]'
+                  : contextualPriority.tone === 'amber'
+                    ? 'text-[#92400E]'
+                    : 'text-[#1D4ED8]'
+              ]"
+            >
+              Tindakan berikutnya | {{ contextualPriority.label }}
+            </p>
+            <p class="text-[15px] font-bold text-[#14181F]">
+              {{ contextualPriority.title }}
+            </p>
           </div>
-          <p class="font-mono text-2xl sm:text-3xl font-bold text-blue-600">
-            <AnimatedNumber :value="data.user.creditBalance" />
-            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Kredit</span>
+          <UiButton
+            :to="contextualPriority.to"
+            variant="dark"
+            size="sm"
+            icon="i-ph-arrow-right"
+          >
+            {{ contextualPriority.ctaLabel }}
+          </UiButton>
+        </div>
+      </section>
+
+      <!-- Paper-Native Credit & Schedule Strip (Friendly Indonesian Terms) -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-0 py-4 border-y border-[#E5E0D5] tabular-nums">
+        <NuxtLink to="/wallet" class="group space-y-1 sm:pr-6">
+          <p class="text-xs font-semibold text-[#526071]">Kredit Saya</p>
+          <p class="font-mono text-2xl font-bold text-[#1D4ED8] group-hover:underline">
+            <AnimatedNumber :value="creditBalance" suffix=" Kredit" />
           </p>
+          <p class="text-xs text-[#526071]">Siap dipakai belajar</p>
         </NuxtLink>
 
-        <NuxtLink
-          to="/wallet"
-          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
-        >
-          <div class="flex items-center justify-between text-xs text-slate-500">
-            <span class="font-medium">Terkunci di Escrow</span>
-            <UIcon name="i-ph-lock-simple-duotone" class="w-4 h-4 text-blue-600" aria-hidden="true" />
-          </div>
-          <p class="font-mono text-2xl sm:text-3xl font-bold text-slate-900">
-            <AnimatedNumber :value="data.user.escrowBalance" />
-            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Kredit</span>
+        <NuxtLink to="/wallet" class="group space-y-1 border-l border-[#E5E0D5] pl-4 sm:px-6">
+          <p class="text-xs font-semibold text-[#526071]">Kredit dalam Pemesanan</p>
+          <p class="font-mono text-2xl font-bold text-[#92400E] group-hover:underline">
+            <AnimatedNumber :value="escrowBalance" suffix=" Kredit" />
           </p>
+          <p class="text-xs text-[#526071]">Aman ditahan hingga sesi selesai</p>
         </NuxtLink>
 
-        <NuxtLink
-          to="/sessions"
-          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
-        >
-          <div class="flex items-center justify-between text-xs text-slate-500">
-            <span class="font-medium">Agenda Mendatang</span>
-            <UIcon name="i-ph-calendar-check" class="w-4 h-4 text-blue-600" aria-hidden="true" />
-          </div>
-          <p class="font-mono text-2xl sm:text-3xl font-bold text-slate-900">
-            <AnimatedNumber :value="upcomingTotal" />
-            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Sesi</span>
+        <NuxtLink to="/sessions" class="col-span-2 sm:col-span-1 group space-y-1 pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l border-[#E5E0D5] sm:pl-6">
+          <p class="text-xs font-semibold text-[#526071]">Jadwal Belajar</p>
+          <p class="font-mono text-2xl font-bold text-[#14181F] group-hover:underline">
+            <AnimatedNumber :value="upcomingTotal" suffix=" Sesi Aktif" />
           </p>
-        </NuxtLink>
-
-        <NuxtLink
-          to="/profile"
-          class="bg-white border border-slate-200 rounded-2xl p-4 stroke-interactive flex flex-col justify-between gap-2"
-        >
-          <div class="flex items-center justify-between text-xs text-slate-500">
-            <span class="font-medium">Progres Peer Mentor</span>
-            <UIcon name="i-ph-seal-check-duotone" class="w-4 h-4 text-blue-600" aria-hidden="true" />
-          </div>
-          <p class="font-mono text-2xl sm:text-3xl font-bold text-slate-900">
-            <AnimatedNumber :value="Math.min(3, data.mentorProgress.completedCount)" /><span class="text-base text-slate-400">/3</span>
-            <span class="text-xs font-sans font-semibold text-slate-500 ml-1">Sesi</span>
-          </p>
+          <p class="text-xs text-[#526071] truncate">{{ nextScheduleSummary }}</p>
         </NuxtLink>
       </section>
 
-      <!-- Action Banner for Incoming Hold Queue -->
-      <UAlert
-        v-if="data.incomingQueueCount > 0"
-        color="primary"
-        variant="subtle"
-        icon="i-ph-clock"
-        :title="`Ada ${data.incomingQueueCount} permintaan Hold Queue menunggu responmu`"
-        description="Terima dan tentukan jadwalnya di tab Hold Queue sebelum batas 48 jam berakhir."
-      >
-        <template #actions>
-          <NuxtLink
-            to="/sessions?tab=queue"
-            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
-          >
-            Lihat Antrean
-          </NuxtLink>
-        </template>
-      </UAlert>
+      <!-- Mobile Quick Action Buttons (Matching Mobile 390 Design) -->
+      <div class="grid grid-cols-1 gap-2.5 sm:hidden">
+        <UiButton to="/explore" variant="primary" block>
+          Cari Skill untuk Dipelajari
+        </UiButton>
+        <UiButton to="/teach" variant="secondary" block>
+          Ajarkan Skill
+        </UiButton>
+      </div>
 
-      <!-- Animated Mode Content -->
-      <Transition name="panel-slide" mode="out-in">
-        <!-- MODE BELAJAR -->
-        <div v-if="dashboardMode === 'learn'" key="mode-learn" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <!-- Left (7 cols): Interactive Mentor Recommendations with Direct Quick-Booking Drawer -->
-          <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl overflow-hidden">
-            <header class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+      <!-- Main Split Workspace (7 / 5 Paper Columns) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        <!-- Left 7 Cols: Learn Recommendations OR Teach Studio Overview -->
+        <section class="lg:col-span-7 space-y-4">
+          <template v-if="dashboardMode === 'learn'">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E5E0D5]">
               <div>
-                <h2 class="text-sm sm:text-base font-bold text-slate-900">Rekomendasi Mentor Untukmu</h2>
-                <p class="text-xs text-slate-500">Klik mentor untuk melihat jadwal, bio, dan langsung booking.</p>
+                <h2 class="text-lg font-bold text-[#14181F]">Rekomendasi mentor untuk kamu</h2>
               </div>
-              <div class="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  :class="[
-                    'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'all' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600'
-                  ]"
-                  @click="recFilter = 'all'"
-                >
-                  Semua
-                </button>
-                <button
-                  type="button"
-                  :class="[
-                    'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'match' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600'
-                  ]"
-                  @click="recFilter = 'match'"
-                >
-                  Cocok Minat
-                </button>
-                <button
-                  type="button"
-                  :class="[
-                    'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors',
-                    recFilter === 'slot' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600'
-                  ]"
-                  @click="recFilter = 'slot'"
-                >
-                  Slot Buka
-                </button>
+              <div class="flex items-center gap-3">
+                <div class="inline-flex rounded-[6px] border border-[#E5E0D5] bg-white p-0.5 text-[11px] font-semibold">
+                  <button
+                    v-for="tab in [
+                      { id: 'all', label: 'Semua' },
+                      { id: 'match', label: 'Cocok Minat' },
+                      { id: 'slot', label: 'Ada Slot' }
+                    ]"
+                    :key="tab.id"
+                    type="button"
+                    :class="[
+                      'px-2.5 py-1 rounded-[4px] transition-colors min-h-[32px]',
+                      recFilter === tab.id ? 'bg-[#14181F] text-white' : 'text-[#475569] hover:text-[#14181F]'
+                    ]"
+                    @click="recFilter = tab.id as 'all' | 'match' | 'slot'"
+                  >
+                    {{ tab.label }}
+                  </button>
+                </div>
+                <NuxtLink to="/explore" class="text-xs font-semibold text-[#1D4ED8] hover:underline whitespace-nowrap">
+                  Lihat semua di Jelajah
+                </NuxtLink>
               </div>
-            </header>
-
-            <div v-if="filteredRecommendations.length === 0" class="p-8 text-center space-y-2">
-              <p class="text-sm font-semibold text-slate-900">Tidak ada rekomendasi pada filter ini</p>
-              <button
-                type="button"
-                class="text-xs font-semibold text-blue-700 hover:underline"
-                @click="recFilter = 'all'"
-              >
-                Tampilkan Semua Mentor
-              </button>
             </div>
 
-            <TransitionGroup v-else name="list-stagger" tag="ul" class="divide-y divide-slate-200">
-              <li
-                v-for="rec in filteredRecommendations"
-                :key="rec.skill.id"
-                class="p-4 sm:p-5 hover:bg-blue-50/30 transition-colors border-l-4 border-l-transparent hover:border-l-blue-600"
-              >
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div class="flex items-start gap-3 min-w-0">
-                    <UAvatar :src="rec.tutorAvatarUrl || undefined" :alt="rec.tutorName" size="sm" class="mt-0.5 shrink-0" />
-                    <div class="min-w-0 space-y-1">
-                      <div class="flex flex-wrap items-center gap-2">
-                        <p class="text-sm sm:text-base font-bold text-slate-900 leading-snug">{{ rec.skill.title }}</p>
-                        <span
-                          v-if="rec.matchesInterest"
-                          class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200"
-                        >
-                          Cocok Minatmu
-                        </span>
-                      </div>
-                      <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                        <span class="font-semibold text-slate-800">{{ rec.tutorName }}</span>
-                        <VerifiedUkswBadge v-if="rec.tutorVerifiedUksw" />
-                      </div>
-                      <p class="text-xs text-slate-500 tabular-nums">
-                        {{
-                          [
-                            rec.skill.category,
-                            rec.tutorMajor,
-                            rec.nextSlot ? `${formatDateTime(rec.nextSlot.scheduledAt)} (${rec.nextSlot.durationMinutes}m)` : 'Via Hold Queue 48j'
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')
-                        }}
-                      </p>
+            <div v-if="filteredRecommendations.length === 0" class="py-10 text-center space-y-3 border-b border-[#E5E0D5]">
+              <p class="text-sm font-semibold text-[#14181F]">Belum ada mentor yang cocok dengan filter ini.</p>
+              <UiButton to="/explore" variant="primary" size="sm">
+                Buka Jelajah Skill
+              </UiButton>
+            </div>
+
+            <ul v-else class="divide-y divide-[#E5E0D5] border-b border-[#E5E0D5]">
+              <li v-for="rec in filteredRecommendations" :key="rec.skill.id">
+                <button
+                  type="button"
+                  class="w-full text-left py-4 px-2 hover:bg-white/80 transition-colors flex items-start justify-between gap-4 min-h-[64px]"
+                  @click="openQuickBooking(rec.skill.id)"
+                >
+                  <div class="min-w-0 space-y-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="text-xs font-semibold text-[#1D4ED8]">{{ rec.skill.category }}</span>
+                      <UiBadge v-if="rec.matchesInterest" tone="primary">
+                        Sesuai Minat
+                      </UiBadge>
+                    </div>
+                    <p class="text-[15px] font-bold text-[#14181F] leading-snug">{{ rec.skill.title }}</p>
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#526071]">
+                      <span class="font-semibold text-[#14181F]">{{ rec.tutorName }}</span>
+                      <VerifiedUkswBadge v-if="rec.tutorVerifiedUksw" />
+                      <span v-if="rec.tutorMajor || rec.tutorCampus">
+                        | {{ [rec.tutorMajor, rec.tutorCampus].filter(Boolean).join(', ') }}
+                      </span>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    :class="[
-                      'shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold min-h-[40px] transition-colors inline-flex items-center justify-center gap-1.5',
-                      rec.nextSlot
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'border border-blue-600 bg-white hover:bg-blue-50 text-blue-700'
-                    ]"
-                    @click="openQuickBooking(rec.skill.id)"
-                  >
-                    <span>{{ rec.nextSlot ? 'Booking Cepat' : 'Hold Queue' }}</span>
-                    <UIcon name="i-ph-arrow-right" class="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
-                </div>
+                  <div class="text-right shrink-0 space-y-1.5">
+                    <UiBadge
+                      :tone="rec.nextSlot ? 'success' : 'warning'"
+                      :icon="rec.nextSlot ? 'i-ph-calendar-check' : 'i-ph-clock'"
+                    >
+                      {{ rec.nextSlot ? 'Slot Tersedia' : 'Daftar Tunggu 48j' }}
+                    </UiBadge>
+                    <p v-if="rec.nextSlot" class="font-mono text-[11px] text-[#526071] tabular-nums">
+                      {{ rec.nextSlot.durationMinutes }}m | {{ rec.nextSlot.format === 'online' ? 'Online' : 'Kampus' }} | 1 Kredit
+                    </p>
+                  </div>
+                </button>
               </li>
-            </TransitionGroup>
-          </section>
+            </ul>
+          </template>
 
-          <!-- Right (5 cols): Agenda + Verified Mentor Anchor + Ledger -->
-          <div class="lg:col-span-5 space-y-5">
-            <!-- Upcoming Agenda -->
-            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3.5">
-              <div class="flex items-center justify-between">
-                <h2 class="text-sm sm:text-base font-bold text-slate-900">Agenda Sesi Terdekat</h2>
-                <NuxtLink to="/sessions" class="text-xs font-semibold text-blue-700 hover:underline">
-                  Kelola Sesi
-                </NuxtLink>
-              </div>
-
-              <div
-                v-if="data.upcomingLearner.length === 0 && data.upcomingTutor.length === 0"
-                class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5"
-              >
-                <p class="text-xs font-semibold text-slate-900">Jadwalmu masih kosong</p>
-                <p class="text-xs text-slate-600">
-                  Klik <strong class="text-slate-900">Booking Cepat</strong> pada rekomendasi mentor di samping untuk memesan sesi pertamamu.
-                </p>
-              </div>
-
-              <ul v-else class="space-y-2.5">
-                <li
-                  v-for="s in data.upcomingLearner"
-                  :key="s.bookingId"
-                  class="p-3.5 rounded-xl bg-white border border-blue-200 flex items-center justify-between gap-3"
-                >
-                  <div class="min-w-0">
-                    <p class="text-xs font-semibold text-blue-700 tabular-nums">
-                      Belajar · {{ formatDateTime(s.scheduledAt) }}
-                    </p>
-                    <p class="text-sm font-semibold text-slate-900 truncate">{{ s.skillTitle }}</p>
-                  </div>
-                  <NuxtLink
-                    :to="`/sessions/${s.sessionId}`"
-                    class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
-                  >
-                    Masuk
-                  </NuxtLink>
-                </li>
-                <li
-                  v-for="t in data.upcomingTutor"
-                  :key="t.sessionId"
-                  class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex items-center justify-between gap-3"
-                >
-                  <div class="min-w-0">
-                    <p class="text-xs font-semibold text-blue-700 tabular-nums">
-                      Mengajar · {{ formatDateTime(t.scheduledAt) }}
-                    </p>
-                    <p class="text-sm font-semibold text-slate-900 truncate">{{ t.skillTitle }}</p>
-                  </div>
-                  <NuxtLink
-                    :to="`/sessions/${t.sessionId}`"
-                    class="px-3.5 py-2 rounded-lg border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-xs font-semibold shrink-0 min-h-[38px] inline-flex items-center"
-                  >
-                    Check-in
-                  </NuxtLink>
-                </li>
-              </ul>
-            </section>
-
-            <!-- Verified Peer Mentor Progress Anchor (Primary Stroke) -->
-            <section class="bg-white border-2 border-blue-600 rounded-2xl p-5 space-y-3.5">
-              <div class="flex items-start justify-between gap-2">
+          <template v-else>
+            <div class="space-y-5 border-b border-[#E5E0D5] pb-6">
+              <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E5E0D5]">
                 <div>
-                  <p class="font-mono text-[11px] font-semibold uppercase tracking-wider text-blue-700">
-                    Reputasi Peer Mentor
-                  </p>
-                  <h2 class="text-base font-bold text-slate-900 mt-0.5">
-                    {{ data.mentorProgress.isVerifiedMentor ? 'Verified Peer Mentor Aktif' : 'Menuju Verified Peer Mentor' }}
+                  <p class="text-xs font-semibold text-[#1D4ED8]">Kesiapan Mengajar</p>
+                  <h2 class="text-lg font-bold text-[#14181F] mt-0.5">
+                    Progres Verified Peer Mentor
                   </h2>
                 </div>
-                <UIcon name="i-ph-seal-check-duotone" class="w-5 h-5 text-blue-600 shrink-0" aria-hidden="true" />
+                <span class="font-mono text-sm font-bold text-[#1D4ED8] tabular-nums">{{ mentorProgressPercent }}%</span>
               </div>
 
-              <div class="space-y-2">
-                <div class="flex justify-between text-xs text-slate-600 tabular-nums">
-                  <span>Sesi Mengajar ({{ Math.min(3, data.mentorProgress.completedCount) }}/3)</span>
-                  <span>Rating: {{ data.mentorProgress.reviewCount > 0 ? `${data.mentorProgress.avgRating}/5` : 'Belum ada' }}</span>
-                </div>
-                <div class="h-2 w-full rounded-full bg-blue-100 overflow-hidden">
-                  <div
-                    class="h-full bg-blue-600 transition-[width] duration-500 ease-out"
-                    :style="{ width: `${mentorProgressPercent}%` }"
-                  />
-                </div>
+              <div class="h-2.5 w-full bg-[#F3EFE6] border border-[#E5E0D5] rounded-[4px] overflow-hidden">
+                <div class="h-full bg-[#1D4ED8] transition-[width] duration-300" :style="{ width: `${mentorProgressPercent}%` }" />
               </div>
 
-              <div class="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-200">
-                <span>Penalti aktif: <strong class="text-slate-900 font-mono">{{ data.user.penaltyCount }}</strong></span>
-                <NuxtLink to="/profile" class="text-blue-700 hover:underline font-semibold">
-                  Detail Reputasi
-                </NuxtLink>
-              </div>
-            </section>
-
-            <!-- Recent Ledger -->
-            <section class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-              <div class="flex items-center justify-between">
-                <h2 class="text-sm font-bold text-slate-900">Aktivitas Ledger Terbaru</h2>
-                <NuxtLink to="/wallet" class="text-xs font-semibold text-blue-700 hover:underline">
-                  Semua
-                </NuxtLink>
-              </div>
-              <p v-if="!data.recentLedger?.length" class="text-xs text-slate-600">
-                Belum ada aktivitas mutasi kredit.
+              <p class="text-xs sm:text-sm text-[#475569] leading-relaxed">
+                Syarat lencana otomatis: minimal <strong class="text-[#14181F]">3 sesi selesai</strong>, rating rata-rata <strong class="text-[#14181F]">&gt;= 4.5</strong>, dan <strong class="text-[#14181F]">0 penalti aktif</strong>.
               </p>
-              <ul v-else class="divide-y divide-slate-100">
-                <li
-                  v-for="row in data.recentLedger"
-                  :key="row.id"
-                  class="py-2 flex items-center justify-between gap-2 text-xs"
-                >
-                  <span class="text-slate-700 truncate">{{ row.reason }}</span>
-                  <span
-                    :class="[
-                      'font-mono font-bold tabular-nums shrink-0',
-                      row.delta >= 0 ? 'text-blue-700' : 'text-slate-600'
-                    ]"
-                  >
-                    {{ row.delta >= 0 ? `+${row.delta}` : row.delta }}
-                  </span>
-                </li>
-              </ul>
-            </section>
-          </div>
-        </div>
 
-        <!-- MODE MENGAJAR -->
-        <div v-else key="mode-teach" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <section class="lg:col-span-7 bg-white border-2 border-blue-600 rounded-2xl p-6 space-y-4">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-ph-chalkboard-teacher" class="w-5 h-5 text-blue-600" aria-hidden="true" />
-              <h2 class="text-base font-bold text-slate-900">Siap Berbagi Micro-Session 30 Menit?</h2>
+              <div class="flex flex-wrap gap-3 pt-1">
+                <UiButton to="/teach" variant="primary" size="sm" icon="i-ph-calendar-plus">
+                  Ajarkan Skill &amp; Buka Jadwal
+                </UiButton>
+                <UiButton to="/sessions?tab=queue" variant="secondary" size="sm">
+                  Kelola Daftar Tunggu ({{ data.incomingQueueCount }})
+                </UiButton>
+              </div>
             </div>
-            <p class="text-sm text-slate-600 leading-relaxed">
-              Tidak perlu silabus panjang. Buka slot 30 menit untuk tanya-jawab dasar atau review tugas teman dan dapatkan kredit belajar baru.
-            </p>
-            <div class="flex flex-wrap gap-3 pt-1">
-              <NuxtLink
-                to="/teach"
-                class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px] inline-flex items-center"
-              >
-                Kelola Topik &amp; Buat Slot
-              </NuxtLink>
-              <NuxtLink
-                to="/sessions?tab=queue"
-                class="px-4 py-2.5 rounded-xl border border-blue-600 bg-white hover:bg-blue-50 text-blue-700 text-sm font-semibold min-h-[44px] inline-flex items-center"
-              >
-                Cek Hold Queue Masuk ({{ data.incomingQueueCount }})
+          </template>
+        </section>
+
+        <!-- Right 5 Cols: Jadwal Belajar & Riwayat Kredit Terbaru -->
+        <aside class="lg:col-span-5 lg:border-l lg:border-[#E5E0D5] lg:pl-8 space-y-7">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-2.5 border-b border-[#E5E0D5]">
+              <h2 class="text-base font-bold text-[#14181F]">Jadwal Belajar</h2>
+              <NuxtLink to="/sessions" class="text-xs font-semibold text-[#1D4ED8] hover:underline">
+                Semua Sesi
               </NuxtLink>
             </div>
-          </section>
 
-          <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
-            <h2 class="text-base font-bold text-slate-900">Jadwal Mengajarmu</h2>
-            <p v-if="data.upcomingTutor.length === 0" class="text-xs text-slate-600">
-              Belum ada slot mengajar aktif. Publikasikan jadwal pertamamu dari menu Mengajar.
-            </p>
-            <ul v-else class="space-y-2.5">
-              <li
-                v-for="t in data.upcomingTutor"
-                :key="t.sessionId"
-                class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex items-center justify-between gap-3"
-              >
-                <div class="min-w-0">
-                  <p class="text-xs font-semibold text-blue-700 tabular-nums">
-                    {{ formatDateTime(t.scheduledAt) }}
+            <div
+              v-if="data.upcomingLearner.length === 0 && data.upcomingTutor.length === 0"
+              class="py-4 text-xs text-[#526071] space-y-2 border-b border-[#E5E0D5]"
+            >
+              <p>Belum ada jadwal sesi aktif saat ini.</p>
+              <NuxtLink to="/explore" class="inline-block font-semibold text-[#1D4ED8] hover:underline">
+                Cari skill untuk dipelajari -&gt;
+              </NuxtLink>
+            </div>
+
+            <ul v-else class="divide-y divide-[#E5E0D5] border-b border-[#E5E0D5]">
+              <li v-for="item in data.upcomingLearner" :key="item.bookingId" class="py-3">
+                <NuxtLink :to="`/sessions/${item.sessionId}`" class="block group space-y-1">
+                  <p class="font-mono text-xs font-semibold text-[#1D4ED8] tabular-nums">
+                    {{ formatDateTime(item.scheduledAt) }} | {{ item.durationMinutes }}m {{ item.format === 'online' ? 'Online' : 'Kampus' }}
                   </p>
-                  <p class="text-sm font-semibold text-slate-900 truncate">{{ t.skillTitle }}</p>
-                </div>
-                <NuxtLink
-                  :to="`/sessions/${t.sessionId}`"
-                  class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
-                >
-                  Check-in
+                  <p class="text-sm font-bold text-[#14181F] group-hover:text-[#1D4ED8] truncate">
+                    {{ item.skillTitle }}
+                  </p>
+                  <p class="text-xs text-[#526071]">Mentor: {{ item.tutorName }}</p>
+                </NuxtLink>
+              </li>
+              <li v-for="item in data.upcomingTutor" :key="item.sessionId" class="py-3">
+                <NuxtLink :to="`/sessions/${item.sessionId}`" class="block group space-y-1">
+                  <p class="font-mono text-xs font-semibold text-[#047857] tabular-nums">
+                    Mengajar | {{ formatDateTime(item.scheduledAt) }} | {{ item.durationMinutes }}m
+                  </p>
+                  <p class="text-sm font-bold text-[#14181F] group-hover:text-[#1D4ED8] truncate">
+                    {{ item.skillTitle }}
+                  </p>
+                  <p class="text-xs text-[#526071]">{{ item.format === 'online' ? 'Online' : 'Tatap Muka Kampus' }}</p>
                 </NuxtLink>
               </li>
             </ul>
-          </section>
-        </div>
-      </Transition>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-2.5 border-b border-[#E5E0D5]">
+              <h2 class="text-base font-bold text-[#14181F]">Riwayat Kredit Terbaru</h2>
+              <NuxtLink to="/wallet" class="text-xs font-semibold text-[#1D4ED8] hover:underline">
+                Kredit Saya
+              </NuxtLink>
+            </div>
+
+            <p v-if="data.recentLedger.length === 0" class="text-xs text-[#526071] py-4 border-b border-[#E5E0D5]">
+              Belum ada catatan riwayat kredit.
+            </p>
+            <ul v-else class="divide-y divide-[#E5E0D5] border-b border-[#E5E0D5]">
+              <li v-for="row in data.recentLedger.slice(0, 4)" :key="row.id" class="py-3 flex items-center justify-between gap-3 text-xs">
+                <div class="min-w-0">
+                  <p class="font-medium text-[#14181F] truncate">{{ row.reason }}</p>
+                  <p class="font-mono text-[11px] text-[#526071] tabular-nums">{{ formatDateTime(row.createdAt) }}</p>
+                </div>
+                <span
+                  :class="[
+                    'font-mono font-bold tabular-nums shrink-0',
+                    row.delta > 0 ? 'text-[#047857]' : 'text-[#92400E]'
+                  ]"
+                >
+                  {{ row.delta > 0 ? `+${row.delta}` : row.delta }} Kredit
+                </span>
+              </li>
+            </ul>
+          </div>
+        </aside>
+      </div>
     </template>
 
-    <!-- Direct Quick-Booking Slideover Drawer -->
-    <USlideover v-model:open="drawerOpen" :title="activeDrawerItem?.skill.title || 'Detail & Booking Cepat'">
+    <!-- Quick Booking Slideover -->
+    <USlideover v-model:open="drawerOpen" title="Detail &amp; Pemesanan Mentor">
       <template #body>
-        <div v-if="drawerLoading" class="space-y-3 animate-pulse" aria-busy="true">
-          <div class="h-6 w-3/4 bg-slate-200 rounded" />
-          <div class="h-20 w-full bg-slate-100 rounded-xl" />
-          <div class="h-28 w-full bg-slate-100 rounded-xl" />
-          <p class="text-xs text-slate-500">Memuat jadwal dan ulasan mentor…</p>
+        <div v-if="drawerLoading" class="py-10 text-center text-sm text-[#526071]" aria-busy="true">
+          Memuat detail mentor dan jadwal…
         </div>
         <SkillBookingPanel
           v-else-if="activeDrawerItem"
@@ -600,29 +559,10 @@ function formatDateTime(iso: string) {
           :credit-balance="creditBalance"
           @booked="handleQuickBooked"
         />
-        <div v-else class="p-6 text-center space-y-3">
-          <p class="text-sm text-slate-600">Penawaran ini sudah tidak tersedia atau sedang dalam cooldown.</p>
-          <NuxtLink
-            to="/explore"
-            class="inline-flex px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
-          >
-            Buka Direktori Jelajah
-          </NuxtLink>
-        </div>
+        <p v-else class="py-8 text-center text-sm text-[#526071]">
+          Detail penawaran tidak ditemukan.
+        </p>
       </template>
     </USlideover>
   </div>
 </template>
-
-<style scoped>
-.list-stagger-enter-active,
-.list-stagger-leave-active {
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-
-.list-stagger-enter-from,
-.list-stagger-leave-to {
-  opacity: 0;
-  transform: translateY(4px);
-}
-</style>

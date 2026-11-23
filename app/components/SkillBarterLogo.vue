@@ -11,9 +11,9 @@ withDefaults(
 )
 
 const sizeMap = {
-  sm: { box: 28, text: 'text-base' },
-  md: { box: 32, text: 'text-lg' },
-  lg: { box: 40, text: 'text-2xl' }
+  sm: { box: 26, text: 'text-base' },
+  md: { box: 30, text: 'text-lg' },
+  lg: { box: 38, text: 'text-2xl' }
 }
 </script>
 
@@ -27,27 +27,27 @@ const sizeMap = {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect x="0.75" y="0.75" width="34.5" height="34.5" rx="8.25" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5" />
+      <rect x="1" y="1" width="34" height="34" rx="5" fill="#14181F" />
       <path
         d="M10 13.5H23.5L19.5 9.5"
-        stroke="#2563EB"
-        stroke-width="2.4"
+        stroke="#FAF8F4"
+        stroke-width="2.2"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
       <path
         d="M26 22.5H12.5L16.5 26.5"
-        stroke="#1D4ED8"
-        stroke-width="2.4"
+        stroke="#60A5FA"
+        stroke-width="2.2"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
     </svg>
     <span
       v-if="showWordmark"
-      :class="['font-semibold tracking-tight text-slate-900', sizeMap[size].text]"
+      :class="['font-bold tracking-tight text-[#14181F]', sizeMap[size].text]"
     >
-      Skill<span class="text-blue-600">Barter</span>
+      Skill<span class="font-serif italic font-normal text-blue-700">Barter</span>
     </span>
   </span>
 </template>

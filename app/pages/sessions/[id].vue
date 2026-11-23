@@ -55,12 +55,12 @@ const route = useRoute()
 const sessionId = String(route.params.id)
 const { user: authUser } = useUserSession()
 
-const { data, status, error, refresh } = useLazyFetch<WorkspacePayload>(
-  `/api/sessions/${sessionId}`
-)
+const { data, status, refresh } = useLazyFetch<WorkspacePayload>(`/api/sessions/${sessionId}`)
 const { data: chatData, refresh: refreshChat } = useLazyFetch<ChatPayload>(
   `/api/sessions/${sessionId}/messages`
 )
+
+const mobilePane = ref<'actions' | 'chat'>('actions')
 
 const qrDataUrl = ref('')
 const codeLoading = ref(false)
@@ -90,16 +90,25 @@ const reportError = ref('')
 const messageInput = ref('')
 const sendingMessage = ref(false)
 
+const nowMs = ref(0)
 let pollTimer: ReturnType<typeof setInterval> | null = null
+let clockTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
+  nowMs.value = Date.now()
   pollTimer = setInterval(() => {
     refreshChat()
   }, 4000)
+  clockTimer = setInterval(() => {
+    nowMs.value = Date.now()
+  }, 10_000)
 })
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
+  if (clockTimer) clearInterval(clockTimer)
+  pollTimer = null
+  clockTimer = null
   stopQrScanner()
 })
 
@@ -115,9 +124,7 @@ function stopQrScanner() {
 }
 
 watch(scannerOpen, (open: boolean) => {
-  if (!open) {
-    stopQrScanner()
-  }
+  if (!open) stopQrScanner()
 })
 
 async function openQrScanner() {
@@ -126,7 +133,7 @@ async function openQrScanner() {
   await nextTick()
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    scannerError.value = 'Browser ini tidak mendukung akses kamera. Silakan masukkan kode 6 digit secara manual.'
+    scannerError.value = 'Browser ini tidak mendukung kamera. Masukkan kode 6 digit secara manual.'
     return
   }
 
@@ -140,7 +147,7 @@ async function openQrScanner() {
       scanRafId = requestAnimationFrame(scanFrame)
     }
   } catch {
-    scannerError.value = 'Izin kamera ditolak atau kamera tidak tersedia. Masukkan kode 6 digit secara manual.'
+    scannerError.value = 'Izin kamera ditolak. Masukkan kode 6 digit secara manual.'
   }
 }
 
@@ -168,7 +175,6 @@ function scanFrame() {
       }
     }
   }
-
   scanRafId = requestAnimationFrame(scanFrame)
 }
 
@@ -182,15 +188,70 @@ watch(
   { immediate: true }
 )
 
-const canGenerateCode = computed(() => {
-  if (!data.value?.session) return false
+const isInCheckinWindow = computed(() => {
+  if (!data.value?.session || nowMs.value === 0) return false
   const start = new Date(data.value.session.scheduledAt).getTime()
-  const now = Date.now()
+  const now = nowMs.value
   return (
     data.value.session.status === 'confirmed' &&
     now >= start - 10 * 60 * 1000 &&
     now <= start + 15 * 60 * 1000
   )
+})
+
+const canGenerateCode = isInCheckinWindow
+
+const canReport = computed(() => {
+  if (!data.value || data.value.myReport) return false
+  if (data.value.roleInSession === 'tutor') {
+    return data.value.session.status === 'confirmed'
+  }
+  return Boolean(
+    data.value.myBooking && ['confirmed', 'checked_in'].includes(data.value.myBooking.status)
+  )
+})
+
+const terminalOrExceptionBanner = computed(() => {
+  const bStatus = data.value?.myBooking?.status
+  const sStatus = data.value?.session?.status
+  if (bStatus === 'disputed') {
+    return {
+      tone: 'danger' as const,
+      label: 'Sengketa Sedang Ditinjau Admin',
+      desc: 'Kredit dalam pemesanan ditahan aman hingga admin menetapkan keputusan.'
+    }
+  }
+  if (bStatus === 'tutor_penalized' || sStatus === 'tutor_penalized') {
+    return {
+      tone: 'danger' as const,
+      label: 'Sesi Ditutup (Penalti Tutor No-Show)',
+      desc: 'Kredit pembelajar dikembalikan 100% dan pengajar menerima cooldown.'
+    }
+  }
+  if (bStatus === 'forfeited_to_tutor') {
+    return {
+      tone: 'warning' as const,
+      label: 'Kredit Diserahkan ke Pengajar',
+      desc: 'Pembatalan terlambat (< 12 jam) atau melewati batas check-in T+15m.'
+    }
+  }
+  if (bStatus === 'cancelled_free' || sStatus === 'cancelled') {
+    return {
+      tone: 'info' as const,
+      label: 'Sesi Dibatalkan (Refund 100%)',
+      desc: 'Kredit dalam pemesanan sudah dikembalikan penuh ke pembelajar.'
+    }
+  }
+  return null
+})
+
+const timelineStepIndex = computed(() => {
+  const s = data.value?.session?.status
+  const b = data.value?.myBooking?.status
+  if (s === 'completed' || b === 'completed') return 4
+  if (b === 'checked_in' || b === 'disputed' || s === 'disputed') return 3
+  if (data.value?.session?.hasCheckinCode) return 2
+  return 1
 })
 
 async function generateCheckinCode() {
@@ -211,7 +272,7 @@ async function generateCheckinCode() {
 async function submitCheckin() {
   checkinError.value = ''
   if (!/^\d{6}$/.test(checkinInput.value.trim())) {
-    checkinError.value = 'Masukkan 6 digit angka check-in dari pengajar.'
+    checkinError.value = 'Masukkan 6 digit angka check-in dari pengajar sebelum T+15 menit.'
     return
   }
   checkinLoading.value = true
@@ -313,362 +374,460 @@ function formatDateTime(iso: string) {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center gap-2">
-      <NuxtLink
-        to="/sessions"
-        class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 min-h-[40px]"
-      >
-        <UIcon name="i-ph-arrow-left" class="w-4 h-4" aria-hidden="true" />
-        <span>Kembali ke Sesi Saya</span>
-      </NuxtLink>
+  <div class="space-y-6">
+    <div v-if="status === 'pending'" aria-busy="true" class="space-y-4">
+      <div class="h-24 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 h-80 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
+        <div class="lg:col-span-7 h-80 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
+      </div>
     </div>
 
-    <div v-if="status === 'pending'" class="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse">
-      <p class="text-sm text-slate-600">Memuat Session Workspace...</p>
-    </div>
-
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="subtle"
-      icon="i-ph-warning-circle"
-      title="Gagal memuat Session Workspace"
+    <UiAlert
+      v-else-if="status === 'error'"
+      tone="danger"
+      title="Gagal memuat ruang sesi"
+      description="Pastikan kamu peserta sesi ini lalu coba muat ulang."
     >
-      <template #actions>
-        <UButton color="error" variant="soft" size="sm" @click="() => refresh()">Coba Lagi</UButton>
+      <template #action>
+        <UiButton variant="danger-soft" size="sm" @click="refresh()">
+          Coba Lagi
+        </UiButton>
       </template>
-    </UAlert>
+    </UiAlert>
 
-    <div v-else-if="data" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-      <!-- Left Panel: Info, Status & Check-in (35% on desktop) -->
-      <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-5">
-        <div>
-          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200">
-            {{ data.roleInSession === 'tutor' ? 'Pengajar' : 'Pembelajar' }} · {{ data.session.durationMinutes }}m ·
+    <template v-else-if="data">
+      <!-- Session Header -->
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#E5E0D5]">
+        <div class="space-y-1.5 min-w-0">
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <NuxtLink to="/sessions" class="font-semibold text-[#1D4ED8] hover:underline">
+              &lt;- Kembali ke Jadwal &amp; Sesi
+            </NuxtLink>
+            <span class="text-[#E5E0D5]" aria-hidden="true">|</span>
+            <span class="font-semibold text-[#1D4ED8]">{{ data.skill.category }}</span>
+          </div>
+
+          <h1 class="text-2xl sm:text-[28px] font-bold text-[#14181F] tracking-tight">
+            {{ data.skill.title }}
+          </h1>
+
+          <p class="text-xs sm:text-sm text-[#475569] tabular-nums break-words">
+            {{ formatDateTime(data.session.scheduledAt) }} | {{ data.session.durationMinutes }} menit |
             {{ data.session.mode === 'group' ? 'Grup' : '1-on-1' }}
-          </span>
-          <h1 class="text-lg font-bold text-slate-900 mt-2">{{ data.skill.title }}</h1>
-          <p class="text-sm text-slate-600 mt-1">
-            {{ formatDateTime(data.session.scheduledAt) }}
+            {{ data.session.format === 'online' ? 'Online' : 'Tatap Muka' }} |
+            <strong class="text-[#14181F]">{{ data.session.locationOrLink }}</strong>
           </p>
-          <div class="mt-2 flex items-center gap-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-            <UIcon
-              :name="data.session.format === 'online' ? 'i-ph-video-camera' : 'i-ph-map-pin'"
-              class="w-4 h-4 text-blue-600 shrink-0"
-              aria-hidden="true"
-            />
-            <span class="break-all">{{ data.session.locationOrLink }}</span>
-          </div>
         </div>
 
-        <!-- Tutor Check-in Generator -->
-        <div
-          v-if="data.roleInSession === 'tutor' && data.session.status === 'confirmed'"
-          class="pt-4 border-t border-slate-200 space-y-3"
-        >
-          <h2 class="text-sm font-semibold text-slate-900">Verifikasi Kehadiran (Check-in)</h2>
-          <UAlert v-if="codeError" color="error" variant="subtle" :title="codeError" />
+        <UiBadge tone="primary" icon="i-ph-user" class="shrink-0">
+          Peran: {{ data.roleInSession === 'tutor' ? 'Pengajar' : 'Pembelajar' }}
+        </UiBadge>
+      </div>
 
+      <!-- Terminal / Exception Banner -->
+      <UiAlert
+        v-if="terminalOrExceptionBanner"
+        :tone="terminalOrExceptionBanner.tone"
+        :title="terminalOrExceptionBanner.label"
+        :description="terminalOrExceptionBanner.desc"
+      />
+
+      <!-- Desktop 4-Step Timeline Strip + Mobile Compact Switcher -->
+      <section aria-label="Progres Status Sesi">
+        <div class="hidden lg:grid grid-cols-4 bg-white border border-[#E5E0D5] rounded-[8px] divide-x divide-[#E5E0D5] overflow-hidden">
           <div
-            v-if="data.session.checkinCode"
-            class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-center space-y-3"
-          >
-            <p class="text-xs font-medium text-blue-800">
-              Bagikan kode 6 digit atau QR ini ke pembelajar:
-            </p>
-            <p class="text-3xl font-bold font-mono tracking-widest text-blue-950 tabular-nums">
-              {{ data.session.checkinCode }}
-            </p>
-            <img
-              v-if="qrDataUrl"
-              :src="qrDataUrl"
-              width="180"
-              height="180"
-              alt="QR Code Check-in Sesi"
-              class="mx-auto rounded-lg border border-blue-200 bg-white p-2"
-            />
-          </div>
-
-          <div v-else class="space-y-2">
-            <p class="text-xs text-slate-600">
-              Kode check-in dapat dibuat mulai 10 menit sebelum sesi hingga 15 menit setelah jadwal mulai.
-            </p>
-            <button
-              type="button"
-              :disabled="codeLoading || !canGenerateCode"
-              class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
-              @click="generateCheckinCode"
-            >
-              {{ codeLoading ? 'Membuat Kode...' : 'Buat Kode Check-in 6 Digit & QR' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Learner Check-in & Attendance-Gated Review -->
-        <div v-if="data.roleInSession === 'learner' && data.myBooking" class="pt-4 border-t border-slate-200 space-y-4">
-          <div v-if="data.myBooking.status === 'confirmed'" class="space-y-3">
-            <h2 class="text-sm font-semibold text-slate-900">Check-in Kehadiran</h2>
-            <p class="text-xs text-slate-600">
-              Masukkan kode 6 digit yang ditampilkan pengajar untuk memverifikasi kehadiran.
-            </p>
-            <div aria-live="polite">
-              <UAlert v-if="checkinError" color="error" variant="subtle" :title="checkinError" />
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <label for="checkin-code-input" class="sr-only">Kode Check-in 6 Digit</label>
-              <input
-                id="checkin-code-input"
-                v-model="checkinInput"
-                name="checkin_code"
-                type="text"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                autocorrect="off"
-                autocapitalize="none"
-                spellcheck="false"
-                maxlength="6"
-                placeholder="123456"
-                class="flex-1 min-w-[140px] rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums min-h-[44px]"
-              />
-              <button
-                type="button"
-                :disabled="checkinLoading"
-                class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
-                @click="submitCheckin"
-              >
-                {{ checkinLoading ? 'Validasi...' : 'Check-in' }}
-              </button>
-              <button
-                type="button"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-blue-50 text-slate-800 text-sm font-semibold min-h-[44px]"
-                @click="openQrScanner"
-              >
-                <UIcon name="i-ph-qr-code" class="w-4 h-4" aria-hidden="true" />
-                <span>Scan QR</span>
-              </button>
-            </div>
-          </div>
-
-          <div
-            v-else-if="data.myBooking.status === 'checked_in' || data.myBooking.status === 'completed'"
-            class="space-y-4 verified-reveal"
-          >
-            <UAlert
-              color="secondary"
-              variant="subtle"
-              icon="i-ph-seal-check-duotone"
-              title="Kehadiran Terverifikasi!"
-              :description="
-                data.myBooking.status === 'completed'
-                  ? 'Sesi selesai dan kredit telah dicairkan ke pengajar.'
-                  : 'Kredit sedang dalam jeda sengketa 24 jam sebelum dicairkan ke pengajar.'
-              "
-            />
-
-            <!-- Attendance-Gated Review -->
-            <div v-if="data.myReview" class="p-4 rounded-xl bg-blue-50/70 border border-blue-100 space-y-1">
-              <p class="text-xs font-semibold text-blue-800">Ulasan Terverifikasi Terkirim ({{ data.myReview.rating }}/5)</p>
-              <p class="text-sm text-slate-800">{{ data.myReview.comment }}</p>
-            </div>
-
-            <form v-else class="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200" @submit.prevent="submitReview">
-              <h3 class="text-sm font-semibold text-slate-900">Beri Ulasan Terverifikasi</h3>
-              <p class="text-xs text-slate-600">
-                Ulasanmu hanya bisa dikirim karena kehadiranmu sudah terverifikasi lewat Check-in.
-              </p>
-              <UAlert v-if="reviewError" color="error" variant="subtle" :title="reviewError" />
-
-              <div>
-                <label for="review-rating" class="block text-xs font-medium text-slate-700 mb-1">
-                  Rating (1 sampai 5)
-                </label>
-                <select
-                  id="review-rating"
-                  v-model.number="reviewRating"
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm min-h-[44px]"
-                >
-                  <option :value="5">5 - Sangat Membantu</option>
-                  <option :value="4">4 - Membantu</option>
-                  <option :value="3">3 - Cukup</option>
-                  <option :value="2">2 - Kurang</option>
-                  <option :value="1">1 - Tidak Sesuai</option>
-                </select>
-              </div>
-
-              <div>
-                <label for="review-comment" class="block text-xs font-medium text-slate-700 mb-1">
-                  Komentar Singkat
-                </label>
-                <textarea
-                  id="review-comment"
-                  v-model="reviewComment"
-                  rows="2"
-                  required
-                  placeholder="Bagikan pengalaman belajarmu di sesi ini..."
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-              </div>
-
-              <button
-                type="submit"
-                :disabled="reviewLoading"
-                class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold min-h-[44px]"
-              >
-                {{ reviewLoading ? 'Mengirim...' : 'Kirim Ulasan Terverifikasi' }}
-              </button>
-            </form>
-          </div>
-
-          <UAlert
-            v-else-if="data.myBooking.status === 'disputed' || data.myReport"
-            color="error"
-            variant="subtle"
-            icon="i-ph-warning-circle"
-            title="Laporan Sengketa Sedang Ditinjau Admin"
-          />
-
-          <div v-if="!data.myReport && data.myBooking.status !== 'completed'" class="pt-1">
-            <button
-              type="button"
-              class="text-xs font-medium text-rose-600 hover:underline"
-              @click="reportModalOpen = true"
-            >
-              Laporkan Masalah / Sengketa
-            </button>
-          </div>
-        </div>
-
-        <!-- Participants Summary -->
-        <div class="pt-4 border-t border-slate-200 space-y-2">
-          <p class="text-xs font-semibold text-slate-700">Peserta ({{ data.participants.length }})</p>
-          <ul class="space-y-1.5">
-            <li
-              v-for="p in data.participants"
-              :key="p.bookingId"
-              class="flex items-center justify-between text-xs text-slate-700"
-            >
-              <span>{{ p.learner.name }}</span>
-              <span class="font-medium text-slate-500">{{ p.status }}</span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- Right Panel: Session-Bound Chat (65% on desktop) -->
-      <section class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl shadow-xs flex flex-col h-[520px]">
-        <header class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <UIcon name="i-ph-chat-circle-text" class="w-5 h-5 text-blue-600" aria-hidden="true" />
-            <h2 class="text-sm font-semibold text-slate-900">Ruang Chat Sesi</h2>
-          </div>
-          <span class="text-xs text-slate-500">Sinkronisasi otomatis</span>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-          <div v-if="!chatData?.messages?.length" class="text-center py-12 text-sm text-slate-500">
-            Belum ada pesan. Koordinasikan link Meet atau titik temu kampus di sini.
-          </div>
-
-          <div
-            v-for="msg in chatData?.messages || []"
-            :key="msg.id"
+            v-for="step in [
+              { idx: 1, code: '01', label: 'Terjadwal', desc: '1 kredit dalam pemesanan' },
+              { idx: 2, code: '02', label: 'Check-in Kehadiran', desc: 'Window T-10m s.d. T+15m' },
+              { idx: 3, code: '03', label: 'Hadir & Jeda 24j', desc: 'Ulasan terverifikasi terbuka' },
+              { idx: 4, code: '04', label: 'Selesai', desc: 'Kredit cair ke pengajar' }
+            ]"
+            :key="step.idx"
             :class="[
-              'flex flex-col max-w-[85%]',
-              msg.senderId === authUser?.id ? 'ml-auto items-end' : 'mr-auto items-start'
+              'p-4 space-y-1',
+              timelineStepIndex > step.idx
+                ? 'bg-[#ECFDF5]'
+                : timelineStepIndex === step.idx
+                  ? 'bg-[#EFF6FF]'
+                  : 'bg-white'
             ]"
           >
-            <span class="text-xs text-slate-500 mb-1">{{ msg.senderName }}</span>
-            <div
-              :class="[
-                'rounded-2xl px-3.5 py-2 text-sm leading-relaxed break-words',
-                msg.senderId === authUser?.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-slate-200 text-slate-900'
-              ]"
+            <p
+              class="font-mono text-xs font-bold"
+              :class="
+                timelineStepIndex > step.idx
+                  ? 'text-[#047857]'
+                  : timelineStepIndex === step.idx
+                    ? 'text-[#1D4ED8]'
+                    : 'text-[#526071]'
+              "
             >
-              <template v-for="(part, i) in splitMessageParts(msg.body)" :key="i">
-                <a
-                  v-if="part.isUrl"
-                  :href="part.text"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="underline font-medium"
-                >
-                  {{ part.text }}
-                </a>
-                <span v-else>{{ part.text }}</span>
-              </template>
+              {{ step.code }} |
+              {{
+                timelineStepIndex > step.idx
+                  ? 'Selesai'
+                  : timelineStepIndex === step.idx
+                    ? 'Aktif'
+                    : step.idx === 4
+                      ? 'Akhir'
+                      : 'Berikutnya'
+              }}
+            </p>
+            <p class="text-[13px] font-bold text-[#14181F]">{{ step.label }}</p>
+            <p class="text-xs text-[#526071]">{{ step.desc }}</p>
+          </div>
+        </div>
+
+        <!-- Mobile Stage Bar + Tab Switcher -->
+        <div class="lg:hidden space-y-3">
+          <div class="flex items-center justify-between px-3.5 py-2.5 rounded-[8px] bg-white border border-[#E5E0D5] text-xs">
+            <span class="font-mono font-bold text-[#1D4ED8]">Tahap {{ timelineStepIndex }}/4</span>
+            <span class="font-semibold text-[#14181F]">
+              {{
+                timelineStepIndex === 1
+                  ? 'Terjadwal'
+                  : timelineStepIndex === 2
+                    ? 'Check-in'
+                    : timelineStepIndex === 3
+                      ? 'Hadir & Jeda 24j'
+                      : 'Selesai'
+              }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 p-1 rounded-[6px] bg-[#F3EFE6] border border-[#E5E0D5]" role="tablist" aria-label="Panel Sesi Mobile">
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="mobilePane === 'actions'"
+              :class="[
+                'py-2 rounded-[4px] text-xs font-semibold transition-colors min-h-[40px]',
+                mobilePane === 'actions' ? 'bg-[#14181F] text-white' : 'text-[#475569]'
+              ]"
+              @click="mobilePane = 'actions'"
+            >
+              Check-in &amp; Aksi
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="mobilePane === 'chat'"
+              :class="[
+                'py-2 rounded-[4px] text-xs font-semibold transition-colors min-h-[40px]',
+                mobilePane === 'chat' ? 'bg-[#14181F] text-white' : 'text-[#475569]'
+              ]"
+              @click="mobilePane = 'chat'"
+            >
+              Chat Sesi ({{ chatData?.messages?.length || 0 }})
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Split Workspace -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <section :class="['min-w-0 lg:col-span-5 space-y-5', mobilePane === 'actions' ? 'block' : 'hidden lg:block']">
+          <!-- Tutor Check-in Generator -->
+          <div v-if="data.roleInSession === 'tutor'" class="bg-white border border-[#1D4ED8] rounded-[8px] p-5 space-y-4">
+            <div class="flex items-center justify-between gap-2">
+              <h2 class="text-base font-bold text-[#14181F]">Tampilan Pengajar: Kode Check-in &amp; QR</h2>
+              <button
+                v-if="canReport"
+                type="button"
+                class="text-xs font-semibold text-[#BE123C] hover:underline shrink-0"
+                @click="reportModalOpen = true"
+              >
+                Laporkan Masalah
+              </button>
+            </div>
+
+            <UiAlert
+              v-if="data.myReport"
+              tone="danger"
+              title="Laporan sengketa terkirim"
+              :description="`Status tinjauan admin: ${data.myReport.status}`"
+            />
+
+            <div v-if="data.session.checkinCode" class="p-4 rounded-[8px] bg-[#FAF8F4] border border-[#E5E0D5] flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs font-semibold text-[#1D4ED8]">Kode Check-in Sesi</p>
+                <p class="font-mono text-3xl font-bold tracking-widest text-[#14181F] tabular-nums mt-1">
+                  {{ data.session.checkinCode.slice(0, 3) }} {{ data.session.checkinCode.slice(3) }}
+                </p>
+              </div>
+              <img v-if="qrDataUrl" :src="qrDataUrl" alt="QR Code Check-in" class="w-20 h-20 rounded-[6px] border border-[#E5E0D5] bg-white p-1 shrink-0" />
+            </div>
+
+            <UiAlert v-if="codeError" tone="danger" :title="codeError" />
+
+            <UiButton
+              v-if="!data.session.checkinCode"
+              variant="primary"
+              block
+              :loading="codeLoading"
+              :disabled="!canGenerateCode"
+              @click="generateCheckinCode"
+            >
+              {{
+                codeLoading
+                  ? 'Membuat Kode…'
+                  : canGenerateCode
+                    ? 'Terbitkan Kode Check-in & QR'
+                    : 'Window Check-in Terbuka pada T-10m s.d. T+15m'
+              }}
+            </UiButton>
+
+            <p class="text-xs text-[#047857] leading-relaxed">
+              Sesudah Check-in: Form Ulasan Terverifikasi (rating 1–5 + komentar) otomatis terbuka bagi pembelajar.
+            </p>
+
+            <div class="pt-3 border-t border-[#E5E0D5] space-y-2">
+              <p class="text-xs font-semibold text-[#526071]">
+                Daftar Peserta ({{ data.participants.length }})
+              </p>
+              <ul class="divide-y divide-[#E5E0D5] text-xs">
+                <li v-for="p in data.participants" :key="p.bookingId" class="py-2.5 flex items-center justify-between gap-2">
+                  <span class="font-semibold text-[#14181F]">{{ p.learner.name }}</span>
+                  <UiBadge :tone="p.status === 'checked_in' || p.status === 'completed' ? 'success' : 'warning'">
+                    {{ p.status === 'checked_in' ? 'Sudah Check-in' : p.status === 'completed' ? 'Selesai' : p.status }}
+                  </UiBadge>
+                </li>
+              </ul>
             </div>
           </div>
-        </div>
 
-        <form class="p-3 border-t border-slate-200 flex gap-2 bg-white rounded-b-2xl" @submit.prevent="sendMessage()">
-          <label for="chat-input" class="sr-only">Tulis pesan koordinasi sesi</label>
-          <input
-            id="chat-input"
-            v-model="messageInput"
-            name="chat_message"
-            type="text"
-            autocomplete="off"
-            placeholder="Tulis pesan atau tempel tautan Meet/lokasi kampus…"
-            class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2 text-sm min-h-[44px]"
-            @keydown.enter.exact="sendMessage($event)"
-          />
-          <button
-            type="submit"
-            :disabled="sendingMessage || !messageInput.trim()"
-            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px]"
-          >
-            Kirim
-          </button>
-        </form>
-      </section>
-    </div>
+          <!-- Learner Check-in, Review & Report -->
+          <div v-else class="space-y-5">
+            <div v-if="data.myBooking?.status === 'confirmed'" class="bg-white border border-[#1D4ED8] rounded-[8px] p-5 space-y-4">
+              <div class="flex items-start justify-between gap-2">
+                <h2 class="text-base font-bold text-[#14181F]">Check-in Kehadiran</h2>
+                <UiBadge :tone="isInCheckinWindow ? 'success' : 'neutral'" icon="i-ph-check-circle">
+                  {{ isInCheckinWindow ? 'Jendela Aktif' : 'T-10m s.d. T+15m' }}
+                </UiBadge>
+              </div>
+
+              <p class="text-[13px] text-[#475569] leading-relaxed">
+                Masukkan kode 6 digit dari pengajar {{ data.tutor.name }} atau pindai QR lewat kamera untuk membuka ulasan terverifikasi.
+              </p>
+
+              <UiAlert
+                v-if="data.myReport"
+                tone="danger"
+                title="Laporan sengketa terkirim"
+                :description="`Status: ${data.myReport.status}`"
+              />
+
+              <UiAlert v-if="checkinError" tone="danger" :title="checkinError" />
+
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input
+                  v-model="checkinInput"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="6"
+                  aria-label="Kode check-in 6 digit"
+                  placeholder="482910"
+                  class="flex-1 px-3.5 py-2.5 rounded-[6px] border border-[#94A3B8] bg-[#FAF8F4] font-mono text-lg font-bold tracking-widest text-[#14181F] min-h-[44px]"
+                />
+                <UiButton
+                  variant="primary"
+                  size="md"
+                  :loading="checkinLoading"
+                  @click="submitCheckin"
+                >
+                  {{ checkinLoading ? 'Validasi…' : 'Check-In' }}
+                </UiButton>
+              </div>
+
+              <UiButton
+                variant="secondary"
+                size="md"
+                block
+                icon="i-ph-camera"
+                @click="openQrScanner"
+              >
+                Pindai QR Lewat Kamera
+              </UiButton>
+
+              <button
+                v-if="canReport"
+                type="button"
+                class="text-left text-xs font-semibold text-[#BE123C] hover:underline pt-1"
+                @click="reportModalOpen = true"
+              >
+                Ada kendala kehadiran? Laporkan Masalah (tahan kredit untuk tinjauan admin)
+              </button>
+            </div>
+
+            <!-- Post-Check-in Verified Review Panel -->
+            <div
+              v-if="data.myBooking && ['checked_in', 'completed', 'disputed'].includes(data.myBooking.status)"
+              class="bg-white border border-[#E5E0D5] rounded-[8px] p-5 space-y-4"
+            >
+              <div class="flex items-center justify-between gap-2 pb-3 border-b border-[#E5E0D5]">
+                <UiBadge tone="success" icon="i-ph-check-circle">
+                  Kehadiran Terverifikasi
+                </UiBadge>
+                <button
+                  v-if="canReport"
+                  type="button"
+                  class="text-xs font-semibold text-[#BE123C] hover:underline"
+                  @click="reportModalOpen = true"
+                >
+                  Laporkan Masalah
+                </button>
+              </div>
+
+              <UiAlert
+                v-if="data.myReport"
+                tone="danger"
+                title="Laporan sengketa terkirim"
+                :description="`Status: ${data.myReport.status}`"
+              />
+
+              <div v-if="data.myReview" class="p-3.5 rounded-[6px] bg-[#FAF8F4] border border-[#E5E0D5] space-y-1">
+                <p class="text-xs font-bold text-[#14181F]">Ulasan Terverifikasimu ({{ data.myReview.rating }}/5)</p>
+                <p class="text-xs text-[#475569]">"{{ data.myReview.comment }}"</p>
+              </div>
+
+              <form v-else class="space-y-3" @submit.prevent="submitReview">
+                <p class="text-sm font-bold text-[#14181F]">Kirim Ulasan Terverifikasi</p>
+                <UiAlert v-if="reviewError" tone="danger" :title="reviewError" />
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button
+                    v-for="star in [1, 2, 3, 4, 5]"
+                    :key="star"
+                    type="button"
+                    :class="[
+                      'px-3 py-1.5 rounded-[4px] border font-mono text-xs font-bold min-h-[38px]',
+                      reviewRating === star
+                        ? 'bg-[#14181F] text-white border-[#14181F]'
+                        : 'bg-[#FAF8F4] text-[#475569] border-[#E5E0D5]'
+                    ]"
+                    @click="reviewRating = star"
+                  >
+                    {{ star }}/5
+                  </button>
+                </div>
+                <textarea
+                  v-model="reviewComment"
+                  rows="3"
+                  placeholder="Bagikan pengalaman belajarmu selama sesi..."
+                  class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-xs text-[#14181F]"
+                />
+                <UiButton type="submit" variant="primary" block :loading="reviewLoading">
+                  {{ reviewLoading ? 'Mengirim…' : 'Terbitkan Ulasan' }}
+                </UiButton>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- Chat Panel -->
+        <section
+          :class="[
+            'min-w-0 lg:col-span-7 bg-white border border-[#E5E0D5] rounded-[8px] flex-col h-[460px] lg:h-[520px] overflow-hidden',
+            mobilePane === 'chat' ? 'flex' : 'hidden lg:flex'
+          ]"
+        >
+          <div class="px-5 py-3.5 border-b border-[#E5E0D5] flex items-center justify-between gap-3">
+            <div>
+              <h2 class="text-sm font-bold text-[#14181F]">
+                Ruang Koordinasi Sesi (Pembaruan tiap 4 detik)
+              </h2>
+            </div>
+            <UiBadge tone="success">Terikat Sesi</UiBadge>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-5 space-y-3 bg-[#FAF8F4]/50">
+            <p v-if="!chatData?.messages?.length" class="text-xs text-[#526071] text-center py-10">
+              Belum ada pesan. Gunakan ruang ini untuk membagikan tautan Meet atau lokasi titik temu.
+            </p>
+            <div
+              v-for="msg in chatData?.messages || []"
+              :key="msg.id"
+              :class="[
+                'max-w-[85%] p-3.5 rounded-[8px] border text-xs space-y-1',
+                msg.senderId === authUser?.id
+                  ? 'ml-auto bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                  : 'bg-white text-[#14181F] border-[#E5E0D5]'
+              ]"
+            >
+              <div class="flex items-center justify-between gap-3 text-[11px] opacity-85">
+                <span class="font-semibold">{{ msg.senderName }}</span>
+                <span class="font-mono tabular-nums">{{ formatDateTime(msg.createdAt) }}</span>
+              </div>
+              <p class="leading-relaxed break-words">
+                <template v-for="(part, idx) in splitMessageParts(msg.body)" :key="idx">
+                  <a
+                    v-if="part.isUrl"
+                    :href="part.text"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="underline font-semibold"
+                  >
+                    {{ part.text }}
+                  </a>
+                  <span v-else>{{ part.text }}</span>
+                </template>
+              </p>
+            </div>
+          </div>
+
+          <form class="p-3.5 border-t border-[#E5E0D5] bg-white flex gap-2" @submit.prevent="sendMessage()">
+            <input
+              v-model="messageInput"
+              type="text"
+              aria-label="Tulis pesan ruang sesi"
+              placeholder="Tulis pesan atau tempel tautan Meet / lokasi..."
+              class="flex-1 px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm text-[#14181F] min-h-[44px]"
+              @keydown.enter.prevent="sendMessage($event)"
+            />
+            <UiButton
+              type="submit"
+              variant="primary"
+              size="md"
+              :disabled="sendingMessage || !messageInput.trim()"
+            >
+              Kirim
+            </UiButton>
+          </form>
+        </section>
+      </div>
+    </template>
 
     <!-- QR Scanner Modal -->
-    <UModal v-model:open="scannerOpen" title="Scan QR Check-in Pengajar">
-      <template #body>
-        <div class="space-y-3">
-          <UAlert v-if="scannerError" color="error" variant="subtle" :title="scannerError" />
-          <div class="relative rounded-xl overflow-hidden bg-slate-900 aspect-square max-h-[300px] mx-auto">
-            <video ref="videoRef" playsinline muted class="w-full h-full object-cover" />
-            <canvas ref="canvasRef" class="hidden" />
-          </div>
-          <p class="text-xs text-slate-600 text-center">
-            Arahkan kamera ke QR Code di layar pengajar. Check-in otomatis berjalan saat kode terbaca.
-          </p>
-        </div>
-      </template>
-    </UModal>
+    <UiDialog v-model:open="scannerOpen" title="Pindai QR Check-in">
+      <div class="space-y-3">
+        <UiAlert v-if="scannerError" tone="danger" :title="scannerError" />
+        <video ref="videoRef" class="w-full rounded-[6px] bg-black aspect-video object-cover" playsinline muted />
+        <canvas ref="canvasRef" class="hidden" />
+      </div>
+    </UiDialog>
 
-    <!-- Dispute Report Modal -->
-    <UModal v-model:open="reportModalOpen" title="Laporkan Masalah / Sengketa">
-      <template #body>
-        <form class="space-y-4" @submit.prevent="submitReport">
-          <UAlert v-if="reportError" color="error" variant="subtle" :title="reportError" />
-          <div>
-            <label for="report-reason" class="block text-sm font-medium text-slate-800 mb-1">
-              Kronologi Masalah
-            </label>
-            <textarea
-              id="report-reason"
-              v-model="reportReason"
-              rows="3"
-              required
-              placeholder="Contoh: Pengajar membuat kode check-in tetapi tidak hadir di Meet selama 15 menit."
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            :disabled="reportLoading"
-            class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold min-h-[44px]"
-          >
-            {{ reportLoading ? 'Mengirim...' : 'Kirim Laporan ke Admin' }}
-          </button>
-        </form>
-      </template>
-    </UModal>
+    <!-- Report Modal -->
+    <UiDialog v-model:open="reportModalOpen" title="Laporkan Sengketa Sesi">
+      <form class="space-y-4" @submit.prevent="submitReport">
+        <UiAlert v-if="reportError" tone="danger" :title="reportError" />
+        <UiField id="report-reason" label="Jelaskan kendala sesi secara spesifik">
+          <textarea
+            id="report-reason"
+            v-model="reportReason"
+            rows="3"
+            placeholder="Jelaskan kendala sesi untuk ditinjau admin..."
+            class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm text-[#14181F]"
+          />
+        </UiField>
+        <div class="flex justify-end gap-2.5">
+          <UiButton variant="secondary" size="sm" @click="reportModalOpen = false">
+            Batal
+          </UiButton>
+          <UiButton type="submit" variant="danger" size="sm" :loading="reportLoading">
+            {{ reportLoading ? 'Mengirim…' : 'Kirim Laporan' }}
+          </UiButton>
+        </div>
+      </form>
+    </UiDialog>
   </div>
 </template>

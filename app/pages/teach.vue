@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { TEACH_CATEGORIES } from '~/utils/designTokens'
+
 interface TeachResponse {
   cooldownUntil: string | null
   penaltyCount: number
@@ -27,15 +29,19 @@ interface TeachResponse {
   }>
 }
 
-const { data, status, error, refresh } = useLazyFetch<TeachResponse>('/api/teach/skills')
+const { data, status, refresh } = useLazyFetch<TeachResponse>('/api/teach/skills')
 
-const categories = ['Teknologi & Coding', 'Desain & UI/UX', 'Bahasa & Presentasi', 'Akademik & Riset', 'Karier & CV']
+const categories = TEACH_CATEGORIES
 
-const newSkillCategory = ref('Teknologi & Coding')
+const slotDrawerOpen = ref(false)
+const skillDrawerOpen = ref(false)
+
+const newSkillCategory = ref<string>('Teknologi & Coding')
 const newSkillTitle = ref('')
 const newSkillDesc = ref('')
 const creatingSkill = ref(false)
 const skillMessage = ref('')
+const skillError = ref('')
 
 const selectedSkillId = ref('')
 const slotMode = ref<'1on1' | 'group'>('1on1')
@@ -69,10 +75,18 @@ const inCooldown = computed(() => {
   return new Date(data.value.cooldownUntil).getTime() > Date.now()
 })
 
+function skillTitleById(id: string) {
+  return data.value?.skills?.find((s) => s.id === id)?.title || 'Topik Skill'
+}
+
 async function createSkill() {
-  if (newSkillTitle.value.trim().length < 3) return
-  creatingSkill.value = true
+  skillError.value = ''
   skillMessage.value = ''
+  if (newSkillTitle.value.trim().length < 3) {
+    skillError.value = 'Judul topik minimal 3 karakter.'
+    return
+  }
+  creatingSkill.value = true
   try {
     await $fetch('/api/teach/skills', {
       method: 'POST',
@@ -84,8 +98,14 @@ async function createSkill() {
     })
     newSkillTitle.value = ''
     newSkillDesc.value = ''
-    skillMessage.value = 'Penawaran skill baru berhasil ditambahkan.'
+    skillMessage.value = 'Topik skill baru berhasil ditambahkan.'
     await refresh()
+    setTimeout(() => {
+      skillDrawerOpen.value = false
+    }, 650)
+  } catch (err: unknown) {
+    const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
+    skillError.value = fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal menambah skill.'
   } finally {
     creatingSkill.value = false
   }
@@ -115,12 +135,15 @@ async function createSessionSlot() {
     })
     slotLocation.value = ''
     slotDateTime.value = ''
-    slotSuccess.value = 'Slot sesi berhasil dipublikasikan ke direktori Jelajah.'
+    slotSuccess.value = 'Jadwal mengajar berhasil dipublikasikan ke Jelajah Skill.'
     await refresh()
+    setTimeout(() => {
+      slotDrawerOpen.value = false
+    }, 650)
   } catch (err: unknown) {
     const fetchErr = err as { data?: { statusMessage?: string }; message?: string }
     slotError.value =
-      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal membuat slot sesi.'
+      fetchErr?.data?.statusMessage || fetchErr?.message || 'Gagal membuat jadwal mengajar.'
   } finally {
     creatingSlot.value = false
   }
@@ -138,288 +161,303 @@ function formatDateTime(iso: string) {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Mengajar</h1>
-      <p class="text-sm text-slate-600">
-        Tidak perlu silabus panjang. Cukup bantu jawab pertanyaan atau review tugas teman selama 30 menit.
-      </p>
+  <div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-5 border-b border-[#E5E0D5]">
+      <div class="space-y-1">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h1 class="text-2xl sm:text-[28px] font-bold text-[#14181F] tracking-tight">
+            Ajarkan Skill &amp; Kelola Jadwal
+          </h1>
+          <UiBadge v-if="data?.isVerifiedMentor" tone="primary" class="md:hidden">
+            Verified Mentor
+          </UiBadge>
+        </div>
+        <p class="text-sm text-[#475569]">
+          Buka sesi 1-on-1 (30/60m, +1 kredit) atau grup 2–5 peserta (60m, maks +2 kredit). Formulir dibuka lewat panel samping agar tidak membingungkan.
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+        <UiButton variant="secondary" size="md" @click="skillDrawerOpen = true">
+          Tambah Topik
+        </UiButton>
+        <UiButton
+          variant="primary"
+          size="md"
+          :disabled="inCooldown || !data?.skills?.length"
+          @click="slotDrawerOpen = true"
+        >
+          Buka Jadwal Baru
+        </UiButton>
+      </div>
     </div>
 
-    <div v-if="status === 'pending'" class="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse">
-      <p class="text-sm text-slate-600">Memuat data mengajar...</p>
+    <div v-if="status === 'pending'" aria-busy="true" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="lg:col-span-7 h-64 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
+      <div class="lg:col-span-5 h-64 bg-white border border-[#E5E0D5] rounded-[8px] animate-pulse" />
     </div>
 
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="subtle"
-      icon="i-ph-warning-circle"
-      title="Gagal memuat halaman mengajar"
+    <UiAlert
+      v-else-if="status === 'error'"
+      tone="danger"
+      title="Gagal memuat studio mengajar"
+      description="Periksa koneksi lalu coba muat ulang."
     >
-      <template #actions>
-        <UButton color="error" variant="soft" size="sm" @click="() => refresh()">Coba Lagi</UButton>
+      <template #action>
+        <UiButton variant="danger-soft" size="sm" @click="refresh()">
+          Muat Ulang
+        </UiButton>
       </template>
-    </UAlert>
+    </UiAlert>
 
     <template v-else-if="data">
-      <!-- Cooldown Alert -->
-      <UAlert
+      <!-- Cooldown / Hold Queue Alerts -->
+      <UiAlert
         v-if="inCooldown && data.cooldownUntil"
-        color="error"
-        variant="subtle"
-        icon="i-ph-warning-circle"
-        title="Mode mengajar sedang dalam masa Cooldown"
-        :description="`Dijeda hingga ${formatDateTime(data.cooldownUntil)} karena no-show sebelumnya. Kamu tidak dapat membuka slot sesi baru sementara.`"
+        tone="danger"
+        :title="`Masa Cooldown Aktif hingga ${formatDateTime(data.cooldownUntil)} (1 -> 3 -> 7 hari)`"
+        description="Jika pengajar tidak hadir lewat T+15m tanpa kode check-in, tombol publikasi slot dinonaktifkan sementara tanpa saldo minus."
       />
 
-      <!-- Hold Queue Reminder -->
-      <UAlert
+      <UiAlert
         v-if="data.pendingHoldQueueCount > 0"
-        color="primary"
-        variant="subtle"
-        icon="i-ph-clock"
-        :title="`Ada ${data.pendingHoldQueueCount} permintaan Hold Queue menunggu konfirmasimu`"
-        description="Buka tab Hold Queue di halaman Sesi Saya untuk menentukan jadwal atau menolak permintaan."
+        tone="warning"
+        :title="`${data.pendingHoldQueueCount} permintaan Daftar Tunggu menunggu jadwal dari kamu`"
+        description="Tinjau dan jadwalkan permintaan dalam 48 jam sebelum kredit kembali otomatis ke pembelajar."
       >
-        <template #actions>
-          <NuxtLink
-            to="/sessions"
-            class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
-          >
-            Buka Sesi Saya
-          </NuxtLink>
+        <template #action>
+          <UiButton to="/sessions?tab=queue" variant="secondary" size="sm">
+            Kelola Antrean
+          </UiButton>
         </template>
-      </UAlert>
+      </UiAlert>
 
-      <!-- Verified Peer Mentor Progress -->
-      <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <UIcon name="i-ph-seal-check-duotone" class="w-5 h-5 text-blue-600" aria-hidden="true" />
-            <h2 class="text-base font-semibold text-slate-900">Progres Badge Verified Peer Mentor</h2>
-          </div>
-          <span
-            v-if="data.isVerifiedMentor"
-            class="text-xs font-semibold px-2.5 py-1 rounded-md bg-white text-blue-700 border border-blue-600"
-          >
-            Aktif Terverifikasi
-          </span>
-          <span v-else class="text-xs font-medium text-slate-600">Belum Tercapai</span>
-        </div>
+      <!-- Inline Readout Strip -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 py-3.5 border-y border-[#E5E0D5] font-mono text-xs font-semibold text-[#047857] tabular-nums">
+        <span>Sesi Mengajar Selesai: {{ data.completedCount }}</span>
+        <span class="text-[#E5E0D5]" aria-hidden="true">|</span>
+        <span>Rating Terverifikasi: {{ data.reviewCount > 0 ? `${data.avgRating.toFixed(1)}/5` : 'Belum ada' }}</span>
+        <span class="text-[#E5E0D5]" aria-hidden="true">|</span>
+        <span :class="data.isVerifiedMentor ? 'text-[#047857]' : 'text-[#14181F]'">
+          Status: {{ data.isVerifiedMentor ? 'Verified Peer Mentor' : `${data.completedCount}/3 menuju Verified Mentor` }}
+        </span>
+      </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm tabular-nums">
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <p class="text-xs text-slate-600">Sesi Selesai (Syarat >= 3)</p>
-            <p class="font-semibold text-slate-900 mt-0.5">{{ Math.min(3, data.completedCount) }}/3 Sesi</p>
+      <!-- Primary Split: Published Schedules (Left 7) + Teach Topics (Right 5) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        <section class="min-w-0 lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-[#E5E0D5]">
+            <h2 class="text-base font-bold text-[#14181F]">
+              Jadwal Mengajar Terpublikasi ({{ data.sessions.length }})
+            </h2>
+            <button
+              type="button"
+              :disabled="inCooldown || !data.skills.length"
+              class="text-xs font-semibold text-[#1D4ED8] hover:underline disabled:opacity-40"
+              @click="slotDrawerOpen = true"
+            >
+              + Buka Jadwal
+            </button>
           </div>
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <p class="text-xs text-slate-600">Rating Rata-rata (Syarat >= 4.5)</p>
-            <p class="font-semibold text-slate-900 mt-0.5">
-              {{ data.reviewCount > 0 ? `${data.avgRating} / 5.0` : 'Belum ada ulasan' }}
+
+          <div v-if="data.sessions.length === 0" class="py-10 text-center space-y-3 border-b border-[#E5E0D5]">
+            <p class="text-sm font-semibold text-[#14181F]">Belum ada jadwal mengajar yang dipublikasikan.</p>
+            <p class="text-xs text-[#526071]">
+              Buka 1 sesi 30 menit agar pembelajar bisa langsung memesan tanpa Daftar Tunggu.
             </p>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <p class="text-xs text-slate-600">Penalti Aktif (Syarat 0)</p>
-            <p class="font-semibold text-slate-900 mt-0.5">{{ data.penaltyCount }} Penalti</p>
-          </div>
-        </div>
-      </section>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Publish New Session Slot -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-          <h2 class="text-base font-semibold text-slate-900">Buat Slot Jadwal Mengajar</h2>
-
-          <UAlert v-if="slotError" color="error" variant="subtle" :title="slotError" />
-          <UAlert v-if="slotSuccess" color="secondary" variant="subtle" :title="slotSuccess" />
-
-          <form class="space-y-3.5" @submit.prevent="createSessionSlot">
-            <div>
-              <label for="slot-skill" class="block text-sm font-medium text-slate-800 mb-1">
-                Pilih Penawaran Skill
-              </label>
-              <select
-                id="slot-skill"
-                v-model="selectedSkillId"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-              >
-                <option v-for="s in data.skills" :key="s.id" :value="s.id">
-                  {{ s.title }} ({{ s.category }})
-                </option>
-              </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label for="slot-mode" class="block text-sm font-medium text-slate-800 mb-1">
-                  Mode Sesi
-                </label>
-                <select
-                  id="slot-mode"
-                  v-model="slotMode"
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-                >
-                  <option value="1on1">1-on-1 (1 Kredit)</option>
-                  <option value="group">Grup 2-5 Orang (Maks 2 Kredit)</option>
-                </select>
-              </div>
-              <div>
-                <label for="slot-duration" class="block text-sm font-medium text-slate-800 mb-1">
-                  Durasi
-                </label>
-                <select
-                  id="slot-duration"
-                  v-model="slotDuration"
-                  :disabled="slotMode === 'group'"
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-                >
-                  <option :value="30">Micro-Session 30 Menit</option>
-                  <option :value="60">Standar 60 Menit</option>
-                </select>
-              </div>
-            </div>
-
-            <div v-if="slotMode === 'group'">
-              <label for="slot-max" class="block text-sm font-medium text-slate-800 mb-1">
-                Kapasitas Maksimal Peserta (2-5)
-              </label>
-              <input
-                id="slot-max"
-                v-model.number="slotMaxLearners"
-                type="number"
-                min="2"
-                max="5"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label for="slot-format" class="block text-sm font-medium text-slate-800 mb-1">
-                  Format Pertemuan
-                </label>
-                <select
-                  id="slot-format"
-                  v-model="slotFormat"
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-                >
-                  <option value="online">Online (Meet/Zoom/Discord)</option>
-                  <option value="in_person">Tatap Muka (Kampus)</option>
-                </select>
-              </div>
-              <div>
-                <label for="slot-time" class="block text-sm font-medium text-slate-800 mb-1">
-                  Tanggal &amp; Jam Mulai
-                </label>
-                <input
-                  id="slot-time"
-                  v-model="slotDateTime"
-                  type="datetime-local"
-                  required
-                  class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label for="slot-location" class="block text-sm font-medium text-slate-800 mb-1">
-                {{ slotFormat === 'online' ? 'Tautan Meeting' : 'Titik Temu di Kampus' }}
-              </label>
-              <input
-                id="slot-location"
-                v-model="slotLocation"
-                type="text"
-                required
-                :placeholder="slotFormat === 'online' ? 'https://meet.google.com/...' : 'Perpustakaan Pusat Lt. 2'"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              :disabled="creatingSlot || inCooldown || data.skills.length === 0"
-              class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold min-h-[44px] transition-colors"
+            <UiButton
+              variant="primary"
+              size="sm"
+              :disabled="inCooldown || !data.skills.length"
+              @click="slotDrawerOpen = true"
             >
-              {{ creatingSlot ? 'Mempublikasikan...' : 'Publikasikan Slot ke Direktori' }}
-            </button>
-          </form>
+              Publikasikan Jadwal Pertamamu
+            </UiButton>
+          </div>
+
+          <ul v-else class="divide-y divide-[#E5E0D5] border-b border-[#E5E0D5]">
+            <li v-for="s in data.sessions" :key="s.id" class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1 min-w-0">
+                <p class="font-mono text-xs font-bold text-[#1D4ED8] tabular-nums">
+                  {{ formatDateTime(s.scheduledAt) }} | {{ s.durationMinutes }}m |
+                  {{ s.mode === 'group' ? `Grup maks ${s.maxLearners} (+2 Kredit maks)` : '1-on-1 (+1 Kredit)' }}
+                </p>
+                <p class="text-[15px] font-bold text-[#14181F]">{{ skillTitleById(s.skillId) }}</p>
+                <p class="text-xs text-[#526071] truncate">
+                  {{ s.format === 'online' ? 'Online' : 'Tatap Muka' }}: {{ s.locationOrLink }}
+                </p>
+              </div>
+              <NuxtLink :to="`/sessions/${s.id}`" class="text-xs font-semibold text-[#1D4ED8] hover:underline shrink-0">
+                Buka Ruang Sesi
+              </NuxtLink>
+            </li>
+          </ul>
         </section>
 
-        <!-- Add New Skill Offer -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-          <h2 class="text-base font-semibold text-slate-900">Tambah Topik Skill Mengajar</h2>
-          <UAlert v-if="skillMessage" color="secondary" variant="subtle" :title="skillMessage" />
-
-          <form class="space-y-3.5" @submit.prevent="createSkill">
-            <div>
-              <label for="new-skill-cat" class="block text-sm font-medium text-slate-800 mb-1">
-                Kategori
-              </label>
-              <select
-                id="new-skill-cat"
-                v-model="newSkillCategory"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-              >
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-              </select>
-            </div>
-            <div>
-              <label for="new-skill-title" class="block text-sm font-medium text-slate-800 mb-1">
-                Judul Topik
-              </label>
-              <input
-                id="new-skill-title"
-                v-model="newSkillTitle"
-                type="text"
-                required
-                placeholder="Contoh: Bedah Error React & TypeScript 30 Menit"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 min-h-[44px]"
-              />
-            </div>
-            <div>
-              <label for="new-skill-desc" class="block text-sm font-medium text-slate-800 mb-1">
-                Deskripsi Singkat (Opsional)
-              </label>
-              <textarea
-                id="new-skill-desc"
-                v-model="newSkillDesc"
-                rows="2"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-              />
-            </div>
-            <button
-              type="submit"
-              :disabled="creatingSkill"
-              class="w-full py-2.5 px-4 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-900 text-sm font-semibold min-h-[44px]"
-            >
-              {{ creatingSkill ? 'Menyimpan...' : 'Simpan Topik Skill Baru' }}
+        <aside class="min-w-0 lg:col-span-5 lg:border-l lg:border-[#E5E0D5] lg:pl-8 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-[#E5E0D5]">
+            <h2 class="text-base font-bold text-[#14181F]">Topik Skill Saya ({{ data.skills.length }})</h2>
+            <button type="button" class="text-xs font-semibold text-[#1D4ED8] hover:underline" @click="skillDrawerOpen = true">
+              + Tambah Topik
             </button>
-          </form>
-
-          <div v-if="data.sessions.length > 0" class="pt-4 border-t border-slate-200 space-y-2">
-            <h3 class="text-sm font-semibold text-slate-900">Slot Terjadwal Kamu ({{ data.sessions.length }})</h3>
-            <ul class="space-y-2">
-              <li
-                v-for="s in data.sessions"
-                :key="s.id"
-                class="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
-              >
-                <div>
-                  <p class="font-semibold text-slate-900">{{ formatDateTime(s.scheduledAt) }}</p>
-                  <p class="text-slate-600">{{ s.durationMinutes }}m · {{ s.mode }} · {{ s.format }}</p>
-                </div>
-                <NuxtLink
-                  :to="`/sessions/${s.id}`"
-                  class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-800 font-medium hover:bg-slate-100"
-                >
-                  Workspace
-                </NuxtLink>
-              </li>
-            </ul>
           </div>
-        </section>
+
+          <p v-if="data.skills.length === 0" class="text-xs text-[#526071] py-4">
+            Belum ada topik skill mengajar. Tambahkan minimal 1 topik untuk mulai membuka jadwal.
+          </p>
+
+          <ul v-else class="divide-y divide-[#E5E0D5] border-b border-[#E5E0D5]">
+            <li v-for="sk in data.skills" :key="sk.id" class="py-3.5 space-y-1">
+              <p class="text-xs font-semibold text-[#1D4ED8]">{{ sk.category }}</p>
+              <p class="text-sm font-bold text-[#14181F]">{{ sk.title }}</p>
+              <p v-if="sk.description" class="text-xs text-[#475569] leading-relaxed">{{ sk.description }}</p>
+            </li>
+          </ul>
+        </aside>
       </div>
     </template>
+
+    <!-- Slideover 1: Publish Slot Form -->
+    <USlideover v-model:open="slotDrawerOpen" title="Buka Jadwal Mengajar Baru">
+      <template #body>
+        <form class="space-y-4" @submit.prevent="createSessionSlot">
+          <p class="text-xs text-[#475569]">
+            1-on-1 berhadiah 1 kredit; Grup (2–5 peserta, wajib 60 menit) dibatasi maksimal 2 kredit.
+          </p>
+
+          <UiAlert v-if="slotError" tone="danger" :title="slotError" />
+          <UiAlert v-if="slotSuccess" tone="success" :title="slotSuccess" />
+
+          <UiField id="slot-skill" label="Pilih Topik Skill">
+            <select
+              id="slot-skill"
+              v-model="selectedSkillId"
+              :disabled="inCooldown || !data?.skills?.length"
+              class="w-full px-3 py-2.5 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+            >
+              <option v-for="sk in data?.skills || []" :key="sk.id" :value="sk.id">
+                {{ sk.title }} ({{ sk.category }})
+              </option>
+            </select>
+          </UiField>
+
+          <div class="grid grid-cols-2 gap-3">
+            <UiField id="slot-mode" label="Mode Sesi">
+              <select id="slot-mode" v-model="slotMode" :disabled="inCooldown" class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]">
+                <option value="1on1">1-on-1 (+1K)</option>
+                <option value="group">Grup (Cap +2K)</option>
+              </select>
+            </UiField>
+
+            <UiField id="slot-duration" label="Durasi">
+              <select
+                id="slot-duration"
+                v-model="slotDuration"
+                :disabled="inCooldown || slotMode === 'group'"
+                class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+              >
+                <option :value="30">Micro 30 Menit</option>
+                <option :value="60">Standar 60 Menit</option>
+              </select>
+            </UiField>
+          </div>
+
+          <UiField id="slot-format" label="Format Pertemuan">
+            <select id="slot-format" v-model="slotFormat" :disabled="inCooldown" class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]">
+              <option value="online">Online (Meet/Zoom)</option>
+              <option value="in_person">Tatap Muka Kampus</option>
+            </select>
+          </UiField>
+
+          <UiField v-if="slotMode === 'group'" id="slot-max" label="Kapasitas Maksimal Peserta (2–5)">
+            <input
+              id="slot-max"
+              v-model.number="slotMaxLearners"
+              type="number"
+              min="2"
+              max="5"
+              :disabled="inCooldown"
+              class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm font-mono min-h-[44px]"
+            />
+          </UiField>
+
+          <UiField id="slot-datetime" label="Jadwal Mulai">
+            <input
+              id="slot-datetime"
+              v-model="slotDateTime"
+              type="datetime-local"
+              :disabled="inCooldown"
+              class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+            />
+          </UiField>
+
+          <UiField id="slot-location" :label="slotFormat === 'online' ? 'Tautan Meeting' : 'Lokasi Kampus'">
+            <input
+              id="slot-location"
+              v-model="slotLocation"
+              type="text"
+              :disabled="inCooldown"
+              :placeholder="slotFormat === 'online' ? 'https://meet.google.com/...' : 'Perpustakaan UKSW Lt. 2'"
+              class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+            />
+          </UiField>
+
+          <UiButton
+            type="submit"
+            variant="primary"
+            block
+            :loading="creatingSlot"
+            :disabled="inCooldown || !data?.skills?.length"
+          >
+            {{ creatingSlot ? 'Mempublikasikan…' : 'Publikasikan Jadwal Mengajar' }}
+          </UiButton>
+        </form>
+      </template>
+    </USlideover>
+
+    <!-- Slideover 2: Add Teach Skill Form -->
+    <USlideover v-model:open="skillDrawerOpen" title="Tambah Topik Skill Baru">
+      <template #body>
+        <form class="space-y-4" @submit.prevent="createSkill">
+          <UiAlert v-if="skillError" tone="danger" :title="skillError" />
+          <UiAlert v-if="skillMessage" tone="success" :title="skillMessage" />
+
+          <UiField id="new-skill-cat" label="Kategori">
+            <select
+              id="new-skill-cat"
+              v-model="newSkillCategory"
+              class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+            >
+              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            </select>
+          </UiField>
+
+          <UiField id="new-skill-title" label="Judul Penawaran" required>
+            <input
+              id="new-skill-title"
+              v-model="newSkillTitle"
+              type="text"
+              placeholder="Mis. Debugging TypeScript & REST API"
+              class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm min-h-[44px]"
+            />
+          </UiField>
+
+          <UiField id="new-skill-desc" label="Deskripsi Singkat">
+            <textarea
+              id="new-skill-desc"
+              v-model="newSkillDesc"
+              rows="3"
+              placeholder="Jelaskan apa yang akan dibahas selama sesi..."
+              class="w-full px-3 py-2 rounded-[6px] border border-[#94A3B8] bg-white text-sm"
+            />
+          </UiField>
+
+          <UiButton type="submit" variant="dark" block :loading="creatingSkill">
+            {{ creatingSkill ? 'Menambahkan…' : 'Simpan Topik Skill' }}
+          </UiButton>
+        </form>
+      </template>
+    </USlideover>
   </div>
 </template>
